@@ -15,10 +15,13 @@ For this installation guide, all code will be using Linux commands. This guide i
 
 ### Get the repository
 
-First get the repository with
+First, get the repository with
 
 ```
-git clone https://github.com/ZaneLesley/NCATrak-Mock-System
+# For Linux
+git clone git@github.com:ZaneLesley/NCATrak-Mock-System.git
+# For Windows
+# git clone https://github.com/ZaneLesley/NCATrak-Mock-System
 ```
 
 ### Configure the .venv
