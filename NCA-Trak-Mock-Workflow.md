@@ -7,7 +7,7 @@ to your own OS.
 
 ## Requirements
 
--   [Anaconda](https://docs.anaconda.com/) or higher (tested with Python 3.10, may work with lower versions)
+-   [Anaconda](https://docs.anaconda.com/)
 
 ## Helpful links
 
@@ -17,11 +17,11 @@ to your own OS.
 
 ## Important commands
 
-```shell
+```console
 conda create --name ENVNAME [package] [package] [package] # for example conda create --name vnv python=3.10
 conda activate ENVNAME
 
-# Conda enviroment has to be active
+# Conda environment has to be active
 conda install [package]
 conda list
 conda export --from-history > environment.yml # cross-platform compatible
