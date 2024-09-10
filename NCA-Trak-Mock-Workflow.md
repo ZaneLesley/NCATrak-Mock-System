@@ -2,68 +2,31 @@
 
 ## Installation
 
-For this installation guide, all code will be using Linux commands. This guide is strictly for developers and not how the end user should be using the file.
+For this installation guide, all code will be using Linux commands. This guide is strictly for developers and not how the end user should be using the file. You may have to transfer the command names
+to your own OS.
 
 ## Requirements
 
--   [Python 3.10](https://www.python.org/downloads/) or higher (tested with Python 3.10, may work with lower versions)
+-   [Anaconda](https://docs.anaconda.com/) or higher (tested with Python 3.10, may work with lower versions)
 
 ## Helpful links
 
-- https://docs.python.org/3/library/venv.html
-- https://pip.pypa.io/en/latest/user_guide/#requirements-files
+-   https://docs.anaconda.com/anaconda/install/
+-   https://conda.io/projects/conda/en/latest/user-guide/getting-started.html
+-   https://conda.io/projects/conda/en/latest/user-guide/cheatsheet.html
 
-### Get the repository
+## Important commands
 
-First, get the repository with
+```shell
+conda create --name ENVNAME [package] [package] [package] # for example conda create --name vnv python=3.10
+conda activate ENVNAME
 
+# Conda enviroment has to be active
+conda install [package]
+conda list
+conda export --from-history > environment.yml # cross-platform compatible
+conda env create -n ENVNAME --file ENV.yml    # Create from an ENV.yml file (environment in our case)
 ```
-# For Linux
-git clone git@github.com:ZaneLesley/NCATrak-Mock-System.git
-# For Windows
-# git clone https://github.com/ZaneLesley/NCATrak-Mock-System
-```
-
-### Configure the .venv
-
-First, install the venv package.
-
-```
-sudo apt install python3.10-venv
-```
-
-Next, go into the project directory and create the venv
-
-```
-python3 -m venv --prompt NCA-Trak-env .venv
-```
-
-Next, ensure proper venv creation by typing
-
-```
-. .venv/bin/activate
-```
-
-**Note: I like to alias this, you can do so by adding an alias to the .bashrc file**
-
-```
-vim ~/.bashrc
-# go into insert mode with 'i'
-alias vnv='. .venv/bin/activate'
-# ESC => ; => x => ENTER
-```
-
-### Getting Requirements
-
-Next, we need to get all the requirements, do this by doing the following
-
-```
-# If you aren't in the venv
-. .venv/bin/activate
-python3 -m pip install -r requirements.txt
-```
-
-After this, you should be set up to be able to start developing in the NCA-Trak-Mock software. Please refer to the next section on the workflow
 
 # Workflow
 
@@ -85,27 +48,7 @@ Commit message titles should be closely related to the ticket you are doing. Aga
 
 Ensure you are working on your own branch **PER FEATURE** we should have a lot more than 5 branches, each feature should have its own branch. Here is a useful [guide](https://www.w3schools.com/git/git_branch.asp?remote=github) if you don't completely understand branching in git.
 
-## Code
-
-### Requirements.txt
-
-Make sure you are writing the requirements to run your packages into the txt file
-
-```
-python -m pip freeze > requirements.txt
-cat requirements.txt # recommend doing this to ensure that it looks correct. (ensures you didn't do it outside of the venv.)
-```
-
-**Note: Make sure you are in the venv when you do this.**
 
 ### Formatting
 
 I recommend using some sort of formatter to ensure your code stays pretty. In Visual Studio Code, I recommend [Black Formatter](https://marketplace.visualstudio.com/items?itemName=ms-python.black-formatter).
-
-### Installing with venv
-
-Ensure you are inside the venv and run this on packages you want to install:
-```
-pip install <package>
-```
-
