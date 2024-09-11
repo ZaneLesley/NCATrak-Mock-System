@@ -3,6 +3,7 @@ channels:
   - defaults
 dependencies:
   - faker
+  - pandas
   - python=3.10
   - rich
   - numpy=1.24
