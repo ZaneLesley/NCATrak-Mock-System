@@ -1,11 +1,23 @@
-"""
-An example on how data generation works. Also Using this to test the Requirements.txt file.
-and installation of everything.
-"""
-
 from faker import Faker
 import pandas as pd
+import random
 from rich import print
+
+# Religions
+religions = ["Christianity", "Islam", "Hinduism", "Buddhism", "Other"]
+
+# Races or Ethnicities
+races = [
+    "White",
+    "Black or African American",
+    "Asian",
+    "Hispanic or Latino",
+    "Native American",
+    "Pacific Islander",
+    "Middle Eastern",
+    "Mixed Race",
+    "Other",
+]
 
 
 def generate_data(n) -> pd.DataFrame:
@@ -14,28 +26,26 @@ def generate_data(n) -> pd.DataFrame:
     fake.seed_instance(0)
     for _ in range(n):
         person = {}
-        person["cust_id"] = fake.unique.random_int(min=0, max=9999)
-
+        
         # Generates a male or female randomly.
-        if fake.random_int(min=0, max=1) == 0:
-            person["first_name"] = fake.first_name_male()
-            person["second_name"] = fake.first_name_male()
-            person["last_name"] = fake.last_name()
-            person["sex"] = "male"
-        else:
-            person["first_name"] = fake.first_name_female()
-            person["second_name"] = fake.first_name_female()
-            person["last_name"] = fake.last_name()
-            person["sex"] = "female"
-
+        x = 0 if fake.random_int(min=0, max=1) == 0 else 1
+        person["first_name"] = fake.first_name_male() if x == 0 else fake.first_name_female()
+        person["second_name"] = fake.first_name_male()[0]  # Middle Inital
+        person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
+        person["nickname"] = "placeholder"
         person["date_of_birth"] = fake.date_of_birth(minimum_age=18, maximum_age=100)
-        person["address"] = fake.address()
-        person["acct_no"] = fake.unique.random_int(min=0, max=100000)
-        person["acct_bal"] = fake.pydecimal(
-            right_digits=2, positive=True, min_value=1, max_value=10000
-        )
-        person["acct_type"] = fake.random_int(min=0, max=1000, step=100)
-        person["acct_opening_date"] = fake.date_of_birth(minimum_age=0, maximum_age=25)
+        person["ssn"] = fake.unique.ssn()
+        person["bio_gender"] = "male" if x == 0 else "female"
+        person["religion"] = random.choice(religions)
+        person["race"] = random.choice(races)
+        person["language"] = fake.language_name()
+        person["voca_classifications"] = fake.random_uppercase_letter()
+        person["comments"] = fake.sentence(nb_words=fake.random_int(min=0, max=15))
+        person["prior_convictions"] = fake.boolean()
+        person["convicted_against_children"] = fake.boolean()
+        person["sexual_offender"] = fake.boolean()
+        person["sexual_predator"] = fake.boolean()
+
         data.append(person)
     return pd.DataFrame(data)
 
