@@ -3,9 +3,16 @@ channels:
   - defaults
 dependencies:
   - faker
+<<<<<<< HEAD
   - numpy=1.22
   - pandas=2.2.2
   - psycopg2
   - python=3.10
   - rich
+=======
+  - pandas
+  - python=3.10
+  - rich
+  - numpy=1.24
+>>>>>>> main
 prefix: /home/zanel/anaconda3/envs/NCA-Trak
