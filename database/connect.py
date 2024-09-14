@@ -1,5 +1,5 @@
 import psycopg2
-from database.config import load_config
+from config import load_config
 
 def connect(config):
 
