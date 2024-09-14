@@ -18,7 +18,10 @@ races = [
     "Mixed Race",
     "Other",
 ]
+<<<<<<< HEAD
+=======
 
+>>>>>>> main
 
 def generate_data(n) -> pd.DataFrame:
     data = []
@@ -30,10 +33,17 @@ def generate_data(n) -> pd.DataFrame:
         # Generates a male or female randomly.
         x = 0 if fake.random_int(min=0, max=1) == 0 else 1
         person["first_name"] = fake.first_name_male() if x == 0 else fake.first_name_female()
+<<<<<<< HEAD
+        person["middle_initial"] = fake.first_name_male()[0]  # Middle Initial
+        person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
+        person["nickname"] = "placeholder"
+        person["birthdate"] = fake.date_of_birth(minimum_age=18, maximum_age=100).strftime('%Y-%m-%d')
+=======
         person["second_name"] = fake.first_name_male()[0]  # Middle Inital
         person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
         person["nickname"] = "placeholder"
         person["date_of_birth"] = fake.date_of_birth(minimum_age=18, maximum_age=100)
+>>>>>>> main
         person["ssn"] = fake.unique.ssn()
         person["bio_gender"] = "male" if x == 0 else "female"
         person["religion"] = random.choice(religions)
@@ -49,7 +59,6 @@ def generate_data(n) -> pd.DataFrame:
         data.append(person)
     return pd.DataFrame(data)
 
-
 if __name__ == "__main__":
     print("[bold blue]NCA-Trak-Mock Data Generator")
     print("[yellow]How many data entries would you like to be generated?")
@@ -57,5 +66,5 @@ if __name__ == "__main__":
     print("[yellow]Generating Data...")
     final_data = generate_data(n)
     print("[yellow]Writing .csv file...")
-    final_data.to_csv("data.csv")
+    final_data.to_csv("data.csv", index=False)
     print("[green]Data written to /data.csv")
