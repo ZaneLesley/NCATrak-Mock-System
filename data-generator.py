@@ -18,10 +18,6 @@ races = [
     "Mixed Race",
     "Other",
 ]
-<<<<<<< HEAD
-=======
-
->>>>>>> main
 
 def generate_data(n) -> pd.DataFrame:
     data = []
@@ -33,17 +29,10 @@ def generate_data(n) -> pd.DataFrame:
         # Generates a male or female randomly.
         x = 0 if fake.random_int(min=0, max=1) == 0 else 1
         person["first_name"] = fake.first_name_male() if x == 0 else fake.first_name_female()
-<<<<<<< HEAD
-        person["middle_initial"] = fake.first_name_male()[0]  # Middle Initial
-        person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
-        person["nickname"] = "placeholder"
-        person["birthdate"] = fake.date_of_birth(minimum_age=18, maximum_age=100).strftime('%Y-%m-%d')
-=======
         person["second_name"] = fake.first_name_male()[0]  # Middle Inital
         person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
         person["nickname"] = "placeholder"
         person["date_of_birth"] = fake.date_of_birth(minimum_age=18, maximum_age=100)
->>>>>>> main
         person["ssn"] = fake.unique.ssn()
         person["bio_gender"] = "male" if x == 0 else "female"
         person["religion"] = random.choice(religions)
