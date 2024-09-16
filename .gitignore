@@ -1,7 +1,4 @@
-<<<<<<< HEAD
 .venv/
 database.ini
 __pycache__/
-=======
 data.csv
->>>>>>> main
