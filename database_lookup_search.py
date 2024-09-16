@@ -12,6 +12,26 @@ entry_width = 30
 padx = 10
 pady = 5
 
+def load_all_patients():
+
+    patient_data = []
+    config = load_config()
+    try:
+        with psycopg2.connect(**config) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT * FROM personal_profile ORDER BY birthdate")
+                row = cur.fetchone()
+                
+                while row is not None:
+                    patient_data.append(row)
+                    row = cur.fetchone()
+
+        return patient_data
+    
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+        return None
+
 
 
 # to populate the details of the selected patient
@@ -113,20 +133,7 @@ window.title("Patient Lookup")
 file_path = 'data.csv'  # Update with your CSV file name
 
 
-patient_data = []
-config = load_config()
-try:
-    with psycopg2.connect(**config) as conn:
-        with conn.cursor() as cur:
-            cur.execute("SELECT * FROM personal_profile ORDER BY birthdate")
-            row = cur.fetchone()
-            
-            while row is not None:
-                patient_data.append(row)
-                row = cur.fetchone()
-except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-
+patient_data = load_all_patients()
 filtered_patients = patient_data  # Initialize filtered_patients
 
 # creates frame for search and patient list
