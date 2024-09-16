@@ -3,6 +3,7 @@ from tkinter import ttk
 import pandas as pd
 import psycopg2
 from database.config import load_config
+from database.connect import connect
 
 heading_font = ("Helvetica", 18, "bold")
 bold_label_font = ("Helvetica", 12, "bold")
@@ -12,28 +13,21 @@ entry_width = 30
 padx = 10
 pady = 5
 
-def load_all_patients():
+def load_first_100_patients():
 
     patient_data = []
     config = load_config()
-    try:
-        with psycopg2.connect(**config) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM personal_profile ORDER BY birthdate")
-                row = cur.fetchone()
+    conn = connect(config)
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM personal_profile ORDER BY last_name FETCH FIRST 100 ROWS ONLY") 
+        row = cur.fetchone()
                 
-                while row is not None:
-                    patient_data.append(row)
-                    row = cur.fetchone()
+        while row is not None:
+            patient_data.append(row)
+            row = cur.fetchone()
 
         return patient_data
     
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
-        return None
-
-
-
 # to populate the details of the selected patient
 def show_patient_details(patient):
     # Clear previous patient details
@@ -92,22 +86,18 @@ def show_patient_details(patient):
 def search_patients(event=None):
     global filtered_patients
     config = load_config()
+    conn = connect(config)
 
     search_query = search_entry.get().lower()
     filtered_patients = []
 
-    try:
-        with psycopg2.connect(**config) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT * FROM personal_profile WHERE first_name~*\'{0}\' OR last_name~*\'{0}\' ORDER BY birthdate".format(search_query))
-                row = cur.fetchone()
+    with conn.cursor() as cur:
+        cur.execute("SELECT * FROM personal_profile WHERE CONCAT(first_name, \' \', middle_initial, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\' ORDER BY last_name FETCH FIRST 100 ROWS ONLY".format(search_query))
+        row = cur.fetchone()
 
-                while row is not None:
-                    filtered_patients.append(row)
-                    row = cur.fetchone()
-
-    except (Exception, psycopg2.DatabaseError) as error:
-        print(error)
+        while row is not None:
+            filtered_patients.append(row)
+            row = cur.fetchone()
 
     update_patient_list(filtered_patients)
 
@@ -115,7 +105,7 @@ def search_patients(event=None):
 def update_patient_list(filtered_patients):
     patient_list.delete(0, tk.END)
     for patient in filtered_patients:
-        patient_list.insert(tk.END, f"{patient[0]} {patient[2]}")
+        patient_list.insert(tk.END, f"{patient[0]} {patient[1]}. {patient[2]}")
     patient_list.bind("<Double-1>", on_patient_select_from_list)
 
 # callback function when a patient is selected from the list
@@ -126,14 +116,14 @@ def on_patient_select_from_list(event):
         show_patient_details(filtered_patients[patient_index])
 
 window = tk.Tk()
-window.geometry("1200x800")
+window.geometry("1600x900")
 window.title("Patient Lookup")
 
 # load patient data
 file_path = 'data.csv'  # Update with your CSV file name
 
 
-patient_data = load_all_patients()
+patient_data = load_first_100_patients()
 filtered_patients = patient_data  # Initialize filtered_patients
 
 # creates frame for search and patient list
