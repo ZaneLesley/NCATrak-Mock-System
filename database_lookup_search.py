@@ -1,7 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
-import pandas as pd
-import psycopg2
 from database.config import load_config
 from database.connect import connect
 
