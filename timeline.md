@@ -27,7 +27,7 @@ Ensure we have a good file and naming layout.
 - **Connect Interafaces**\
 Zac, Go back and ensure you can navigate from one database to the next.
 
-- **Name Project**\
+- **Name Project**
 
 ## Sprint 3 - Interface UI Design and Logic [10/21 - 11/8]
 
