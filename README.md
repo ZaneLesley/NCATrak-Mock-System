@@ -30,7 +30,7 @@ Follow Anaconda's [Installation Guide](https://docs.anaconda.com/anaconda/instal
 cd directory/of/mock/system/install
 ```
 
-- Run the following command to create a virtual enviornment called NCA-Trak that installs all of the dependencies listed in the environment.yml file:
+- Run the following command to create a virtual environment called NCA-Trak that installs all of the dependencies listed in the environment.yml file:
 
 ```shell
 conda env create -n NCA-Trak --file environment.yml
