@@ -1,5 +1,5 @@
 .venv/
-database/database.ini
+database.ini
 __pycache__/
 data.csv
 .idea/
