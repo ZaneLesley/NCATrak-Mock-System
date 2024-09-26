@@ -8,6 +8,7 @@ This software aims to give professors at the [University of Oklahoma Health Scie
 
 -   [Anaconda](https://docs.anaconda.com/)
 -   [PostgreSQL](https://www.postgresql.org/)
+-   [Python](https://www.python.org/downloads/)
 
 ## Installation
 
@@ -123,6 +124,17 @@ password=<password>
 
 - Run the script “create_tables.py”. This will create the table currently being used for the personal profile page.
 
+```shell
+python3 create_tables.py
+```
 - Next, run the script “populate_database.py”. This pulls the mock data stored in the data.csv file and populates the newly-created data table.
 
+```shell
+python3 populate_database.py
+``` 
+
 And that’s it! You should now be able to run the script “database_lookup_search.py” to search and select personal profiles by name.
+
+```shell
+database_lookup_search.py
+```
