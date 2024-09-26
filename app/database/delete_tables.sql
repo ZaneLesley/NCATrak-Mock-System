@@ -1,0 +1,14 @@
+DELETE FROM cac_case;
+DROP TABLE cac_case;
+DELETE FROM person;
+DROP TABLE person;
+DELETE FROM employee_account;
+DROP TABLE employee_account;
+DELETE FROM employee;
+DROP TABLE employee;
+DELETE FROM cac_agency;
+DROP TABLE cac_agency;
+DELETE FROM child_advocacy_center;
+DROP TABLE child_advocacy_center;
+DELETE FROM state_table;
+DROP TABLE state_table;
