@@ -5,3 +5,8 @@ employee
 employee_account
 person
 cac_case
+case_person
+case_va_session
+case_va_session_attendee
+case_va_session_service
+case_mh_session

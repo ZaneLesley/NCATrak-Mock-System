@@ -1,3 +1,13 @@
+DELETE FROM case_mh_session;
+DROP TABLE case_mh_session;
+DELETE FROM case_va_session_service;
+DROP TABLE case_va_session_service;
+DELETE FROM case_va_session_attendee;
+DROP TABLE case_va_session_attendee;
+DELETE FROM case_va_session;
+DROP TABLE case_va_session;
+DELETE FROM case_person;
+DROP TABLE case_person;
 DELETE FROM cac_case;
 DROP TABLE cac_case;
 DELETE FROM person;
