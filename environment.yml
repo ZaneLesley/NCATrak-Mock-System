@@ -3,8 +3,12 @@ channels:
   - defaults
 dependencies:
   - faker
-  - pandas
+  - numpy=1.22
+  - pandas=2.2.2
+  - psycopg2
   - python=3.10
   - rich
-  - numpy=1.24
+  - pip
+  - pip:
+      - tkcalendar
 prefix: /home/zanel/anaconda3/envs/NCA-Trak
