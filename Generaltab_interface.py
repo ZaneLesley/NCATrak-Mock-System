@@ -194,6 +194,92 @@ person_combo.grid(row=1, column=7, padx=5, pady=5)
 ttk.Button(cases_frame, text="Edit", command=add_editbutton_popup).grid(row=1, column=0, padx=5, pady=5)
 
 #------------------------------
+
+def add_agency_popup():
+    popup = tk.Toplevel(root)
+    popup.title("New Agency")
+    popup.geometry("600x500")
+
+    ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="If the desired agency is on this list then click 'Use Agency'.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="If the agency is not on the list enter the agency name below and click 'Save'.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+
+    # Entry fields for case agency
+    ttk.Label(popup, text="Agency Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
+    requested_date_entry = ttk.Entry(popup, foreground='white')
+    requested_date_entry.grid(row=5, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Address Line 1", foreground='black').grid(row=6, column=0, padx=5, pady=5)
+    referral_date_entry = ttk.Entry(popup)
+    referral_date_entry.grid(row=6, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Address Line 2", foreground='black').grid(row=7, column=0, padx=5, pady=5)
+    referral_group_entry = ttk.Entry(popup)
+    referral_group_entry.grid(row=7, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="City").grid(row=8, column=0, padx=5, pady=5)
+    providing_agency_entry = ttk.Entry(popup)
+    providing_agency_entry.grid(row=8, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="State").grid(row=9, column=0, padx=5, pady=5)
+    primary_contact_entry = ttk.Combobox(popup)
+    primary_contact_entry.grid(row=9, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Zip Code").grid(row=10, column=0, padx=5, pady=5)
+    status_entry = ttk.Entry(popup)
+    status_entry.grid(row=10, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Phone Number").grid(row=11, column=0, padx=5, pady=5)
+    release_date_entry = ttk.Entry(popup)
+    release_date_entry.grid(row=11, column=1, padx=5, pady=5)
+
+    # Update and Cancel buttons
+    ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+
+def add_personnel_popup():
+    popup = tk.Toplevel(root)
+    popup.title("New Personnel")
+    popup.geometry("800x600")
+
+    ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="Instead click Cancel to return to the previous screen and select them from the person pick list.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+
+    # Entry fields for case agency
+    ttk.Label(popup, text="First Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
+    requested_date_entry = ttk.Entry(popup, foreground='white')
+    requested_date_entry.grid(row=5, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Last Name", foreground='black').grid(row=6, column=0, padx=5, pady=5)
+    referral_date_entry = ttk.Entry(popup)
+    referral_date_entry.grid(row=6, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Preface", foreground='black').grid(row=7, column=0, padx=5, pady=5)
+    referral_group_entry = ttk.Entry(popup)
+    referral_group_entry.grid(row=7, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Credentials").grid(row=8, column=0, padx=5, pady=5)
+    providing_agency_entry = ttk.Entry(popup)
+    providing_agency_entry.grid(row=8, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Job Title").grid(row=9, column=0, padx=5, pady=5)
+    primary_contact_entry = ttk.Entry(popup)
+    primary_contact_entry.grid(row=9, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Email").grid(row=10, column=0, padx=5, pady=5)
+    status_entry = ttk.Entry(popup)
+    status_entry.grid(row=10, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Phone").grid(row=11, column=0, padx=5, pady=5)
+    release_date_entry = ttk.Entry(popup)
+    release_date_entry.grid(row=11, column=1, padx=5, pady=5)
+
+    # Update and Cancel buttons
+    ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+
+
 # Case Information
 
 case_information_frame = tk.LabelFrame(scrollable_frame, text="Case Information", padx=10, pady=10)
@@ -206,13 +292,13 @@ date_entry.grid(row=0, column=1, padx=5, pady=5)
 ttk.Label(case_information_frame, text="Main Agency Involved").grid(row=1, column=0, padx=5, pady=5)
 main_agency = ttk.Combobox(case_information_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
 main_agency.grid(row=1, column=1, padx=5, pady=5)
-add_agency = ttk.Button(case_information_frame, text="+ Add")
+add_agency = ttk.Button(case_information_frame, text="+ Add", command=add_agency_popup)
 add_agency.grid(row=1, column=2, padx=5, pady=5)
 
 ttk.Label(case_information_frame, text="Main Personnel Involved").grid(row=2, column=0, padx=5, pady=5)
 main_personnel = ttk.Combobox(case_information_frame, values=["Person 1", "Person 2"])  
 main_personnel.grid(row=2, column=1, padx=5, pady=5)
-add_personnel = ttk.Button(case_information_frame, text="+ Add")  
+add_personnel = ttk.Button(case_information_frame, text="+ Add", command=add_personnel_popup)  
 add_personnel.grid(row=2, column=2, padx=5, pady=5)
 
 ttk.Label(case_information_frame, text="Case Closed Reason").grid(row=3, column=0, padx=5, pady=5)
