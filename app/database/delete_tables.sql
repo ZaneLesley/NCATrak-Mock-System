@@ -1,3 +1,15 @@
+DELETE FROM case_mh_assessment_diagnosis;
+DROP TABLE case_mh_assessment_diagnosis;
+DELETE FROM case_mh_assessment_measure_scores;
+DROP TABLE case_mh_assessment_measure_scores;
+DELETE FROM case_mh_assessment;
+DROP TABLE case_mh_assessment;
+DELETE FROM case_mh_assessment_instrument;
+DROP TABLE case_mh_assessment_instrument;
+DELETE FROM case_mh_session_attribute_group;
+DROP TABLE case_mh_session_attribute_group;
+DELETE FROM case_mh_session_attendee;
+DROP TABLE case_mh_session_attendee;
 DELETE FROM case_mh_session;
 DROP TABLE case_mh_session;
 DELETE FROM case_va_session_service;
