@@ -19,17 +19,17 @@ scrollable_frame.bind(
     lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
 )
 
-# Create a window in the canvas
+#  window in the canvas
 canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-# Link scrollbar to the canvas
+# scrollbar to canvas
 canvas.configure(yscrollcommand=scrollbar.set)
 
-# Pack the canvas and scrollbar
+# pack canvas and scrollbar
 canvas.pack(side="left", fill="both", expand=True)
 scrollbar.pack(side="right", fill="y")
 
-# Create a function for line numbering
+# function for line numbering
 def create_line_numbered_label(frame, text, line_number):
     line_number_label = ttk.Label(frame, text=f"({line_number})")
     line_number_label.grid(row=line_number-1, column=0, sticky="w", padx=5)
@@ -43,13 +43,13 @@ mdt_frame.pack(anchor="center", pady=10)
 ttk.Checkbutton(mdt_frame, text="Ready for MDT Review", variable=ready_mdt_var).pack()
 
 
-# Function to create a new personnel popup
+# function to create a new personnel popup
 def add_personnel_popup():
     popup = tk.Toplevel(root)
     popup.title("New Personnel")
     popup.geometry("400x400")
 
-    # Existing personnel list
+    # existing personnel 
     existing_personnel = [
         "Bob Dylan",
         "Freddie Mercury",
@@ -58,7 +58,7 @@ def add_personnel_popup():
         "Elvis Presley"
     ]
     
-    # Display existing personnel
+    # existing personnel displayed
     ttk.Label(popup, text="Below is a list of existing personnel. If the desired person is on this list, do not add again.").grid(row=0, column=0, columnspan=2, pady=5)
 
     personnel_listbox = tk.Listbox(popup, height=5)
@@ -66,7 +66,7 @@ def add_personnel_popup():
         personnel_listbox.insert(tk.END, person)
     personnel_listbox.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
 
-    # Entry fields for new personnel
+    # input fields for new personnel
     ttk.Label(popup, text="First Name *", foreground='red').grid(row=2, column=0, padx=5, pady=5)
     first_name_entry = ttk.Entry(popup)
     first_name_entry.grid(row=2, column=1, padx=5, pady=5)
@@ -95,7 +95,7 @@ def add_personnel_popup():
     phone_entry = ttk.Entry(popup)
     phone_entry.grid(row=8, column=1, padx=5, pady=5)
 
-    # Save and Cancel buttons
+    # save/cancel buttons
     ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=9, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
 
@@ -104,13 +104,13 @@ def add_referral_source_popup():
     popup.title("New Referral Source")
     popup.geometry("400x400")
 
-    # Existing referral sources
+    # existing referral sources
     existing_sources = [
         "Blue Shield Blue Cross",
         "United Healthcare"
     ]
     
-    # Display existing referral sources
+    # existing referral sources display
     ttk.Label(popup, text="Below is a list of existing referral sources. If the desired source is on this list, select it.").grid(row=0, column=0, columnspan=2, pady=5)
 
     source_listbox = tk.Listbox(popup, height=5)
@@ -118,8 +118,8 @@ def add_referral_source_popup():
         source_listbox.insert(tk.END, source)
     source_listbox.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
 
-    # Entry fields for new referral source
-    ttk.Label(popup, text="Agency Name *").grid(row=2, column=0, padx=5, pady=5)
+    # input fields for new referral source
+    ttk.Label(popup, text="Agency Name *", foreground='red').grid(row=2, column=0, padx=5, pady=5)
     agency_name_entry = ttk.Entry(popup)
     agency_name_entry.grid(row=2, column=1, padx=5, pady=5)
 
@@ -147,15 +147,15 @@ def add_referral_source_popup():
     phone_number_entry = ttk.Entry(popup)
     phone_number_entry.grid(row=8, column=1, padx=5, pady=5)
 
-    # Save and Cancel buttons
+    # save/cancel buttons
     ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=9, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
 
-# Create the incoming referral section
+#  incoming referral section
 incoming_frame = tk.LabelFrame(scrollable_frame, text="Incoming Referral", padx=10, pady=10)
 incoming_frame.pack(fill="x", padx=10, pady=5)
 
-# Date (with DateEntry for calendar selection)
+# Date (uses dateEntry)
 ttk.Label(incoming_frame, text="Date").grid(row=0, column=0, padx=5, pady=5)
 date_entry = DateEntry(incoming_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
 date_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -164,30 +164,30 @@ ttk.Label(incoming_frame, text="Referral Source:").grid(row=1, column=0, sticky=
 referral_source = ttk.Combobox(incoming_frame, values=["Blue Shield Blue Cross", "United Healthcare"])
 referral_source.grid(row=1, column=1, padx=5, pady=5)
 
-# Add the "+ Add" button next to the referral source dropdown
+#  "+ Add" button for referral source dropdown
 ttk.Button(incoming_frame, text="+ Add", command=add_referral_source_popup).grid(row=1, column=2, padx=5, pady=5)
 
 ttk.Label(incoming_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-person_combo = ttk.Combobox(incoming_frame, values=["Bob Dylan", "Freddie Mercury"])  # Add person options
+person_combo = ttk.Combobox(incoming_frame, values=["Bob Dylan", "Freddie Mercury"])  
 person_combo.grid(row=2, column=1, padx=5, pady=5)
 
-# Add the "+ Add" button next to the personnel dropdown
+#  "+ Add" button next to personnel dropdown
 ttk.Button(incoming_frame, text="+ Add", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
 
-# Custom Fields Section
+# custom fields section
 custom_frame = tk.LabelFrame(scrollable_frame, text="Custom Fields", padx=10, pady=10)
 custom_frame.pack(fill="x", padx=10, pady=5)
 
-# Custom fields content with line numbers
+# custom fields content
 create_line_numbered_label(custom_frame, "Referred for Mental Health Services", 1)
 mh_services_var = tk.BooleanVar(value=False)
-no_mh_services_var = tk.BooleanVar(value=False)  # Added the 'No' variable
+no_mh_services_var = tk.BooleanVar(value=False)  
 ttk.Checkbutton(custom_frame, text="Yes", variable=mh_services_var).grid(row=0, column=2, sticky="w")
 ttk.Checkbutton(custom_frame, text="No", variable=no_mh_services_var).grid(row=0, column=3, sticky="w")
 
 create_line_numbered_label(custom_frame, "Status of Mental Health Referral", 2)
 status_accepted_var = tk.BooleanVar(value=False)
-status_declined_var = tk.BooleanVar(value=False)  # Added the 'Declined' variable
+status_declined_var = tk.BooleanVar(value=False)  
 ttk.Checkbutton(custom_frame, text="Accepted: Attending Therapy Sessions", variable=status_accepted_var).grid(row=1, column=2, sticky="w")
 ttk.Checkbutton(custom_frame, text="Declined: Already receiving therapy services", variable=status_declined_var).grid(row=1, column=3, sticky="w")
 
@@ -200,7 +200,7 @@ psyc_notes_entry = ttk.Entry(custom_frame)
 psyc_notes_entry.grid(row=3, column=2, columnspan=2, padx=5, pady=5, sticky="we")
 
 create_line_numbered_label(custom_frame, "MH Extended Services Candidate", 5)
-# Create the options for the dropdown
+# the options for the dropdown based of NCA-Trak
 options = ["If Needed"] + [str(i) for i in range(4, 34)] + ["If Space Allows"]
 mh_extended_services = ttk.Combobox(custom_frame, values=options)
 mh_extended_services.grid(row=4, column=2, columnspan=2, padx=5, pady=5, sticky="we")
@@ -216,7 +216,7 @@ custom_field_7.grid(row=6, column=2, columnspan=2, padx=5, pady=5, sticky="we")
 
 create_line_numbered_label(custom_frame, "Client Declined Services", 8)
 client_declined_var = tk.BooleanVar(value=False)
-no_client_declined_var = tk.BooleanVar(value=False)  # Added 'No' variable
+no_client_declined_var = tk.BooleanVar(value=False)  
 ttk.Checkbutton(custom_frame, text="Yes", variable=client_declined_var).grid(row=7, column=2, sticky="w")
 ttk.Checkbutton(custom_frame, text="No", variable=no_client_declined_var).grid(row=7, column=3, sticky="w")
 
@@ -224,28 +224,26 @@ create_line_numbered_label(custom_frame, "Why Client Declined Services", 9)
 client_declined_reason = ttk.Combobox(custom_frame, values=["Already receiving therapy services", "Family didn't think needed/not supportive"])
 client_declined_reason.grid(row=8, column=2, columnspan=2, padx=5, pady=5, sticky="we")
 
-# --- Add New Sections Below ---
-
-# Telehealth Services Section
+# telehealth Services Section
 telehealth_frame = tk.LabelFrame(scrollable_frame, text="Telehealth Services", padx=10, pady=10)
 telehealth_frame.pack(fill="x", padx=10, pady=5)
 
-# Number of Miles Saved
+# number of miles saved
 ttk.Label(telehealth_frame, text="Number of Miles Saved Providing Telehealth Services Per Session:").grid(row=0, column=0, padx=5, pady=5)
 miles_saved_combo = ttk.Combobox(telehealth_frame, values=["0-10 miles", "10-20 miles", "20+ miles"])
 miles_saved_combo.grid(row=0, column=1, padx=5, pady=5)
 
-# Barriers Encountered
+# barriers encountered
 ttk.Label(telehealth_frame, text="Barriers Encountered During Mental Health Services:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
 
-# Create a list to store the BooleanVar instances
+# list to store the BooleanVar instances
 barrier_vars = []
 barriers = ["Center doesn't offer the services needed", "Concerned about what others think", "Cost of services", 
             "Distance to clinic", "Lack of transportation", "No insurance", "Scheduling difficulty", 
             "Waitlist too long", "Other"]
 for i, barrier in enumerate(barriers):
-    var = tk.BooleanVar(value=False)  # Variable for each checkbox
-    barrier_vars.append(var)  # Store the variable in the list
+    var = tk.BooleanVar(value=False)  
+    barrier_vars.append(var)  
     ttk.Checkbutton(telehealth_frame, text=barrier, variable=var).grid(row=i+2, column=0, sticky="w")
 
 
@@ -255,7 +253,7 @@ def add_provider_popup():
     popup.title("Add Provider")
     popup.geometry("600x400")
 
-    # Create labels and entry fields
+    #  labels and entry fields
     ttk.Label(popup, text="MH Provider Agency").grid(row=0, column=0, padx=5, pady=5)
     agency_entry = ttk.Combobox(popup, values=["ABS Linkage", "Other Agency Options"])
     agency_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -276,7 +274,7 @@ def add_provider_popup():
     reason_combo = ttk.Combobox(popup, values=["Select...", "Reason 1", "Reason 2"])
     reason_combo.grid(row=4, column=1, padx=5, pady=5)
 
-    # Create Save and Cancel buttons
+    # save/cancel buttons
     ttk.Button(popup, text="Save", command=popup.destroy).grid(row=5, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=5, column=1, padx=5, pady=5)
 
@@ -284,7 +282,7 @@ def add_provider_popup():
 provider_log_frame = tk.LabelFrame(scrollable_frame, text="Mental Health Provider Log", padx=10, pady=10)
 provider_log_frame.pack(fill="x", padx=10, pady=5)
 
-# Add Provider and Details buttons
+# provider and details buttons
 provider_log_buttons_frame = tk.Frame(provider_log_frame)
 provider_log_buttons_frame.grid(row=0, column=0, sticky="w")
 ttk.Button(provider_log_buttons_frame, text="+ Add Provider", command=add_provider_popup).pack(side="left", padx=5, pady=5)
@@ -306,6 +304,7 @@ ttk.Label(provider_frame, text="Therapist").grid(row=0, column=4, padx=5, pady=5
 therapist_entry = ttk.Entry(provider_frame)
 therapist_entry.grid(row=0, column=5, padx=5, pady=5)
 
+
 ttk.Label(provider_frame, text="Referral Type").grid(row=0, column=6, padx=5, pady=5)
 referral_type_entry = ttk.Combobox(provider_frame, values=["In House", "External"])
 referral_type_entry.grid(row=0, column=7, padx=5, pady=5)
@@ -314,7 +313,7 @@ ttk.Label(provider_frame, text="Case #").grid(row=0, column=8, padx=5, pady=5)
 case_number_entry = ttk.Entry(provider_frame)
 case_number_entry.grid(row=0, column=9, padx=5, pady=5)
 
-# Save and Cancel buttons
+# save/cancel buttons
 ttk.Button(provider_frame, text="Save").grid(row=1, column=8, padx=5, pady=5)
 ttk.Button(provider_frame, text="Cancel").grid(row=1, column=9, padx=5, pady=5)
 
@@ -325,7 +324,7 @@ def add_referral_popup():
     popup.title("Add Referral")
     popup.geometry("400x300")
 
-    # Create labels and entry fields
+    #  labels and entry fields
     ttk.Label(popup, text="Date").grid(row=0, column=0, padx=5, pady=5)
     referral_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
     referral_date_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -338,7 +337,7 @@ def add_referral_popup():
     comment_entry = ttk.Entry(popup, width=50)
     comment_entry.grid(row=2, column=1, padx=5, pady=5)
 
-    # Update and Cancel buttons
+    # update/cancel buttons
     ttk.Button(popup, text="Update", command=popup.destroy).grid(row=4, column=1, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=4, column=2, padx=5, pady=5)
 
@@ -351,15 +350,15 @@ ttk.Label(outside_referrals_frame, text="Referral").grid(row=1, column=0, padx=5
 ttk.Label(outside_referrals_frame, text="Referred To").grid(row=1, column=1, padx=5, pady=5)
 ttk.Label(outside_referrals_frame, text="Comments").grid(row=1, column=2, padx=5, pady=5)
 
-# Additional Points of Contact Section
-# Function to add new point of contact popup
+
+# function to add new point of contact popup for addintonal point of contact section
 def add_contact_popup():
     # Create a new Toplevel window
     popup = tk.Toplevel(root)
     popup.title("Add New Point of Contact")
     popup.geometry("400x300")
 
-    # Create labels and entry fields
+    #  labels and entry fields
     ttk.Label(popup, text="Action").grid(row=0, column=0, padx=5, pady=5)
     action_entry = ttk.Entry(popup)
     action_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -376,7 +375,7 @@ def add_contact_popup():
     phone_entry = ttk.Entry(popup)
     phone_entry.grid(row=3, column=1, padx=5, pady=5)
 
-    # Update and Cancel buttons
+    # update/cancel buttons
     ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=4, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=4, column=1, padx=5, pady=5)
 
@@ -384,7 +383,7 @@ def add_contact_popup():
 additional_contact_frame = tk.LabelFrame(scrollable_frame, text="Additional Points of Contact", padx=10, pady=10)
 additional_contact_frame.pack(fill="x", padx=10, pady=5)
 
-# Button to add a new point of contact
+# button to add a new point of contact
 ttk.Button(additional_contact_frame, text="+ Add New Point of Contact", command=add_contact_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
 ttk.Label(additional_contact_frame, text="Action").grid(row=1, column=0, padx=5, pady=5)
 ttk.Label(additional_contact_frame, text="Agency").grid(row=1, column=1, padx=5, pady=5)
