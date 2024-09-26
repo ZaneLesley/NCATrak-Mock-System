@@ -26,6 +26,8 @@ conda install [package]
 conda list
 conda export --from-history > environment.yml # cross-platform compatible
 conda env create -n ENVNAME --file ENV.yml    # Create from an ENV.yml file (environment in our case)
+conda env update -f environment.yml
+
 ```
 
 # Workflow
