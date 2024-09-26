@@ -119,7 +119,7 @@ def add_referral_source_popup():
     source_listbox.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
 
     # input fields for new referral source
-    ttk.Label(popup, text="Agency Name *").grid(row=2, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="Agency Name *", foreground='red').grid(row=2, column=0, padx=5, pady=5)
     agency_name_entry = ttk.Entry(popup)
     agency_name_entry.grid(row=2, column=1, padx=5, pady=5)
 
@@ -303,6 +303,7 @@ agency_entry.grid(row=0, column=3, padx=5, pady=5)
 ttk.Label(provider_frame, text="Therapist").grid(row=0, column=4, padx=5, pady=5)
 therapist_entry = ttk.Entry(provider_frame)
 therapist_entry.grid(row=0, column=5, padx=5, pady=5)
+
 
 ttk.Label(provider_frame, text="Referral Type").grid(row=0, column=6, padx=5, pady=5)
 referral_type_entry = ttk.Combobox(provider_frame, values=["In House", "External"])
