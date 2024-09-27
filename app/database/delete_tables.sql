@@ -1,3 +1,11 @@
+DELETE FROM case_mh_service_barriers;
+DROP TABLE case_mh_service_barriers;
+DELETE FROM case_mh_provider;
+DROP TABLE case_mh_provider;
+DELETE FROM case_mh_treatment_plan;
+DROP TABLE case_mh_treatment_plan;
+DELETE FROM case_mh_treatment_model;
+DROP TABLE case_mh_treatment_model;
 DELETE FROM case_mh_assessment_diagnosis;
 DROP TABLE case_mh_assessment_diagnosis;
 DELETE FROM case_mh_assessment_measure_scores;
