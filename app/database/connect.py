@@ -1,7 +1,7 @@
 import psycopg2
 import sys
 
-sys.path.append('../')
+sys.path.append('..')
 from database.config import load_config
 
 def connect(config):
