@@ -20,9 +20,18 @@ while(True):
         print("[red]Please insert a number from the options listed.")
     else:
         break
+n = int(n)
 
-# TODO: Create Tables, Delete Database
-# Table Creation / Deletion stuff
-
-# TODO: Configure then generate data. Put into database
-# Data Generation and Insert into database
+# TODO: Implement Each one
+# Complete Install
+if n == 1:
+    pass
+# Data Regeneration
+elif n == 2:
+    pass
+# Configure Data Generation Defaults
+elif n == 3:
+    pass
+# Delete Database
+elif n == 4:
+    pass
