@@ -1,4 +1,5 @@
 from faker import Faker
+from faker_education import SchoolProvider
 import random
 from datetime import datetime
 from rich import print
@@ -18,6 +19,7 @@ PERSON_AGE_CUTOFF = 15
 cac_data = []
 agency_data = []
 person_data = []
+case_person_data = []
 
 # Custom Fields
 religions = ["Christianity", "Islam", "Hinduism", "Buddhism", "Other"]
@@ -97,6 +99,7 @@ def generate_person(amount: int):
         person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
         person["suffix"] = None
         person["birthdate"] = fake.date_of_birth(minimum_age=3, maximum_age=100).strftime('%d-%m-%Y')
+        #TODO: Put this in a utility file
         birthdate = datetime.strptime(person["birthdate"], '%d-%m-%Y')
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
@@ -109,6 +112,49 @@ def generate_person(amount: int):
         person["sexual_offender"] = False if (age <= PERSON_AGE_CUTOFF) else fake.boolean(chance_of_getting_true = 10)
         person["sexual_predator"] = False if (age <= PERSON_AGE_CUTOFF) else fake.boolean(chance_of_getting_true = 10)
         person_data.append(person)
+
+#TODO: Figure out how this exactly works, is there multiple of these types of cases per person.
+def generator_case_person(amount: int):
+    fake = Faker()
+    fake.add_provider(SchoolProvider)
+    fake.seed_instance(0)
+    for _ in range(amount):
+        person  = random.choice(person_data)   
+        case = {}
+             
+        case["person_id"] = person["person_id"]
+        case["case_id"] = fake.unique.random_number(digits = 9)
+        case["cac_id"] = person["cac_id"]
+        birthdate = datetime.strptime(person["birthdate"], '%d-%m-%Y')
+        today = datetime.today()
+        age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+        # TODO: Check if it is Months / Days
+        case["age"] = age
+        case["age_unit"] = "year"
+        case["addr_line_1"] = fake.street_address()
+        case["addr_line_2"] = None
+        city = fake.unique.city()
+        case["city"] = city
+        case["state_abbr"] = random.choice(state_abbreviations)
+        case["zip_code"] = fake.postalcode()
+        case["phone_number"] = fake.unique.numerify("(###)###-####")
+        #TODO: Set Chances / NULL
+        case["phone_number"] = fake.unique.numerify("(###)###-####")
+        case["phone_number"] = fake.unique.numerify("(###)###-####")
+        school_data = fake.school_object()
+        case["school_or_employer"] = school_data["school"] if age < 18 else fake.job()
+        case["custody"] = fake.boolean()
+        #TODO: Get Clarification on these
+        case["education_level"] = school_data["level"] if age < 18 else random.choice(["GED", "No_GED", "Associates", "Bachelors", "Masters", "Doctorate"])
+        case["income_level"] = random.choice(["Low", "Medium", "High"])
+        #TODO: AGE CHECK PLEASE ZANE
+        case["martial_status"] = random.choice(["Single", "Married", "Divocred", "Widowed", "Seperated", "Anullued"])
+        #TODO: Get Clarification
+        case["relationship"] = "placeholder"
+        case["case_role"] = random.choice(["Victim", "Family", "Aggressor"])
+        case["same_household"] = fake.boolean()
+        case["victim_status_id"] = fake.unique.random_number(digits = 8)
+        case_person_data.append(case)
         
 if __name__ == "__main__":
     print("[bold blue]NCA-Trak-Mock Data Generator")
@@ -120,9 +166,11 @@ if __name__ == "__main__":
     generate_child_advocacy_center()
     generate_cac_agency()
     generate_person(amount = n)
+    generator_case_person(amount= n * n)
 
     
     # Print Testing
     #print(cac_data)
     #print(agency_data)
     print(person_data)
+    print(case_person_data)
