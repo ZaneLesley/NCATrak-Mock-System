@@ -1,16 +1,6 @@
 import psycopg2
 from config import load_config
 
-def execute_command(command):
-
-    try:
-        config = load_config()
-        with psycopg2.connect(**config) as conn:
-            with conn.cursor() as cur:
-                cur.execute(command)
-    except (psycopg2.DatabaseError, Exception) as error:
-        print(error)
-
 tables_to_create = [
     "state",
     "child_advocacy_center",
@@ -32,9 +22,19 @@ tables_to_create = [
     "case_mh_assessment_diagnosis",
     "case_mh_treatment_model",
     "case_mh_treatment_plan",
-    "case_mh_provider"
+    "case_mh_provider",
     "case_mh_service_barriers"
 ]
+
+def execute_command(command):
+
+    try:
+        config = load_config()
+        with psycopg2.connect(**config) as conn:
+            with conn.cursor() as cur:
+                cur.execute(command)
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
 
 if __name__ == '__main__':
 
