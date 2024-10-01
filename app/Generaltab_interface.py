@@ -41,13 +41,6 @@ canvas.configure(yscrollcommand=scrollbar.set)
 canvas.pack(side="left", fill="both", expand=True)
 scrollbar.pack(side="right", fill="y")
 
-# Create a function for line numbering
-def create_line_numbered_label(frame, text, line_number):
-    line_number_label = ttk.Label(frame, text=f"({line_number})")
-    line_number_label.grid(row=line_number-1, column=0, sticky="w", padx=5)
-    label = ttk.Label(frame, text=text)
-    label.grid(row=line_number-1, column=1, sticky="w", padx=5)
-
 # General tab title
 general_frame = tk.Frame(scrollable_frame)
 general_frame.pack(anchor="center", pady=10)
@@ -58,36 +51,37 @@ ttk.Label(general_frame, text="Case Tracking").pack()
 def add_editbutton_popup():
     popup = tk.Toplevel(root)
     popup.title("Edit")
-    popup.geometry("400x400")
+    popup.geometry("500x400")
 
     # Entry fields for case details
-    ttk.Label(popup, text="Service", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-    service_name = ttk.Entry(popup)
+    ttk.Label(popup, text="Service", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+    service_name = ttk.Label(popup, text="LI")
+    service_name.grid(row=1, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Referral Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-    referral_date_entry = ttk.Entry(popup)
+    referral_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
     referral_date_entry.grid(row=2, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Referred By", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-    referral_group_entry = ttk.Entry(popup)
+    referral_group_entry = ttk.Combobox(popup)
     referral_group_entry.grid(row=3, column=1, padx=5, pady=5)
-    referral_worker_entry = ttk.Entry(popup)
+    referral_worker_entry = ttk.Combobox(popup)
     referral_worker_entry.grid(row=3, column=2, padx=5, pady=5)
 
     ttk.Label(popup, text="Providing Agency").grid(row=4, column=0, padx=5, pady=5)
-    providing_agency_entry = ttk.Entry(popup)
+    providing_agency_entry = ttk.Combobox(popup)
     providing_agency_entry.grid(row=4, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Primary Contact").grid(row=5, column=0, padx=5, pady=5)
-    primary_contact_entry = ttk.Entry(popup)
+    primary_contact_entry = ttk.Combobox(popup)
     primary_contact_entry.grid(row=5, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Status").grid(row=6, column=0, padx=5, pady=5)
-    status_entry = ttk.Entry(popup)
+    status_entry = ttk.Label(popup, text="Referred")
     status_entry.grid(row=6, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Status Date").grid(row=7, column=0, padx=5, pady=5)
-    status_date_entry = ttk.Entry(popup)
+    status_date_entry = ttk.Label(popup, text="08/25/2021")
     status_date_entry.grid(row=7, column=1, padx=5, pady=5)
 
     # Update and Cancel buttons
@@ -118,8 +112,8 @@ def add_information_record_popup():
     requested_date_entry.grid(row=2, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Requested By", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-    referral_date_entry = ttk.Entry(popup)
-    referral_date_entry.grid(row=3, column=1, padx=5, pady=5)
+    requested_by_entry = ttk.Entry(popup)
+    requested_by_entry.grid(row=3, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Is this a request by subpoena?", foreground='black').grid(row=4, column=0, padx=5, pady=5)
     referral_group_entry = ttk.Entry(popup)
