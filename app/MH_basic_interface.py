@@ -2,11 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
+import sv_ttk
 
 # Initialize the main window
 root = tk.Tk()
 root.title("Mental Health Basic Tab")
-root.geometry("800x800")
+root.geometry("1080x720")
+sv_ttk.set_theme("dark")
 
 # Create a canvas and a scrollbar
 canvas = tk.Canvas(root)
