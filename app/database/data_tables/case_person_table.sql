@@ -20,7 +20,7 @@ CREATE TABLE case_person (
     relationship VARCHAR(200),
     case_role VARCHAR(200),
     same_household BOOLEAN,
-    victime_status VARCHAR(200),
+    victim_status_id INTEGER
     FOREIGN KEY(person_id) REFERENCES person(person_id),
     FOREIGN KEY(case_id) REFERENCES cac_case(case_id),
     FOREIGN KEY(cac_id) REFERENCES child_advocacy_center(cac_id),
