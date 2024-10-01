@@ -13,6 +13,18 @@ canvas = tk.Canvas(root)
 scrollbar = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
 scrollable_frame = ttk.Frame(canvas)
 
+
+widget_frame = ttk.Frame(root)
+widget_frame.pack(side='top')
+
+save_button = ttk.Button(widget_frame, text='SAVE')
+cancel_button = ttk.Button(widget_frame, text='CANCEL')
+delete_button = ttk.Button(widget_frame, text='DELETE CASE')
+
+save_button.grid(row=1, column=0, sticky="w", padx=5)
+cancel_button.grid(row=1, column=1, sticky="w", padx=5)
+delete_button.grid(row=1, column=2, sticky="w", padx=5)
+
 # Configure the canvas and scrollbar
 scrollable_frame.bind(
     "<Configure>",
@@ -459,24 +471,24 @@ def add_referral_popup():
 
     # Create labels and entry fields
     ttk.Label(popup, text="Referred From").grid(row=0, column=0, padx=5, pady=5)
-    comment_entry = ttk.Entry(popup, width=50)
-    comment_entry.grid(row=2, column=1, padx=5, pady=5)
+    comment_entry = ttk.Entry(popup)
+    comment_entry.grid(row=0, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Date").grid(row=1, column=0, padx=5, pady=5)
     referral_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
-    referral_date_entry.grid(row=0, column=1, padx=5, pady=5)
+    referral_date_entry.grid(row=1, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Referred To").grid(row=2, column=0, padx=5, pady=5)
-    referred_to_combo = ttk.Combobox(popup, values=["Provider 1", "Provider 2"])
-    referred_to_combo.grid(row=1, column=1, padx=5, pady=5)
+    referred_to_combo = ttk.Entry(popup)
+    referred_to_combo.grid(row=2, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Comment").grid(row=3, column=0, padx=5, pady=5)
-    comment_entry = ttk.Entry(popup, width=50)
-    comment_entry.grid(row=2, column=1, padx=5, pady=5)
+    comment_entry = ttk.Entry(popup)
+    comment_entry.grid(row=3, column=1, padx=5, pady=5)
 
     # Update and Cancel buttons
-    ttk.Button(popup, text="Update", command=popup.destroy).grid(row=4, column=1, padx=5, pady=5)
-    ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=4, column=2, padx=5, pady=5)
+    ttk.Button(popup, text="Update", command=popup.destroy).grid(row=4, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=4, column=1, padx=5, pady=5)
 
 # Outside Referrals Section
 outside_referrals_frame = tk.LabelFrame(scrollable_frame, text="Outside Referrals", padx=10, pady=10)
@@ -498,7 +510,7 @@ ttk.Label(outside_referrals_frame, text="Comments").grid(row=1, column=4, padx=5
 comments_entry = ttk.Entry(outside_referrals_frame)
 comments_entry.grid(row=2, column=4, padx=5, pady=5)
 
-ttk.Button(outside_referrals_frame, text="Add New Referral").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+ttk.Button(outside_referrals_frame, text="Add New Referral", command=add_referral_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
 #----------------------
 # Insurance Information
