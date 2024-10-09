@@ -11,5 +11,4 @@ dependencies:
   - pip
   - pip:
       - tkcalendar
-      - sv-ttk
 prefix: /home/zanel/anaconda3/envs/NCA-Trak
