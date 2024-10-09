@@ -1,5 +1,8 @@
 import psycopg2
-from config import load_config
+import sys
+
+sys.path.append('..')
+from database.config import load_config
 
 def connect(config):
 

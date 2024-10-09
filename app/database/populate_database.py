@@ -32,7 +32,8 @@ def insert_personal_profile():
         print("Failed to connect to the database")
         return
     
-    file_path = "data.csv"
+    os.chdir("..")
+    file_path = os.path.join(os.getcwd(), "generator", "data.csv")
     with open(file_path, 'r') as data:
         parser = csv.reader(data)
         next(parser)

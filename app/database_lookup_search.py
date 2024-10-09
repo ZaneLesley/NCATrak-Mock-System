@@ -13,7 +13,8 @@ pady = 5
 def load_first_100_patients():
 
     patient_data = []
-    config = load_config()
+    config = load_config(filename="database/database.ini")
+    print(config)
     conn = connect(config)
     with conn.cursor() as cur:
         cur.execute("SELECT * FROM personal_profile ORDER BY last_name FETCH FIRST 100 ROWS ONLY") 
@@ -82,7 +83,7 @@ def show_patient_details(patient):
 #to filter patients based on search
 def search_patients(event=None):
     global filtered_patients
-    config = load_config()
+    config = load_config(filename="database/database.ini")
     conn = connect(config)
 
     search_query = search_entry.get().lower()
@@ -115,10 +116,6 @@ def on_patient_select_from_list(event):
 window = tk.Tk()
 window.geometry("1600x900")
 window.title("Patient Lookup")
-
-# load patient data
-file_path = 'data.csv'  # Update with your CSV file name
-
 
 patient_data = load_first_100_patients()
 filtered_patients = patient_data  # Initialize filtered_patients
