@@ -6,7 +6,7 @@ from tkcalendar import DateEntry
 # Initialize the main window
 root = tk.Tk()
 root.title("General")
-root.geometry("1600x800")
+root.geometry("1000x800")
 
 # Create a canvas and a scrollbar
 canvas = tk.Canvas(root)
@@ -41,8 +41,67 @@ scrollbar.pack(side="right", fill="y")
 
 # VA tab title
 va_frame = tk.Frame(scrollable_frame)
-va_frame.pack(anchor="center", pady=10)
+va_frame.pack(anchor="center", pady=10, padx=10)
 ttk.Label(va_frame, text="VA").pack()
+
+def add_new_session_popup():
+    popup = tk.Toplevel(root)
+    popup.title("Add New Session")
+    popup.geometry("600x500")
+
+def add_agency_popup():
+    popup = tk.Toplevel(root)
+    popup.title("New Agency")
+    popup.geometry("600x500")
+
+    existing_agency = [
+        "CAC of Anytown",
+        "Child Guidance",
+        "FBI",
+        "Mercy Hospital",
+        "Police Department"
+    ]
+
+    ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="If the desired agency is on this list then click 'Use Agency'.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+    ttk.Label(popup, text="If the agency is not on the list enter the agency name below and click 'Save'.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+    agency_listbox = tk.Listbox(popup, height=5)
+    for person in existing_agency:
+        agency_listbox.insert(tk.END, person)
+    agency_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+
+    # Entry fields for case agency
+    ttk.Label(popup, text="Agency Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
+    agency_name_entry = ttk.Entry(popup, foreground='white')
+    agency_name_entry.grid(row=5, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Address Line 1", foreground='black').grid(row=6, column=0, padx=5, pady=5)
+    address_line1_entry = ttk.Entry(popup)
+    address_line1_entry.grid(row=6, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Address Line 2", foreground='black').grid(row=7, column=0, padx=5, pady=5)
+    address_line2_entry = ttk.Entry(popup)
+    address_line2_entry.grid(row=7, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="City").grid(row=8, column=0, padx=5, pady=5)
+    city_entry = ttk.Entry(popup)
+    city_entry.grid(row=8, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="State").grid(row=9, column=0, padx=5, pady=5)
+    state_entry = ttk.Combobox(popup)
+    state_entry.grid(row=9, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Zip Code").grid(row=10, column=0, padx=5, pady=5)
+    zipcode_entry = ttk.Entry(popup)
+    zipcode_entry.grid(row=10, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Phone Number").grid(row=11, column=0, padx=5, pady=5)
+    phone_entry = ttk.Entry(popup)
+    phone_entry.grid(row=11, column=1, padx=5, pady=5)
+
+    # Update and Cancel buttons
+    ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
 
 # Function to create edit case details
@@ -280,6 +339,86 @@ def add_personnel_popup():
     ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
+
+
+# Create the Referral section
+referral_frame = tk.LabelFrame(scrollable_frame, text="Referral", padx=10, pady=10)
+referral_frame.pack(fill="x", padx=10, pady=5)
+
+# Date (with DateEntry for calendar selection)
+ttk.Label(referral_frame, text="Date").grid(row=0, column=0, padx=5, pady=5)
+date_entry = DateEntry(referral_frame)
+date_entry.grid(row=0, column=1, padx=5, pady=5)
+
+ttk.Label(referral_frame, text="Referral Source").grid(row=1, column=0, sticky="w")
+referral_source = ttk.Combobox(referral_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
+referral_source.grid(row=1, column=1, padx=5, pady=5)
+
+ttk.Label(referral_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
+person_entry = ttk.Combobox(referral_frame, values=["Person 1", "Person 2"]) 
+person_entry.grid(row=2, column=1, padx=5, pady=5)
+
+ttk.Button(referral_frame, text="Add Referral Source", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
+ttk.Button(referral_frame, text="Add Person", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
+
+
+#Create the VAS section
+vas_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services", padx=10, pady=10)
+vas_frame.pack(fill="x", padx=10, pady=5)
+
+ttk.Label(vas_frame, text="VA Case Number").grid(row=0, column=0, padx=5, pady=5)
+va_casenum_entry = ttk.Entry(vas_frame) 
+va_casenum_entry.grid(row=0, column=1, padx=5, pady=5)
+
+ttk.Label(vas_frame, text="Agency").grid(row=1, column=0, padx=5, pady=5)
+agency_entry = ttk.Combobox(vas_frame, values=["Person 1", "Person 2"]) 
+agency_entry.grid(row=1, column=1, padx=5, pady=5)
+
+ttk.Button(vas_frame, text="Add Agency", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
+
+ttk.Label(vas_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
+person_entry = ttk.Combobox(vas_frame, values=["Person 1", "Person 2"]) 
+person_entry.grid(row=2, column=1, padx=5, pady=5) 
+
+ttk.Button(vas_frame, text="Add Person", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
+
+ttk.Label(vas_frame, text="Date Services first offered to child/family").grid(row=3, column=0, padx=5, pady=5)
+date_services_offered = DateEntry(vas_frame)  
+date_services_offered.grid(row=3, column=1, padx=5, pady=5)
+
+ttk.Label(vas_frame, text="Did the child/family accept VA services?").grid(row=4, column=0, padx=5, pady=5)
+services_accepted = ttk.Checkbutton(vas_frame, text="Yes", variable=False)  
+services_accepted.grid(row=4, column=1, padx=5, pady=5)
+
+ttk.Label(vas_frame, text="Hope: (1)").grid(row=5, column=0, padx=5, pady=5)
+hope_entry = ttk.Combobox(vas_frame)  
+hope_entry.grid(row=5, column=1, padx=5, pady=5)
+
+tk.Label(vas_frame, text="VA Services Custom Field (2)").grid(row=6, column=0, padx=5, pady=5)
+custom_field2 = ttk.Combobox(vas_frame)  
+custom_field2.grid(row=6, column=1, padx=5, pady=5)
+
+tk.Label(vas_frame, text="VA Services Custom Field (3)").grid(row=7, column=0, padx=5, pady=5)
+custom_field3 = ttk.Combobox(vas_frame)  
+custom_field3.grid(row=7, column=1, padx=5, pady=5)
+
+tk.Label(vas_frame, text="VA Services Custom Field (4)").grid(row=8, column=0, padx=5, pady=5)
+custom_field4 = ttk.Combobox(vas_frame)  
+custom_field4.grid(row=8, column=1, padx=5, pady=5)
+
+tk.Label(vas_frame, text="VA Services Custom Field (5)").grid(row=9, column=0, padx=5, pady=5)
+custom_field5 = ttk.Combobox(vas_frame)  
+custom_field5.grid(row=9, column=1, padx=5, pady=5)
+
+tk.Label(vas_frame, text="Date Services were concluded").grid(row=10, column=0, padx=5, pady=5)
+services_conclusion = DateEntry(vas_frame)  
+services_conclusion.grid(row=10, column=1, padx=5, pady=5)
+
+ttk.Label(vas_frame, text="Ready for MDT Review").grid(row=11, column=0, padx=5, pady=5)
+mdt_ready = ttk.Checkbutton(vas_frame, text="Yes", variable=False)  
+mdt_ready.grid(row=11, column=1, padx=5, pady=5)
+
+#------------------------------
 
 # VAS Log Information
 
@@ -583,52 +722,6 @@ ttk.Button(outside_referrals_frame, text="Add New Referral", command=add_referra
 
 #----------------------
 # Insurance Information
-
-insurance_information_frame = tk.LabelFrame(scrollable_frame, text="Insurance Information", padx=10, pady=10)
-insurance_information_frame.pack(fill="x", padx=10, pady=5)
-
-ttk.Label(insurance_information_frame, text="Primary Insurance").grid(row=0, column=1, padx=5, pady=5)
-ttk.Label(insurance_information_frame, text="Secondary Insurance").grid(row=0, column=2, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Company").grid(row=1, column=0, padx=5, pady=5)
-company1 = ttk.Entry(insurance_information_frame, foreground='white')
-company1.grid(row=1, column=1, padx=5, pady=5)
-company2 = ttk.Entry(insurance_information_frame,foreground='white')
-company2.grid(row=1, column=2, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Subscriber").grid(row=2, column=0, padx=5, pady=5)
-subscriber1 = ttk.Entry(insurance_information_frame)
-subscriber1.grid(row=2, column=1, padx=5, pady=5)
-subscriber2 = ttk.Entry(insurance_information_frame,foreground='white')
-subscriber2.grid(row=2, column=2, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Policy Number").grid(row=3, column=0, padx=5, pady=5)
-policy1 = ttk.Entry(insurance_information_frame)  
-policy1.grid(row=3, column=1, padx=5, pady=5)
-policy2 = ttk.Entry(insurance_information_frame,foreground='white')
-policy2.grid(row=3, column=2, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Group").grid(row=4, column=0, padx=5, pady=5)
-group1 = ttk.Entry(insurance_information_frame)  
-group1.grid(row=4, column=1, padx=5, pady=5)
-group2 = ttk.Entry(insurance_information_frame, foreground='white')
-group2.grid(row=4, column=2, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Has Client received referral").grid(row=5, column=0, padx=5, pady=5)
-client_referral = ttk.Checkbutton(insurance_information_frame, variable=False) 
-client_referral.grid(row=5, column=1, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Primary Clinic").grid(row=6, column=0, padx=5, pady=5)
-primary_clinic = ttk.Entry(insurance_information_frame)  
-primary_clinic.grid(row=6, column=1, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Primary Provider").grid(row=7, column=0, padx=5, pady=5)
-primary_prov = ttk.Entry(insurance_information_frame)  
-primary_prov.grid(row=7, column=1, padx=5, pady=5)
-
-ttk.Label(insurance_information_frame, text="Primary Provider Phone").grid(row=8, column=0, padx=5, pady=5)
-phone_num = ttk.Entry(insurance_information_frame) 
-phone_num.grid(row=8, column=1, padx=5, pady=5)
 
 # Function to add new ICD Code record
 def add_code_record_popup():
