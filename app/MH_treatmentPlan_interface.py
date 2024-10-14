@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkcalendar import DateEntry
+from tkinter import filedialog
 import sv_ttk
 
 # Initialize main window
@@ -168,7 +169,28 @@ ttk.Label(treatment_frame, text="Provider Agency").grid(row=1, column=3, padx=5,
 ttk.Label(treatment_frame, text="Therapist").grid(row=1, column=4, padx=5, pady=5)
 
 
-# document upload section
+# # document upload section
+# upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
+# upload_frame.pack(fill="x", padx=10, pady=5)
+
+# ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
+# file_name_var = tk.StringVar()  # Variable to hold the filename
+# file_name_entry = ttk.Entry(upload_frame, textvariable=file_name_var, width=50, state="readonly")
+# file_name_entry.grid(row=0, column=1, padx=5, pady=5)
+
+# # Function to open file dialog and set the filename
+# def select_file():
+#     file_path = tk.filedialog.askopenfilename(title="Select a file", filetypes=[("All files", "*.*")])
+#     if file_path:  # If a file is selected
+#         file_name_var.set(file_path.split("/")[-1])  # Set the filename in the entry
+
+# # Button to trigger file selection
+# ttk.Button(upload_frame, text="Select Files...", command=select_file).grid(row=0, column=2, padx=5, pady=5)
+
+# # add placeholder for upload status 
+# upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
+# upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
+# Document Upload Section (this goes in the main interface, under the Treatment Plans section)
 upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
 upload_frame.pack(fill="x", padx=10, pady=5)
 
@@ -186,9 +208,10 @@ def select_file():
 # Button to trigger file selection
 ttk.Button(upload_frame, text="Select Files...", command=select_file).grid(row=0, column=2, padx=5, pady=5)
 
-# add placeholder for upload status 
+# Add placeholder for upload status (could be enhanced later)
 upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
 upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
+
 
 # Start the Tkinter event loop
 root.mainloop()
