@@ -103,131 +103,6 @@ def add_agency_popup():
     ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
-
-# Function to create edit case details
-def add_editbutton_popup():
-    popup = tk.Toplevel(root)
-    popup.title("Edit")
-    popup.geometry("500x400")
-
-    # Entry fields for case details
-    ttk.Label(popup, text="Service", foreground='black').grid(row=1, column=0, padx=5, pady=5)
-    service_name = ttk.Label(popup, text="LI")
-    service_name.grid(row=1, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Referral Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-    referral_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
-    referral_date_entry.grid(row=2, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Referred By", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-    referral_group_entry = ttk.Combobox(popup)
-    referral_group_entry.grid(row=3, column=1, padx=5, pady=5)
-    referral_worker_entry = ttk.Combobox(popup)
-    referral_worker_entry.grid(row=3, column=2, padx=5, pady=5)
-
-    ttk.Label(popup, text="Providing Agency").grid(row=4, column=0, padx=5, pady=5)
-    providing_agency_entry = ttk.Combobox(popup)
-    providing_agency_entry.grid(row=4, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Primary Contact").grid(row=5, column=0, padx=5, pady=5)
-    primary_contact_entry = ttk.Combobox(popup)
-    primary_contact_entry.grid(row=5, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Status").grid(row=6, column=0, padx=5, pady=5)
-    status_entry = ttk.Label(popup, text="Referred")
-    status_entry.grid(row=6, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Status Date").grid(row=7, column=0, padx=5, pady=5)
-    status_date_entry = ttk.Label(popup, text="08/25/2021")
-    status_date_entry.grid(row=7, column=1, padx=5, pady=5)
-
-    # Update and Cancel buttons
-    ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=9, column=0, padx=5, pady=5)
-    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
-
-def add_allegation_record_popup():
-    popup = tk.Toplevel(root)
-    popup.title("Edit")
-    popup.geometry("300x200")
-
-    ttk.Label(popup, text="CAC Case Number", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-    case_number_entry = ttk.Entry(popup)
-    case_number_entry.grid(row=2, column=1, padx=5, pady=5)
-
-    # Update and Cancel buttons
-    ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=9, column=0, padx=5, pady=5)
-    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
-
-
-# Create the Referral section
-referral_frame = tk.LabelFrame(scrollable_frame, text="Referral", padx=10, pady=10)
-referral_frame.pack(fill="x", padx=10, pady=5)
-
-# Date (with DateEntry for calendar selection)
-ttk.Label(referral_frame, text="Date").grid(row=0, column=0, padx=5, pady=5)
-date_entry = DateEntry(referral_frame)
-date_entry.grid(row=0, column=1, padx=5, pady=5)
-
-ttk.Label(referral_frame, text="Referral Source").grid(row=1, column=0, sticky="w")
-referral_source = ttk.Combobox(referral_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
-referral_source.grid(row=1, column=1, padx=5, pady=5)
-
-ttk.Label(referral_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-person_entry = ttk.Combobox(referral_frame, values=["Person 1", "Person 2"]) 
-person_entry.grid(row=2, column=1, padx=5, pady=5)
-
-#Create the VAS section
-vas_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services", padx=10, pady=10)
-vas_frame.pack(fill="x", padx=10, pady=5)
-
-ttk.Label(vas_frame, text="VA Case Number").grid(row=0, column=0, padx=5, pady=5)
-va_casenum_entry = ttk.Entry(vas_frame) 
-va_casenum_entry.grid(row=0, column=1, padx=5, pady=5)
-
-ttk.Label(vas_frame, text="Agency").grid(row=1, column=0, padx=5, pady=5)
-agency_entry = ttk.Combobox(vas_frame, values=["Person 1", "Person 2"]) 
-agency_entry.grid(row=1, column=1, padx=5, pady=5)
-
-ttk.Label(vas_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-person_entry = ttk.Combobox(vas_frame, values=["Person 1", "Person 2"]) 
-person_entry.grid(row=2, column=1, padx=5, pady=5) 
-
-ttk.Label(vas_frame, text="Date Services first offered to child/family").grid(row=3, column=0, padx=5, pady=5)
-date_services_offered = DateEntry(vas_frame)  
-date_services_offered.grid(row=3, column=1, padx=5, pady=5)
-
-ttk.Label(vas_frame, text="Did the child/family accept VA services?").grid(row=4, column=0, padx=5, pady=5)
-services_accepted = ttk.Checkbutton(vas_frame, text="Yes", variable=False)  
-services_accepted.grid(row=4, column=1, padx=5, pady=5)
-
-ttk.Label(vas_frame, text="Hope: (1)").grid(row=5, column=0, padx=5, pady=5)
-hope_entry = ttk.Combobox(vas_frame)  
-hope_entry.grid(row=5, column=1, padx=5, pady=5)
-
-tk.Label(vas_frame, text="VA Services Custom Field (2)").grid(row=6, column=0, padx=5, pady=5)
-custom_field2 = ttk.Combobox(vas_frame)  
-custom_field2.grid(row=6, column=1, padx=5, pady=5)
-
-tk.Label(vas_frame, text="VA Services Custom Field (3)").grid(row=7, column=0, padx=5, pady=5)
-custom_field3 = ttk.Combobox(vas_frame)  
-custom_field3.grid(row=7, column=1, padx=5, pady=5)
-
-tk.Label(vas_frame, text="VA Services Custom Field (4)").grid(row=8, column=0, padx=5, pady=5)
-custom_field4 = ttk.Combobox(vas_frame)  
-custom_field4.grid(row=8, column=1, padx=5, pady=5)
-
-tk.Label(vas_frame, text="VA Services Custom Field (5)").grid(row=9, column=0, padx=5, pady=5)
-custom_field5 = ttk.Combobox(vas_frame)  
-custom_field5.grid(row=9, column=1, padx=5, pady=5)
-
-tk.Label(vas_frame, text="Date Services were concluded").grid(row=10, column=0, padx=5, pady=5)
-services_conclusion = DateEntry(vas_frame)  
-services_conclusion.grid(row=10, column=1, padx=5, pady=5)
-
-ttk.Label(vas_frame, text="Ready for MDT Review").grid(row=11, column=0, padx=5, pady=5)
-mdt_ready = ttk.Checkbutton(vas_frame, text="Yes", variable=False)  
-mdt_ready.grid(row=11, column=1, padx=5, pady=5)
-
 #------------------------------
 
 def add_agency_popup():
@@ -387,7 +262,7 @@ date_services_offered = DateEntry(vas_frame)
 date_services_offered.grid(row=3, column=1, padx=5, pady=5)
 
 ttk.Label(vas_frame, text="Did the child/family accept VA services?").grid(row=4, column=0, padx=5, pady=5)
-services_accepted = ttk.Checkbutton(vas_frame, text="Yes", variable=False)  
+services_accepted = ttk.Checkbutton(vas_frame, text="Yes", variable=False, sticky="w")  
 services_accepted.grid(row=4, column=1, padx=5, pady=5)
 
 ttk.Label(vas_frame, text="Hope: (1)").grid(row=5, column=0, padx=5, pady=5)
@@ -425,7 +300,7 @@ mdt_ready.grid(row=11, column=1, padx=5, pady=5)
 def add_new_session_popup():
     popup = tk.Toplevel(root)
     popup.title("New Session")
-    popup.geometry("600x1000")
+    popup.geometry("800x900")
 
     # Entry fields for case details
     ttk.Label(popup, text="Session Date").grid(row=0, column=0, padx=5, pady=5)
@@ -465,42 +340,42 @@ def add_new_session_popup():
     provider_employee_entry.grid(row=8, column=1, padx=5, pady=5)
 
     ttk.Label(popup, text="Attendees").grid(row=9, column=0, padx=5, pady=5)
-    attendee1 = ttk.Checkbutton(popup, text="Billie Badguys").grid(row=9, column=1)
-    attendee2 = ttk.Checkbutton(popup, text="Bobbie RRose").grid(row=9, column=2)
-    attendee3 = ttk.Checkbutton(popup, text="Candi Rose").grid(row=10, column=1)
-    attendee4 = ttk.Checkbutton(popup, text="Cindi Rose").grid(row=10, column=2)
+    attendee1 = ttk.Checkbutton(popup, text="Billie Badguys").grid(row=9, column=1, sticky="w")
+    attendee2 = ttk.Checkbutton(popup, text="Bobbie RRose").grid(row=9, column=2, sticky="w")
+    attendee3 = ttk.Checkbutton(popup, text="Candi Rose").grid(row=10, column=1, sticky="w")
+    attendee4 = ttk.Checkbutton(popup, text="Cindi Rose").grid(row=10, column=2, sticky="w")
 
     ttk.Label(popup, text="Services Provided").grid(row=11, column=0, padx=5, pady=5)
-    service1 = ttk.Checkbutton(popup, text="Legal Services").grid(row=11, column=1)
-    service2 = ttk.Checkbutton(popup, text="Transportation").grid(row=11, column=2)
-    service3 = ttk.Checkbutton(popup, text="Victim Support").grid(row=12, column=1)
-    service4 = ttk.Checkbutton(popup, text="1-2 Week Follow-up Call").grid(row=12, column=2)
-    service5 = ttk.Checkbutton(popup, text="2. Personal Court Education").grid(row=13, column=1)
-    service6 = ttk.Checkbutton(popup, text="24 -- hour crisis line cal").grid(row=13, column=2)
-    service7 = ttk.Checkbutton(popup, text="3a. Info & Support - MDT response").grid(row=14, column=1)
-    service8 = ttk.Checkbutton(popup, text="3b. Information & Support - Court").grid(row=14, column=2)
-    service9 = ttk.Checkbutton(popup, text="3bi Personal advocacy").grid(row=15, column=1)
-    service10 = ttk.Checkbutton(popup, text="6--8 Week Follow-up Call").grid(row=15, column=2)
-    service11 = ttk.Checkbutton(popup, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam").grid(row=16, column=1)
-    service12 = ttk.Checkbutton(popup, text="Collected Survey").grid(row=16, column=2)
-    service13 = ttk.Checkbutton(popup, text="Criminal Justice support/advocacy").grid(row=17, column=1)
-    service14 = ttk.Checkbutton(popup, text="Compensation Claim Filing").grid(row=17, column=2)
-    service15 = ttk.Checkbutton(popup, text="Emergency Crisis Intervention").grid(row=18, column=1)
-    service16 = ttk.Checkbutton(popup, text="Crisis Counseling").grid(row=18, column=2)
-    service17 = ttk.Checkbutton(popup, text="Gave Educational Information").grid(row=19, column=1)
-    service18 = ttk.Checkbutton(popup, text="Follow-up").grid(row=19, column=2)
-    service19 = ttk.Checkbutton(popup, text="Homeless support group").grid(row=20, column=1)
-    service20 = ttk.Checkbutton(popup, text="Initial Meeting with Caregiver").grid(row=20, column=2)
-    service21 = ttk.Checkbutton(popup, text="Initial Telephone Call").grid(row=21, column=1)
-    service22 = ttk.Checkbutton(popup, text="Mailed Brochure").grid(row=21, column=2)
-    service23 = ttk.Checkbutton(popup, text="Orientation to Center for FI").grid(row=22, column=1)
-    service24 = ttk.Checkbutton(popup, text="Post Interview Crisis Counseling").grid(row=22, column=2)
-    service25 = ttk.Checkbutton(popup, text="Pre-Interview Family Call").grid(row=23, column=1)
-    service26 = ttk.Checkbutton(popup, text="Shelter/safehouse Referral").grid(row=23, column=2)
-    service27 = ttk.Checkbutton(popup, text="Survey Distributed").grid(row=24, column=1)
-    service28 = ttk.Checkbutton(popup, text="Survey Recieved").grid(row=24, column=2)
-    service29 = ttk.Checkbutton(popup, text="Telephone Follow-up").grid(row=25, column=1)
-    service30 = ttk.Checkbutton(popup, text="Unscheduled Call").grid(row=25, column=2)
+    service1 = ttk.Checkbutton(popup, text="Legal Services").grid(row=11, column=1, sticky="w")
+    service2 = ttk.Checkbutton(popup, text="Transportation").grid(row=11, column=2, sticky="w")
+    service3 = ttk.Checkbutton(popup, text="Victim Support").grid(row=12, column=1, sticky="w")
+    service4 = ttk.Checkbutton(popup, text="1-2 Week Follow-up Call").grid(row=12, column=2, sticky="w")
+    service5 = ttk.Checkbutton(popup, text="2. Personal Court Education").grid(row=13, column=1, sticky="w")
+    service6 = ttk.Checkbutton(popup, text="24 -- hour crisis line cal").grid(row=13, column=2, sticky="w")
+    service7 = ttk.Checkbutton(popup, text="3a. Info & Support - MDT response").grid(row=14, column=1, sticky="w")
+    service8 = ttk.Checkbutton(popup, text="3b. Information & Support - Court").grid(row=14, column=2, sticky="w")
+    service9 = ttk.Checkbutton(popup, text="3bi Personal advocacy").grid(row=15, column=1, sticky="w")
+    service10 = ttk.Checkbutton(popup, text="6--8 Week Follow-up Call").grid(row=15, column=2, sticky="w")
+    service11 = ttk.Checkbutton(popup, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam").grid(row=16, column=1, sticky="w")
+    service12 = ttk.Checkbutton(popup, text="Collected Survey").grid(row=16, column=2, sticky="w")
+    service13 = ttk.Checkbutton(popup, text="Criminal Justice support/advocacy").grid(row=17, column=1, sticky="w")
+    service14 = ttk.Checkbutton(popup, text="Compensation Claim Filing").grid(row=17, column=2, sticky="w")
+    service15 = ttk.Checkbutton(popup, text="Emergency Crisis Intervention").grid(row=18, column=1, sticky="w")
+    service16 = ttk.Checkbutton(popup, text="Crisis Counseling").grid(row=18, column=2, sticky="w")
+    service17 = ttk.Checkbutton(popup, text="Gave Educational Information").grid(row=19, column=1, sticky="w")
+    service18 = ttk.Checkbutton(popup, text="Follow-up").grid(row=19, column=2, sticky="w")
+    service19 = ttk.Checkbutton(popup, text="Homeless support group").grid(row=20, column=1, sticky="w")
+    service20 = ttk.Checkbutton(popup, text="Initial Meeting with Caregiver").grid(row=20, column=2, sticky="w")
+    service21 = ttk.Checkbutton(popup, text="Initial Telephone Call").grid(row=21, column=1, sticky="w")
+    service22 = ttk.Checkbutton(popup, text="Mailed Brochure").grid(row=21, column=2, sticky="w")
+    service23 = ttk.Checkbutton(popup, text="Orientation to Center for FI").grid(row=22, column=1, sticky="w")
+    service24 = ttk.Checkbutton(popup, text="Post Interview Crisis Counseling").grid(row=22, column=2, sticky="w")
+    service25 = ttk.Checkbutton(popup, text="Pre-Interview Family Call").grid(row=23, column=1, sticky="w")
+    service26 = ttk.Checkbutton(popup, text="Shelter/safehouse Referral").grid(row=23, column=2, sticky="w")
+    service27 = ttk.Checkbutton(popup, text="Survey Distributed").grid(row=24, column=1, sticky="w")
+    service28 = ttk.Checkbutton(popup, text="Survey Recieved").grid(row=24, column=2, sticky="w")
+    service29 = ttk.Checkbutton(popup, text="Telephone Follow-up").grid(row=25, column=1, sticky="w")
+    service30 = ttk.Checkbutton(popup, text="Unscheduled Call").grid(row=25, column=2, sticky="w")
 
     ttk.Label(popup, text="Comments").grid(row=26, column=0, padx=5, pady=5)
     session_comments_entry = ttk.Entry(popup)
@@ -553,11 +428,11 @@ state_claim_rep = ttk.Entry(crime_comp_app_frame)
 state_claim_rep.grid(row=0, column=1, padx=5, pady=5)
 
 ttk.Label(crime_comp_app_frame, text="Have Birth Certificate").grid(row=1, column=0, padx=5, pady=5)
-has_birth_cert = ttk.Checkbutton(crime_comp_app_frame, variable=False)  
+has_birth_cert = ttk.Checkbutton(crime_comp_app_frame, variable=False, sticky="w")  
 has_birth_cert.grid(row=1, column=1, padx=5, pady=5)
 
 ttk.Label(crime_comp_app_frame, text="Have Police Report").grid(row=2, column=0, padx=5, pady=5)
-has_police_report = ttk.Checkbutton(crime_comp_app_frame, variable=False)  
+has_police_report = ttk.Checkbutton(crime_comp_app_frame, variable=False, sticky="w")  
 has_police_report.grid(row=2, column=1, padx=5, pady=5)
 
 ttk.Label(crime_comp_app_frame, text="Claim Number").grid(row=3, column=0, padx=5, pady=5)
@@ -721,28 +596,6 @@ comments_entry.grid(row=2, column=4, padx=5, pady=5)
 ttk.Button(outside_referrals_frame, text="Add New Referral", command=add_referral_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
 #----------------------
-# Insurance Information
-
-# Function to add new ICD Code record
-def add_code_record_popup():
-    # Create a new Toplevel window
-    popup = tk.Toplevel(root)
-    popup.title("Edit")
-    popup.geometry("400x300")
-
-    # Create labels and entry fields
-    ttk.Label(popup, text="Group").grid(row=0, column=0, padx=5, pady=5)
-    group_entry = ttk.Entry(popup)
-    group_entry.grid(row=0, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Code").grid(row=1, column=0, padx=5, pady=5)
-    code_entry = ttk.Entry(popup)
-    code_entry.grid(row=1, column=1, padx=5, pady=5)
-
-    # Update and Cancel buttons
-    ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=3, column=0, padx=5, pady=5)
-    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=3, column=1, padx=5, pady=5)
-
 
 #Add contact modal
 def add_contact_popup():
