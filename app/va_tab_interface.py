@@ -39,7 +39,7 @@ canvas.configure(yscrollcommand=scrollbar.set)
 canvas.pack(side="left", fill="both", expand=True)
 scrollbar.pack(side="right", fill="y")
 
-# General tab title
+# VA tab title
 va_frame = tk.Frame(scrollable_frame)
 va_frame.pack(anchor="center", pady=10)
 ttk.Label(va_frame, text="VA").pack()
@@ -98,67 +98,6 @@ def add_allegation_record_popup():
     # Update and Cancel buttons
     ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=9, column=0, padx=5, pady=5)
     ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
-
-def add_information_record_popup():
-    popup = tk.Toplevel(root)
-    popup.title("")
-    popup.geometry("600x500")
-
-    twelve = tk.BooleanVar(value=False)
-
-    # Entry fields for case details
-    ttk.Label(popup, text="Requested Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-    requested_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
-    requested_date_entry.grid(row=2, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Requested By", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-    requested_by_entry = ttk.Entry(popup)
-    requested_by_entry.grid(row=3, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Is this a request by subpoena?", foreground='black').grid(row=4, column=0, padx=5, pady=5)
-    check_box = ttk.Checkbutton(popup, text="Yes", variable=twelve) 
-    check_box.grid(row=4, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Who authorized release?").grid(row=5, column=0, padx=5, pady=5)
-    who_authorized_entry = ttk.Entry(popup)
-    who_authorized_entry.grid(row=5, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Who released the records?").grid(row=6, column=0, padx=5, pady=5)
-    who_released_entry = ttk.Entry(popup)
-    who_released_entry.grid(row=6, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="What records were released?").grid(row=7, column=0, padx=5, pady=5)
-    what_records_entry = ttk.Entry(popup)
-    what_records_entry.grid(row=7, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Date Released").grid(row=8, column=0, padx=5, pady=5)
-    date_released_entry = ttk.Entry(popup)
-    date_released_entry.grid(row=8, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Date to be returned (if applicable)").grid(row=9, column=0, padx=5, pady=5)
-    tobe_returned_date_entry = ttk.Entry(popup)
-    tobe_returned_date_entry.grid(row=9, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Date Returned").grid(row=10, column=0, padx=5, pady=5)
-    returned_date_entry = ttk.Entry(popup)
-    returned_date_entry.grid(row=10, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Testing field 1").grid(row=11, column=0, padx=5, pady=5)
-    testing_field1_entry = ttk.Entry(popup)
-    testing_field1_entry.grid(row=11, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Testing field 2").grid(row=12, column=0, padx=5, pady=5)
-    testing_field2_entry = ttk.Entry(popup)
-    testing_field2_entry.grid(row=12, column=1, padx=5, pady=5)
-
-    ttk.Label(popup, text="Name and Address").grid(row=13, column=0, padx=5, pady=5)
-    name_address_entry = ttk.Entry(popup)
-    name_address_entry.grid(row=13, column=1, padx=5, pady=5)
-
-    # Update and Cancel buttons
-    ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
-    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
-
 
 
 # Create the Referral section
@@ -343,97 +282,127 @@ def add_personnel_popup():
 
 
 # VAS Log Information
+
+def add_new_session_popup():
+    popup = tk.Toplevel(root)
+    popup.title("New Session")
+    popup.geometry("600x1000")
+
+    # Entry fields for case details
+    ttk.Label(popup, text="Session Date").grid(row=0, column=0, padx=5, pady=5)
+    session_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
+    session_date_entry.grid(row=0, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Start Time").grid(row=1, column=0, padx=5, pady=5)
+    start_time_entry = ttk.Combobox(popup)
+    start_time_entry.grid(row=1, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="End Time").grid(row=2, column=0, padx=5, pady=5)
+    end_start_entry = ttk.Combobox(popup) 
+    end_start_entry.grid(row=2, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Prep").grid(row=3, column=0, padx=5, pady=5)
+    prep_entry = ttk.Combobox(popup)
+    prep_entry.grid(row=3, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Session Status").grid(row=4, column=0, padx=5, pady=5)
+    session_status_entry = ttk.Combobox(popup)
+    session_status_entry.grid(row=4, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Funding Source").grid(row=5, column=0, padx=5, pady=5)
+    funding_source_entry = ttk.Combobox(popup)
+    funding_source_entry.grid(row=5, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Location").grid(row=6, column=0, padx=5, pady=5)
+    location_entry = ttk.Combobox(popup)
+    location_entry.grid(row=6, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Provider Agency").grid(row=7, column=0, padx=5, pady=5)
+    provider_agency_entry = ttk.Combobox(popup)
+    provider_agency_entry.grid(row=7, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Provider Employee").grid(row=8, column=0, padx=5, pady=5)
+    provider_employee_entry = ttk.Combobox(popup)
+    provider_employee_entry.grid(row=8, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Attendees").grid(row=9, column=0, padx=5, pady=5)
+    attendee1 = ttk.Checkbutton(popup, text="Billie Badguys").grid(row=9, column=1)
+    attendee2 = ttk.Checkbutton(popup, text="Bobbie RRose").grid(row=9, column=2)
+    attendee3 = ttk.Checkbutton(popup, text="Candi Rose").grid(row=10, column=1)
+    attendee4 = ttk.Checkbutton(popup, text="Cindi Rose").grid(row=10, column=2)
+
+    ttk.Label(popup, text="Services Provided").grid(row=11, column=0, padx=5, pady=5)
+    service1 = ttk.Checkbutton(popup, text="Legal Services").grid(row=11, column=1)
+    service2 = ttk.Checkbutton(popup, text="Transportation").grid(row=11, column=2)
+    service3 = ttk.Checkbutton(popup, text="Victim Support").grid(row=12, column=1)
+    service4 = ttk.Checkbutton(popup, text="1-2 Week Follow-up Call").grid(row=12, column=2)
+    service5 = ttk.Checkbutton(popup, text="2. Personal Court Education").grid(row=13, column=1)
+    service6 = ttk.Checkbutton(popup, text="24 -- hour crisis line cal").grid(row=13, column=2)
+    service7 = ttk.Checkbutton(popup, text="3a. Info & Support - MDT response").grid(row=14, column=1)
+    service8 = ttk.Checkbutton(popup, text="3b. Information & Support - Court").grid(row=14, column=2)
+    service9 = ttk.Checkbutton(popup, text="3bi Personal advocacy").grid(row=15, column=1)
+    service10 = ttk.Checkbutton(popup, text="6--8 Week Follow-up Call").grid(row=15, column=2)
+    service11 = ttk.Checkbutton(popup, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam").grid(row=16, column=1)
+    service12 = ttk.Checkbutton(popup, text="Collected Survey").grid(row=16, column=2)
+    service13 = ttk.Checkbutton(popup, text="Criminal Justice support/advocacy").grid(row=17, column=1)
+    service14 = ttk.Checkbutton(popup, text="Compensation Claim Filing").grid(row=17, column=2)
+    service15 = ttk.Checkbutton(popup, text="Emergency Crisis Intervention").grid(row=18, column=1)
+    service16 = ttk.Checkbutton(popup, text="Crisis Counseling").grid(row=18, column=2)
+    service17 = ttk.Checkbutton(popup, text="Gave Educational Information").grid(row=19, column=1)
+    service18 = ttk.Checkbutton(popup, text="Follow-up").grid(row=19, column=2)
+    service19 = ttk.Checkbutton(popup, text="Homeless support group").grid(row=20, column=1)
+    service20 = ttk.Checkbutton(popup, text="Initial Meeting with Caregiver").grid(row=20, column=2)
+    service21 = ttk.Checkbutton(popup, text="Initial Telephone Call").grid(row=21, column=1)
+    service22 = ttk.Checkbutton(popup, text="Mailed Brochure").grid(row=21, column=2)
+    service23 = ttk.Checkbutton(popup, text="Orientation to Center for FI").grid(row=22, column=1)
+    service24 = ttk.Checkbutton(popup, text="Post Interview Crisis Counseling").grid(row=22, column=2)
+    service25 = ttk.Checkbutton(popup, text="Pre-Interview Family Call").grid(row=23, column=1)
+    service26 = ttk.Checkbutton(popup, text="Shelter/safehouse Referral").grid(row=23, column=2)
+    service27 = ttk.Checkbutton(popup, text="Survey Distributed").grid(row=24, column=1)
+    service28 = ttk.Checkbutton(popup, text="Survey Recieved").grid(row=24, column=2)
+    service29 = ttk.Checkbutton(popup, text="Telephone Follow-up").grid(row=25, column=1)
+    service30 = ttk.Checkbutton(popup, text="Unscheduled Call").grid(row=25, column=2)
+
+    ttk.Label(popup, text="Comments").grid(row=26, column=0, padx=5, pady=5)
+    session_comments_entry = ttk.Entry(popup)
+    session_comments_entry.grid(row=26, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="VA Session Custom Field 1").grid(row=27, column=0, padx=5, pady=5)
+    session_custom_one_entry = ttk.Entry(popup)
+    session_custom_one_entry.grid(row=27, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="VA Session Custom Field 2").grid(row=28, column=0, padx=5, pady=5)
+    session_custom_two_entry = ttk.Entry(popup)
+    session_custom_two_entry.grid(row=28, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="VA Session Custom Field 3").grid(row=29, column=0, padx=5, pady=5)
+    session_custom_three_entry = ttk.Entry(popup)
+    session_custom_three_entry.grid(row=29, column=1, padx=5, pady=5)
+
+    # Update and Cancel buttons
+    ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=31, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=31, column=1, padx=5, pady=5)
+
+
 vas_log_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services Log", padx=10, pady=10)
 vas_log_frame.pack(fill="x", padx=10, pady=5)
 
-ttk.Label(vas_log_frame, text="Date Received by CAC").grid(row=0, column=0, padx=5, pady=5)
-date_entry = DateEntry(vas_log_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
-date_entry.grid(row=0, column=1, padx=5, pady=5)
+ttk.Button(vas_log_frame, text="Add New Session Log", command=add_new_session_popup).grid(row=0, column=0, padx=5, pady=5)
+ttk.Button(vas_log_frame, text="Details").grid(row=0, column=1, padx=5, pady=5)
+ttk.Button(vas_log_frame, text="Newer Records").grid(row=0, column=2, padx=5, pady=5)
+ttk.Button(vas_log_frame, text="Older Records").grid(row=0, column=3, padx=5, pady=5)
 
-ttk.Label(vas_log_frame, text="Main Agency Involved").grid(row=1, column=0, padx=5, pady=5)
-main_agency = ttk.Combobox(vas_log_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
-main_agency.grid(row=1, column=1, padx=5, pady=5)
-add_agency = ttk.Button(vas_log_frame, text="+ Add", command=add_agency_popup)
-add_agency.grid(row=1, column=2, padx=5, pady=5)
+ttk.Label(vas_log_frame, text="Date").grid(row=1, column=1)
+session_date = ttk.Entry(vas_log_frame).grid(row=2, column=1)
 
-ttk.Label(vas_log_frame, text="Main Personnel Involved").grid(row=2, column=0, padx=5, pady=5)
-main_personnel = ttk.Combobox(vas_log_frame, values=["Person 1", "Person 2"])  
-main_personnel.grid(row=2, column=1, padx=5, pady=5)
-add_personnel = ttk.Button(vas_log_frame, text="+ Add", command=add_personnel_popup)  
-add_personnel.grid(row=2, column=2, padx=5, pady=5)
+ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=2)
+start_time = ttk.Entry(vas_log_frame).grid(row=2, column=2)
 
-ttk.Label(vas_log_frame, text="Case Closed Reason").grid(row=3, column=0, padx=5, pady=5)
-close_reason = ttk.Combobox(vas_log_frame, values=["Person 1", "Person 2"]) 
-close_reason.grid(row=3, column=1, padx=5, pady=5)
+ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=3)
+end_time = ttk.Entry(vas_log_frame).grid(row=2, column=3)
 
-ttk.Label(vas_log_frame, text="Case Close Date").grid(row=4, column=0, padx=5, pady=5)
-close_date = DateEntry(vas_log_frame, width=12, background='darkblue', foreground='white', borderwidth=2) 
-close_date.grid(row=4, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="Survey Complete (1)").grid(row=5, column=0, padx=5, pady=5)
-survey_complete = ttk.Combobox(vas_log_frame, values=["Person 1", "Person 2"])  
-survey_complete.grid(row=5, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="Follow Up Survey Complete (2)").grid(row=6, column=0, padx=5, pady=5)
-followup_survey = DateEntry(vas_log_frame, width=12, background='darkblue', foreground='white', borderwidth=2) 
-followup_survey.grid(row=6, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="CAC Case # (3)").grid(row=7, column=0, padx=5, pady=5)
-cac_casenum = ttk.Entry(vas_log_frame)  
-cac_casenum.grid(row=7, column=1, padx=5, pady=5)
-
-one = tk.BooleanVar(value=False)
-two = tk.BooleanVar(value=False)
-three = tk.BooleanVar(value=False)
-four = tk.BooleanVar(value=False)
-five = tk.BooleanVar(value=False)
-six = tk.BooleanVar(value=False)
-seven = tk.BooleanVar(value=False)
-eight = tk.BooleanVar(value=False)
-nine = tk.BooleanVar(value=False)
-ten = tk.BooleanVar(value=False)
-eleven = tk.BooleanVar(value=False)
-
-ttk.Label(vas_log_frame, text="Did child go through the education program? (4)").grid(row=8, column=0, padx=2, pady=5)
-Yes = ttk.Checkbutton(vas_log_frame, text="Yes", variable=one) 
-Yes.grid(row=8, column=1, padx=5, pady=5)
-No = ttk.Checkbutton(vas_log_frame, text="No", variable=two)
-No.grid(row=8, column=2, padx=5, pady=5)
-Not_Interested = ttk.Checkbutton(vas_log_frame, text="Not Interested", variable=three) 
-Not_Interested.grid(row=8, column=3, padx=5, pady=5)
-Maybe = ttk.Checkbutton(vas_log_frame, text="Maybe", variable=four) 
-Maybe.grid(row=9, column=1, padx=5, pady=5)
-sure = ttk.Checkbutton(vas_log_frame, text="Not sure", variable=five)
-sure.grid(row=9, column=2, padx=5, pady=5)
-Interested = ttk.Checkbutton(vas_log_frame, text="Interested", variable=six) 
-Interested.grid(row=9, column=3, padx=5, pady=5)
-Denied = ttk.Checkbutton(vas_log_frame, text="Denied", variable=seven)
-Denied.grid(row=10, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="Test 5").grid(row=11, column=0, padx=5, pady=5)
-test5 = ttk.Combobox(vas_log_frame, values=["Person 1", "Person 2"])  
-test5.grid(row=11, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="General - Custom Field 6").grid(row=12, column=0, padx=5, pady=5)
-custom_field6 = ttk.Entry(vas_log_frame)  
-custom_field6.grid(row=12, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="General - Custom Field 7").grid(row=13, column=0, padx=5, pady=5)
-custom_field7 = ttk.Entry(vas_log_frame)  
-custom_field7.grid(row=13, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="General - Custom Field 8").grid(row=14, column=0, padx=5, pady=5)
-custom_field8 = ttk.Entry(vas_log_frame)  
-custom_field8.grid(row=14, column=1, padx=5, pady=5)
-
-ttk.Label(vas_log_frame, text="Chapter Test Field (9)").grid(row=15, column=0, padx=5, pady=5)
-testing = ttk.Checkbutton(vas_log_frame, text="Testing", variable=nine) 
-testing.grid(row=15, column=1, padx=5, pady=5)
-no_testing = ttk.Checkbutton(vas_log_frame, text="No Testing", variable=ten)
-no_testing.grid(row=16, column=1, padx=5, pady=5)
-new_client = ttk.Checkbutton(vas_log_frame, text="New Client", variable=eleven) 
-new_client.grid(row=17, column=1, padx=5, pady=5)
-
+ttk.Label(vas_log_frame, text="Status").grid(row=1, column=4)
+session_status = ttk.Entry(vas_log_frame).grid(row=2, column=4)
 #------------------------------
 
 # Crime Compensation Application Section
@@ -477,53 +446,96 @@ claim_denied_reason = ttk.Entry(crime_comp_app_frame)
 claim_denied_reason.grid(row=8, column=1, padx=5, pady=5)
 
 #--------------------------------
-# -Release of Information Section
-information_release_frame = tk.LabelFrame(scrollable_frame, text="Release of Information", padx=10, pady=10)
-information_release_frame.pack(fill="x", padx=10, pady=5)
+# -Screenings Given Section
+def edit_screening_instrument_popup():
+    popup = tk.Toplevel(root)
+    popup.title("Edit Screening Instrument")
+    popup.geometry("800x500")
+
+    ttk.Label(popup, text="Action", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+
+    ttk.Label(popup, text="Screening Instrument Name", foreground='black').grid(row=1, column=2, padx=5, pady=5)
+    screening_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
+    screening_date_entry.grid(row=2, column=2, padx=5, pady=5)
+
+    ttk.Label(popup, text="Source", foreground='black').grid(row=1, column=3, padx=5, pady=5)
+    provider_agency_entry = ttk.Combobox(popup)
+    provider_agency_entry.grid(row=2, column=3, padx=5, pady=5)
+
+    ttk.Label(popup, text="# of Measures", foreground='black').grid(row=1, column=4, padx=5, pady=5)
+    provider_personnel_entry = ttk.Combobox(popup) 
+    provider_personnel_entry.grid(row=2, column=4, padx=5, pady=5)
+
+    # Update and Cancel buttons
+    ttk.Button(popup, text="Edit", command=lambda: [popup.destroy()]).grid(row=2, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Delete", command=lambda: [popup.destroy()]).grid(row=2, column=1, padx=5, pady=5)
+
+def add_new_screening_popup():
+    popup = tk.Toplevel(root)
+    popup.title("Add New Screening")
+    popup.geometry("900x500")
+
+    ttk.Label(popup, text="* Instrument, Agency, and Personnel Fields are Required").grid(row=0, column=0, padx=5, pady=5)
+
+    ttk.Label(popup, text="Scores of this Screening's Measures").grid(row=0, column=4, padx=5, pady=5)
+    ttk.Entry(popup).grid(row=1, column=4, padx=5, pady=5)
+
+    ttk.Label(popup, text="Screening Instrument", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+    screening_instrument_entry = ttk.Combobox(popup)
+    screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
+
+    ttk.Button(popup, text="Add Screening Instrument", command=edit_screening_instrument_popup).grid(row=1, column=2, padx=5, pady=5)
+
+    ttk.Label(popup, text="Screening Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+    screening_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
+    screening_date_entry.grid(row=2, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Provider Agency", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+    provider_agency_entry = ttk.Combobox(popup)
+    provider_agency_entry.grid(row=3, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Provider Personnel", foreground='black').grid(row=4, column=0, padx=5, pady=5)
+    provider_personnel_entry = ttk.Combobox(popup) 
+    provider_personnel_entry.grid(row=4, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Functional Impairment").grid(row=5, column=0, padx=5, pady=5)
+    functional_impairment_entry = ttk.Entry(popup)
+    functional_impairment_entry.grid(row=5, column=1, padx=5, pady=5)
+
+    ttk.Label(popup, text="Comments").grid(row=6, column=0, padx=5, pady=5)
+    _screening_commets_entry = ttk.Entry(popup)
+    _screening_commets_entry.grid(row=6, column=1, padx=5, pady=5)
+
+    # Update and Cancel buttons
+    ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+    ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
 
-ttk.Label(information_release_frame, text="Date Requested").grid(row=1, column=1, padx=5, pady=5)
-date_requested = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+screenings_frame = tk.LabelFrame(scrollable_frame, text="Screenings Given", padx=10, pady=10)
+screenings_frame.pack(fill="x", padx=10, pady=5)
+
+#Add New Screening button
+ttk.Button(screenings_frame, text="Add New Screening", command=add_new_screening_popup).grid(row=0, column=0, padx=5, pady=5)
+
+ttk.Label(screenings_frame, text="Action").grid(row=1, column=0, padx=5, pady=5)
+date_requested = ttk.Label(screenings_frame)  
 date_requested.grid(row=2, column=1, padx=5, pady=5)
 
 
-ttk.Label(information_release_frame, text="Requested By").grid(row=1, column=2, padx=5, pady=5)
-requested_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+ttk.Label(screenings_frame, text="Screening Instrument Name").grid(row=1, column=2, padx=5, pady=5)
+requested_by = ttk.Combobox(screenings_frame, values=["Person 1", "Person 2"])  
 requested_by.grid(row=2, column=2, padx=5, pady=5)
 
-ttk.Label(information_release_frame, text="By Subpoena").grid(row=1, column=3, padx=5, pady=5)
-by_subpeona = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+ttk.Label(screenings_frame, text="Date").grid(row=1, column=3, padx=5, pady=5)
+by_subpeona = ttk.Combobox(screenings_frame, values=["Person 1", "Person 2"])  
 by_subpeona.grid(row=2, column=3, padx=5, pady=5)
 
 
-ttk.Label(information_release_frame, text="Authorized By").grid(row=1, column=4, padx=5, pady=5)
-authorized_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+ttk.Label(screenings_frame, text="Provider Personnel").grid(row=1, column=4, padx=5, pady=5)
+authorized_by = ttk.Combobox(screenings_frame, values=["Person 1", "Person 2"])  
 authorized_by.grid(row=2, column=4, padx=5, pady=5)
 
-ttk.Label(information_release_frame, text="Released By").grid(row=1, column=5, padx=5, pady=5)
-released_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
-released_by.grid(row=2, column=5, padx=5, pady=5)
-
-
-ttk.Label(information_release_frame, text="Records").grid(row=1, column=6, padx=5, pady=5)
-records = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
-records.grid(row=2, column=6, padx=5, pady=5)
-
-ttk.Label(information_release_frame, text="Date Released").grid(row=1, column=7, padx=5, pady=5)
-date_released = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
-date_released.grid(row=2, column=7, padx=5, pady=5)
-
-
-ttk.Label(information_release_frame, text="Date to be Returned").grid(row=1, column=8, padx=5, pady=5)
-tobe_returned = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
-tobe_returned.grid(row=2, column=8, padx=5, pady=5)
-
-ttk.Label(information_release_frame, text="Date Returned").grid(row=1, column=9, padx=5, pady=5)
-date_returned = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
-date_returned.grid(row=2, column=9, padx=5, pady=5)
-
-# Add the "Add new record" button 
-ttk.Button(information_release_frame, text="Add new record", command=add_information_record_popup).grid(row=0, column=0, padx=5, pady=5)
+#--------------------------------------
 
 def add_referral_popup():
     # Create a new Toplevel window
@@ -603,7 +615,7 @@ group2 = ttk.Entry(insurance_information_frame, foreground='white')
 group2.grid(row=4, column=2, padx=5, pady=5)
 
 ttk.Label(insurance_information_frame, text="Has Client received referral").grid(row=5, column=0, padx=5, pady=5)
-client_referral = ttk.Checkbutton(insurance_information_frame, variable=eight) 
+client_referral = ttk.Checkbutton(insurance_information_frame, variable=False) 
 client_referral.grid(row=5, column=1, padx=5, pady=5)
 
 ttk.Label(insurance_information_frame, text="Primary Clinic").grid(row=6, column=0, padx=5, pady=5)
