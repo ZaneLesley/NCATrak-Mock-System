@@ -25,6 +25,7 @@ case_person_data = []
 cac_case_data = []
 case_va_session_attendee_data = []
 case_va_session_log_data = []
+case_va_session_service_data = []
 
 # Custom Fields
 religions = ["Christianity", "Islam", "Hinduism", "Buddhism", "Other"]
@@ -234,7 +235,6 @@ def generator_case_va_session_attendee(amount: int):
     for _ in range(amount):
         session = {}
         case = random.choice(case_va_session_log_data)
-        
         session["case_id"] = case["case_id"]
         session["case_va_session_attendee_id"] = fake.unique.random_number(digits = 7)
         session["case_va_session_id"] = case["case_va_session_id"]
@@ -242,7 +242,21 @@ def generator_case_va_session_attendee(amount: int):
         session["person_id"] = person["person_id"]
         
         case_va_session_attendee_data.append(session)
-                
+        
+def generator_case_va_session_service(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        session = {}
+        case = random.choice(case_va_session_log_data)
+        
+        session["cac_id"] = case["cac_id"] 
+        session["case_va_session_id"] = case["case_va_session_id"] 
+        session["case_va_session_service_id"] = fake.unique.random_number(digits = 10)
+        #FIXME: Check what this can be
+        session["service_type_id"] = None
+        
+        case_va_session_service_data.append(session)
         
 if __name__ == "__main__":
     print("[bold blue]NCA-Trak-Mock Data Generator")
@@ -258,6 +272,7 @@ if __name__ == "__main__":
     generator_cac_case(amount= n)
     generator_case_va_session_log(amount=n // 2)
     generator_case_va_session_attendee(amount=n // 4)
+    generator_case_va_session_service(n // 4)
 
     
     # Print Testing
@@ -268,4 +283,5 @@ if __name__ == "__main__":
     print(cac_case_data)
     print(case_va_session_log_data)
     print(case_va_session_attendee_data)
+    print(case_va_session_service_data)
     
