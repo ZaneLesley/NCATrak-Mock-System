@@ -26,6 +26,7 @@ tables_to_create = [
     "case_mh_service_barriers"
 ]
 
+# Wrapper function to simplify syntax for calling a try-except block with the database connection
 def execute_command(command):
 
     try:
@@ -47,6 +48,7 @@ if __name__ == '__main__':
             execute_command(command)
     delete_tables_file.close()
     
+    # Create new tables from the above list
     for table_name in tables_to_create:
         print(f"Creating new table {table_name}")
         sql_file_name = f"app/database/data_tables/{table_name}_table.sql"
