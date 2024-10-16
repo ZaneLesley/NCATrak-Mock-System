@@ -35,7 +35,7 @@ def execute_db_command(command: str):
             with conn.cursor() as cur:
                 cur.execute(command)
     except (psycopg2.DatabaseError, Exception) as error:
-        print(error)
+        print(f"[red]{error}")
 
 if __name__ == "__main__":
     print('''
@@ -62,7 +62,7 @@ n = int(n)
 # TODO: Implement Each one
 # Complete Install
 if n == 1:
-    print("Creating database tables...")
+    print("[yellow]Creating database tables...")
     for table_name in db_tables:
         print(f"Creating new table {table_name}")
         sql_file_name = f"app/database/data_tables/{table_name}_table.sql"
@@ -73,7 +73,7 @@ if n == 1:
                 execute_db_command(command)
         sql_file.close()
     
-    print("Database tables created. Installation complete.")
+    print("[green]Database tables created. Installation complete.")
 
 # Data Regeneration
 elif n == 2:
@@ -88,10 +88,11 @@ elif n == 4:
     while not (proceed.lower() == "y" or proceed.lower() == "n"):
         proceed = input("Enter [y/n]: ")
     if proceed.lower() == "y":
-        print("Deleting data tables...")
+        print("[yellow]Deleting data tables...")
         delete_tables_file = open("app/database/delete_tables.sql", "r")
         actions = delete_tables_file.read().strip().split(";")
         for action in actions:
             if not action == "":
                 execute_db_command(action)
+        
     
