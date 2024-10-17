@@ -1,0 +1,10 @@
+name: NCA-Trak
+channels:
+  - defaults
+dependencies:
+  - faker
+  - pandas
+  - python=3.10
+  - rich
+  - numpy=1.24
+prefix: /home/zanel/anaconda3/envs/NCA-Trak
