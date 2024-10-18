@@ -1,6 +1,14 @@
+import os
 from configparser import ConfigParser
 
-def load_config(filename="app/database/database.ini", section='postgresql'):
+def load_config(filename=None, section='postgresql'):
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        
+        if filename is None:
+            filename = os.path.join(current_directory, "database.ini")
+        else:
+            filename = os.path.join(current_directory, filename)
+        
         parser = ConfigParser()
         parser.read(filename)
 
