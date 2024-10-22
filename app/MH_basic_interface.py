@@ -5,7 +5,7 @@ from tkcalendar import DateEntry
 import Generaltab_interface
 import sv_ttk
 
-class MHBasicInterface:
+class MHBasicInterface(tk.Frame):
 
     def __init__(self, parent, controller):
 
@@ -31,9 +31,9 @@ class MHBasicInterface:
         # scrollbar to canvas
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # pack canvas and scrollbar
-        canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        # Use grid over pack for interface linking
+        canvas.grid(row=2, column=0, sticky="nsew")
+        scrollbar.grid(row=2, column=1, sticky="ns")
 
         button1 = ttk.Button(self, text="Back to main page", 
                             command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
