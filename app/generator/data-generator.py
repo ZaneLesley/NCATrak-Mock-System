@@ -26,6 +26,20 @@ cac_case_data = []
 case_va_session_attendee_data = []
 case_va_session_log_data = []
 case_va_session_service_data = []
+case_mh_assessments_data = []
+case_mh_assessment_instruments_data = []
+case_mh_assessment_measure_scores_data = []
+case_mh_diagonosis_log_data = []
+case_mh_session_log_enc_data = []
+case_mh_treatment_plans_data = []
+case_mh_session_attendee_data = []
+case_mh_attribute_group_data = []
+case_mh_provider_log_data = []
+case_mh_service_barriers_data = []
+case_mh_treatment_models_data = []
+state_data = []
+employee_data = []
+employee_account_data = []
 
 # Custom Fields
 religions = ["Christianity", "Islam", "Hinduism", "Buddhism", "Other"]
@@ -50,6 +64,29 @@ state_abbreviations = [
 "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
 ]
 
+# (id, name)
+assessment_instrument = [
+(0, "Alabama Parenting Questionnaire", "Corporal Punishment"),
+(1, "Alabama Parenting Questionnaire",	"Inconsistent Discipline"),
+(2, "Alabama Parenting Questionnaire",	"Poor Monitoring/Supervision"),
+(3, "Alabama Parenting Questionnaire",	"Positive Parenting"),
+(4, "Brief Child Abuse Potential Inventory", "Abuse Risk"),
+(5, "Brief Child Abuse Potential Inventory", "Family Conflict"),
+(6, "Brief Child Abuse Potential Inventory", "Lie"),
+(7, "Brief Child Abuse Potential Inventory", "Random Response"),
+(8, "CATS - Caregiver Report Ages 3-6", "Score"),
+(9, "CATS - Caregiver Report Ages 7-17", "Score"),
+(10, "CATS - Youth Report", "Score"),
+(11, "CPSS", "Total"),
+(12, "CPSS Caregiver", "Total"),
+(13, "CPSS-5-I", "Total"),
+(14, "CPSS-5-P", "Total"),
+(15, "CPSS-5-SR", "Total"),
+(16, "CSBI", "CSBI Total (T-SCORE)"),
+(17, "CSBI", "DRSB (T-SCORE)"),
+(18, "CSBI", "SASI (T-SCORE)"),
+(19, "Eyberg Child Behavior", "Intensity Raw Score")
+]
 # CAC_AGENCY
 def generate_cac_agency():
     data = []
@@ -62,7 +99,7 @@ def generate_cac_agency():
             agency["agency_id"] = fake.unique.random_number(digits=8)
             agency["cac_id"] = cac["cac_id"]
             city = fake.unique.city()                     
-            agency["agency_name"] = city + " Agenecy"
+            agency["agency_name"] = city + " Agency"
             agency["addr_line_1"] = fake.street_address()
             agency["addr_line_2"] = None
             agency["city"] = city
@@ -228,7 +265,6 @@ def generator_case_va_session_log(amount: int):
         
         case_va_session_log_data.append(session)
         
-
 def generator_case_va_session_attendee(amount: int):
     fake = Faker()
     fake.seed_instance(0)
@@ -257,6 +293,120 @@ def generator_case_va_session_service(amount: int):
         session["service_type_id"] = None
         
         case_va_session_service_data.append(session)
+
+def generator_case_mh_assessments_instruments(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for temp in assessment_instrument:
+        instrument = {}
+        instrument["instruments_id"] = temp[0]
+        instrument["mh_assessment_name"] = temp[1]
+        
+        case_mh_assessment_instruments_data.append(instrument)
+        
+def generator_case_mh_assessments(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        assessment = {}
+        case = random.choice(cac_case_data)
+        assessment["cac_id"] = case["cac_id"]
+        assessment["case_id"] = case["case_id"]
+        #FIXME: Ask about this value
+        assessment["assessment_id"] = fake.unique.random_number(digits = 6)
+        assessment["mh_provider_agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=agency_data, value="agency_id")
+        #FIXME: What does this mean
+        assessment["timing_id"] = None
+        #FIXME: repeat, what to do here
+        # asssessment["assessment_id"] = ...
+        #TODO: Fill in
+        assessment["session_date"] = None
+        assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=agency_data, value="agency_id")
+        assessment["provider_employee_id"] = None
+        temp = random.choice(assessment_instrument)
+        assessment["assessment_instrument_id"] = temp[0]
+        assessment["comments"] = None
+        
+        case_mh_assessments_data.append(assessment)
+        
+def generator_case_mh_assessment_measure_scores(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        assessment = {}
+        case = random.choice(case_mh_assessments_data)
+        assessment["score_id"] = fake.unique.random_number(digits = 6)
+        assessment["cac_id"] = case["cac_id"]
+        assessment["case_id"] = case["case_id"]
+        assessment["assessment_id"] = case["assessment_id"]
+        assessment["instruments_id"] = case["assessment_instrument_id"]
+        # FIXME: pick a value
+        assessment["mh_assessment_scores"] = None
+        
+        case_mh_assessment_measure_scores_data.append(assessment)
+
+def generator_mh_assessment_diagnosis_log(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        case = random.choice(cac_case_data)
+        log = {}
+        log["case_id"] = case["case_id"]
+        log["diagonsis_date"] = fake.date()
+        log["mh_provider_agency"] = None
+        
+        case_mh_diagonosis_log_data.append(log)
+        
+def generator_mh_session_log_enc(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        case = random.choice(cac_case_data)
+        log = {}
+        log["cac_id"] = case["cac_id"]
+        log["case_id"] = case["case_id"]
+        log["case_mh_session_id"] = fake.unique.random_number(digits = 8)
+        log["comments"] = None
+        log["start_time"] = None
+        log["end_time"] = None
+        log["intervention_id"] = None
+        log["location_id"] = None
+        log["onsite"] = None
+        log["provider_agency_id"] = None
+        log["provider_employee_id"] = None
+        log["session_date"] = fake.date()
+        log["session_status_id"] = fake.random_int(min=0, max=9, step = 1)
+        log["session_type_id"] = None
+        log["reccuring"] = None
+        log["recurring_fre"] = None
+        log["recurring_duration"] = None
+        log["recurring_duration_unit"] = None
+        
+        case_mh_session_log_enc_data.append(log)
+        
+def generator_mh_treatment_plan(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        treatment = {}
+        case = random.choice(cac_case_data)
+        treatment["authorized_status_id"] = fake.random_int(min=0, max=5, step = 1)
+        treatment["cac_id"] = case["cac_id"]
+        treatment["case_id"] = case["case_id"]
+        treatment["duration"] = None
+        # FIXME: CHECK THIS LATER CUZ IM TOO TIRED TO UNDERSTAND
+        treatment["duration_unit"] = None
+        treatment["id"] = fake.unique.random_number(digits = 8)
+        treatment["planned_end_date"] = None
+        treatment["planned_review_date"] = None
+        treatment["planned_start_date"] = None
+        treatment["provider_agency_id"] = None
+        treatment["provider_employee_id"] = None
+        treatment["treatment_model_id"] = None
+        treatment["treatment_plan_date"] = None
+        
+        case_mh_treatment_plans_data.append(treatment)
+        
         
 if __name__ == "__main__":
     print("[bold blue]NCA-Trak-Mock Data Generator")
