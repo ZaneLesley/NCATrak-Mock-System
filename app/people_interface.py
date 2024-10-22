@@ -1,20 +1,59 @@
 import tkinter as tk
 from tkinter import ttk
+import Generaltab_interface
+import MH_basic_interface
 
-class People_Interface:
+class people_interface(tk.Frame):
 
-    # Initialize the main window
-    def __init__(self, root, controller):
-        self.controller = controller
-        root.title("People Associated with Case")
-        root.geometry("1200x600")
-        self.create_interface(root, controller)
+    def __init__(self, parent, controller):
 
-    def create_interface(self, root, controller):
+        tk.Frame.__init__(self, parent)
 
-        # ----------------Save and Cancel Buttons---------------
-        buttons_frame = tk.Frame(root)
-        buttons_frame.pack(fill='x', padx=10, pady=5)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # Create a canvas and a scrollbar
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        #  window in the canvas
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        # scrollbar to canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # row counter for grid management
+        row_counter = 2
+
+        # Use grid over pack for interface linking
+        canvas.grid(row=row_counter, column=0, sticky="nsew")
+        scrollbar.grid(row=row_counter, column=1, sticky="ns")
+        row_counter += 1
+
+        button1 = ttk.Button(self, text="General", 
+                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.grid(row=0, column=0, padx=5, pady=5)
+
+        button2 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
+
+        # -------------------- Save and Cancel Buttons --------------------
+
+        buttons_frame = tk.Frame(self)
+        buttons_frame.grid(row=row_counter, column=0, padx=10, pady=5)
+        row_counter += 1
 
         save_button = ttk.Button(buttons_frame, text="Save")
         save_button.pack(side='left', padx=5)
@@ -24,21 +63,24 @@ class People_Interface:
 
         # -------------------- Header --------------------
 
-        header_label = ttk.Label(root, text="PEOPLE ASSOCIATED WITH CASE", font=('Helvetica', 16))
-        header_label.pack(fill='x', padx=10, pady=10)
+        header_label = ttk.Label(self, text="PEOPLE ASSOCIATED WITH CASE", font=('Helvetica', 16))
+        header_label.grid(row=row_counter, column=0, padx=10, pady=10)
+        row_counter += 1
 
         # -------------------- Add Button --------------------
 
-        add_button_frame = tk.Frame(root)
-        add_button_frame.pack(fill='x', padx=10)
+        add_button_frame = tk.Frame(self)
+        add_button_frame.grid(row=row_counter, column=0, padx=10)
+        row_counter += 1
 
         add_button = ttk.Button(add_button_frame, text="+ Add")
         add_button.pack(side='left', padx=5)
 
         # -------------------- Main Table --------------------
 
-        table_frame = tk.Frame(root)
-        table_frame.pack(fill='both', expand=True, padx=10, pady=10)
+        table_frame = tk.Frame(self)
+        table_frame.grid(row=row_counter, column=0, padx=10, pady=10)
+        row_counter += 1
 
         # Define columns
         columns = ("Action", "Name", "Age", "Date of Birth", "Role", "Relationship To Victim", "Same Household", "Custody")
@@ -95,28 +137,28 @@ class People_Interface:
 
                 # Adjust x and y to be relative to root window
                 x_action, y_action, width_action, height_action = bbox_action
-                x_action += tree.winfo_rootx() - root.winfo_rootx()
-                y_action += tree.winfo_rooty() - root.winfo_rooty()
+                x_action += tree.winfo_rootx() - self.winfo_rootx()
+                y_action += tree.winfo_rooty() - self.winfo_rooty()
 
                 x_sh, y_sh, width_sh, height_sh = bbox_same_household
-                x_sh += tree.winfo_rootx() - root.winfo_rootx()
-                y_sh += tree.winfo_rooty() - root.winfo_rooty()
+                x_sh += tree.winfo_rootx() - self.winfo_rootx()
+                y_sh += tree.winfo_rooty() - self.winfo_rooty()
 
                 x_custody, y_custody, width_custody, height_custody = bbox_custody
-                x_custody += tree.winfo_rootx() - root.winfo_rootx()
-                y_custody += tree.winfo_rooty() - root.winfo_rooty()
+                x_custody += tree.winfo_rootx() - self.winfo_rootx()
+                y_custody += tree.winfo_rooty() - self.winfo_rooty()
 
                 if item not in action_widgets:
                     # Create the buttons
-                    edit_button = ttk.Button(root, text='Edit', command=lambda i=item: on_edit_press(i), style='Action.TButton')
-                    bio_button = ttk.Button(root, text='Bio', command=lambda i=item: on_bio_press(i), style='Action.TButton')
+                    edit_button = ttk.Button(self, text='Edit', command=lambda i=item: on_edit_press(i), style='Action.TButton')
+                    bio_button = ttk.Button(self, text='Bio', command=lambda i=item: on_bio_press(i), style='Action.TButton')
 
                     # Create the checkboxes
                     sh_var = tk.BooleanVar()
                     custody_var = tk.BooleanVar()
 
-                    sh_checkbox = ttk.Checkbutton(root, variable=sh_var)
-                    custody_checkbox = ttk.Checkbutton(root, variable=custody_var)
+                    sh_checkbox = ttk.Checkbutton(self, variable=sh_var)
+                    custody_checkbox = ttk.Checkbutton(self, variable=custody_var)
 
                     action_widgets[item] = {
                         'edit_button': edit_button,
@@ -164,15 +206,16 @@ class People_Interface:
                 del action_widgets[item]
 
             # Schedule the next update
-            root.after(100, update_action_buttons)
+            self.after(100, update_action_buttons)
 
         # Start the update loop
         update_action_buttons()
 
         # -------------------- Pagination Controls --------------------
 
-        pagination_frame = tk.Frame(root)
-        pagination_frame.pack(fill='x', padx=10, pady=5)
+        pagination_frame = tk.Frame(self)
+        pagination_frame.grid(row=row_counter, column=0, padx=10, pady=5)
+        row_counter += 1
 
         first_button = ttk.Button(pagination_frame, text="\u23EE")  # Black left-pointing double triangle with vertical bar
         first_button.pack(side='left', padx=2)
@@ -199,8 +242,9 @@ class People_Interface:
 
         # -------------------- Additional Checkbox and Comments --------------------
 
-        additional_frame = tk.Frame(root)
-        additional_frame.pack(fill='x', padx=10, pady=10)
+        additional_frame = tk.Frame(self)
+        additional_frame.grid(row=row_counter, column=0, padx=10, pady=10)
+        row_counter += 1
 
         checkbox_var = tk.BooleanVar()
         checkbox = ttk.Checkbutton(additional_frame, text="Alleged Offender Name Unknown", variable=checkbox_var)
@@ -211,10 +255,3 @@ class People_Interface:
 
         comments_text = tk.Text(additional_frame, height=5, width=100)
         comments_text.grid(row=2, column=0, pady=5, sticky='n')
-
-        # ------------------- Link to MH_basic_interface ----------------------------
-        link_frame = tk.Frame(root)
-        link_frame.pack(fill = 'x', padx=10, pady=10)
-
-        link_button = ttk.Button(link_frame, text="Go to MH_Basic_Interface", command=lambda: controller.show_frame("MH_Basic_Interface"))   # Black right-pointing double triangle with vertical bar
-        link_button.pack(side='left', padx=2)

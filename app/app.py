@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import Generaltab_interface
 import MH_basic_interface
+import people_interface
 
 class tkinterApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -15,7 +16,7 @@ class tkinterApp(tk.Tk):
         
         self.frames = {}
         
-        for F in (Generaltab_interface.GeneraltabInterface, MH_basic_interface.MHBasicInterface):
+        for F in (Generaltab_interface.GeneraltabInterface, MH_basic_interface.MHBasicInterface, people_interface.people_interface):
             frame = F(parent=container, controller=self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
@@ -23,7 +24,7 @@ class tkinterApp(tk.Tk):
         # For Testing
         #print(self.frame)
         
-        self.show_frame(Generaltab_interface.GeneraltabInterface)
+        self.show_frame(people_interface.people_interface)
             
     
     def show_frame(self, frame_class):

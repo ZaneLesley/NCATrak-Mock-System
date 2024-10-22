@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
+import MH_basic_interface
+import people_interface
 
 class GeneraltabInterface(tk.Frame):
     
@@ -14,10 +16,20 @@ class GeneraltabInterface(tk.Frame):
         
         # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
         # label.grid(row = 0, column=0, padx = 5, pady = 5)
+
+        navigation_pages = [GeneraltabInterface, MH_basic_interface.MHBasicInterface]
         
-        button1 = ttk.Button(self, text="Back to main page", 
+        button1 = ttk.Button(self, text="General", 
                             command=lambda: controller.show_frame(GeneraltabInterface))
         button1.grid(row=0, column=0, padx=5, pady=5)
+
+        button2 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface.people_interface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
         
         
         # Create a canvas and a scrollbar

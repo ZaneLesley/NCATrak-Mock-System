@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
 import Generaltab_interface
+import people_interface
 import sv_ttk
 
 class MHBasicInterface(tk.Frame):
@@ -35,9 +36,17 @@ class MHBasicInterface(tk.Frame):
         canvas.grid(row=2, column=0, sticky="nsew")
         scrollbar.grid(row=2, column=1, sticky="ns")
 
-        button1 = ttk.Button(self, text="Back to main page", 
+        button1 = ttk.Button(self, text="General", 
                             command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
         button1.grid(row=0, column=0, padx=5, pady=5)
+
+        button2 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MHBasicInterface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface.people_interface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
 
         # function for line numbering
         def create_line_numbered_label(frame, text, line_number):
