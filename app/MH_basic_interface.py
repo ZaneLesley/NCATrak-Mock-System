@@ -2,23 +2,21 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
+import Generaltab_interface
 import sv_ttk
 
-class MH_Basic_Interface:
+class MHBasicInterface:
 
-    def __init__(self, root, controller):
-        self.controller = controller
-        root.title("Mental Health Basic Tab")
-        root.geometry("1080x720")
-        sv_ttk.set_theme("dark")
-        self.create_interface(root)
-        self.run(root)
+    def __init__(self, parent, controller):
 
-    def create_interface(self, root):
+        tk.Frame.__init__(self, parent)
+
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
         # Create a canvas and a scrollbar
-        canvas = tk.Canvas(root)
-        scrollbar = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
 
         # Configure the canvas and scrollbar
@@ -37,6 +35,10 @@ class MH_Basic_Interface:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
+        button1 = ttk.Button(self, text="Back to main page", 
+                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.grid(row=0, column=0, padx=5, pady=5)
+
         # function for line numbering
         def create_line_numbered_label(frame, text, line_number):
             line_number_label = ttk.Label(frame, text=f"({line_number})")
@@ -53,7 +55,7 @@ class MH_Basic_Interface:
 
         # function to create a new personnel popup
         def add_personnel_popup():
-            popup = tk.Toplevel(root)
+            popup = tk.Toplevel(self)
             popup.title("New Personnel")
             popup.geometry("400x400")
 
@@ -108,7 +110,7 @@ class MH_Basic_Interface:
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
 
         def add_referral_source_popup():
-            popup = tk.Toplevel(root)
+            popup = tk.Toplevel(self)
             popup.title("New Referral Source")
             popup.geometry("400x400")
 
@@ -257,7 +259,7 @@ class MH_Basic_Interface:
 
         def add_provider_popup():
             # Create a new Toplevel window
-            popup = tk.Toplevel(root)
+            popup = tk.Toplevel(self)
             popup.title("Add Provider")
             popup.geometry("600x400")
 
@@ -328,7 +330,7 @@ class MH_Basic_Interface:
 
         def add_referral_popup():
             # Create a new Toplevel window
-            popup = tk.Toplevel(root)
+            popup = tk.Toplevel(self)
             popup.title("Add Referral")
             popup.geometry("400x300")
 
@@ -362,7 +364,7 @@ class MH_Basic_Interface:
         # function to add new point of contact popup for addintonal point of contact section
         def add_contact_popup():
             # Create a new Toplevel window
-            popup = tk.Toplevel(root)
+            popup = tk.Toplevel(self)
             popup.title("Add New Point of Contact")
             popup.geometry("400x300")
 
@@ -430,6 +432,3 @@ class MH_Basic_Interface:
         # Add placeholder for upload status (could be enhanced later)
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
-
-    def run(self, root):
-        root.mainloop()

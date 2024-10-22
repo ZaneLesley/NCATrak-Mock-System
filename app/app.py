@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import Generaltab_interface
+import MH_basic_interface
 
 class tkinterApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -16,6 +17,9 @@ class tkinterApp(tk.Tk):
         
         frame = Generaltab_interface.GeneraltabInterface(parent=container, controller=self)
         self.frames[Generaltab_interface.GeneraltabInterface] = frame
+
+        frame = MH_basic_interface.MHBasicInterface(parent=container, controller=self)
+        self.frames[MH_basic_interface.MHBasicInterface] = frame
         
         frame.grid(row=0, column=0, sticky="nsew")
         

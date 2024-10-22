@@ -12,17 +12,24 @@ class GeneraltabInterface(tk.Frame):
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
-        label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
-        label.grid(row = 0, column=0, padx = 5, pady = 5)
+        # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
+        # label.grid(row = 0, column=0, padx = 5, pady = 5)
         
         button1 = ttk.Button(self, text="Back to main page", 
                             command=lambda: controller.show_frame(GeneraltabInterface))
-        button1.grid(row=1, column=0, padx=5, pady=5)
+        button1.grid(row=0, column=0, padx=5, pady=5)
         
         
         # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
 
         widget_frame = ttk.Frame(self)
         widget_frame.grid(row=1, column=0, pady=20)
