@@ -15,19 +15,19 @@ class tkinterApp(tk.Tk):
         
         self.frames = {}
         
-        frame = Generaltab_interface.GeneraltabInterface(parent=container, controller=self)
-        self.frames[Generaltab_interface.GeneraltabInterface] = frame
-
-        frame = MH_basic_interface.MHBasicInterface(parent=container, controller=self)
-        self.frames[MH_basic_interface.MHBasicInterface] = frame
+        for F in (Generaltab_interface.GeneraltabInterface, MH_basic_interface.MHBasicInterface):
+            frame = F(parent=container, controller=self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky="nsew")
         
-        frame.grid(row=0, column=0, sticky="nsew")
+        # For Testing
+        #print(self.frame)
         
         self.show_frame(Generaltab_interface.GeneraltabInterface)
             
     
     def show_frame(self, frame_class):
-        frame = self.frames[frame_class]
+        frame = self.frames[frame_class] 
         frame.tkraise()
 
 if __name__ == "__main__":
