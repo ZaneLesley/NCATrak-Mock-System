@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 import Generaltab_interface
 import MH_basic_interface
+import MH_assessment
+import MH_treatmentPlan_interface
+import va_tab_interface
 
 class people_interface(tk.Frame):
 
@@ -41,13 +44,25 @@ class people_interface(tk.Frame):
                             command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
         button1.grid(row=0, column=0, padx=5, pady=5)
 
-        button2 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button2 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface))
         button2.grid(row=0, column=1, padx=5, pady=5)
 
-        button3 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface))
+        button3 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
         button3.grid(row=0, column=2, padx=5, pady=5)
+
+        button4 = ttk.Button(self, text="Mental Health - Assessment", 
+                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
+        button4.grid(row=0, column=3, padx=5, pady=5)
+
+        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
+                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
+        button5.grid(row=0, column=4, padx=5, pady=5)
+
+        button6 = ttk.Button(self, text="VA", 
+                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
+        button6.grid(row=0, column=5, padx=5, pady=5)
 
         # -------------------- Save and Cancel Buttons --------------------
 

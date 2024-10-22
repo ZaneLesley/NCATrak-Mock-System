@@ -4,6 +4,9 @@ from tkinter import filedialog
 from tkcalendar import DateEntry
 import Generaltab_interface
 import people_interface
+import MH_assessment
+import MH_treatmentPlan_interface
+import va_tab_interface
 import sv_ttk
 
 class MHBasicInterface(tk.Frame):
@@ -40,13 +43,25 @@ class MHBasicInterface(tk.Frame):
                             command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
         button1.grid(row=0, column=0, padx=5, pady=5)
 
-        button2 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MHBasicInterface))
+        button2 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface.people_interface))
         button2.grid(row=0, column=1, padx=5, pady=5)
 
-        button3 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
+        button3 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MHBasicInterface))
         button3.grid(row=0, column=2, padx=5, pady=5)
+
+        button4 = ttk.Button(self, text="Mental Health - Assessment", 
+                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
+        button4.grid(row=0, column=3, padx=5, pady=5)
+
+        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
+                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
+        button5.grid(row=0, column=4, padx=5, pady=5)
+
+        button6 = ttk.Button(self, text="VA", 
+                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
+        button6.grid(row=0, column=5, padx=5, pady=5)
 
         # function for line numbering
         def create_line_numbered_label(frame, text, line_number):
