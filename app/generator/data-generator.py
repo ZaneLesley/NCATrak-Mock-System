@@ -18,8 +18,8 @@ PERSON_AGE_CUTOFF = 15
 
 # Data Tables table name + data = variable name, refer to .xlsx for tables
 #FIXME: fix some of the table names here
-cac_data = []
-agency_data = []
+cac_agency_data = []
+child_advocacy_center_data = []
 person_data = []
 case_person_data = []
 cac_case_data = []
@@ -87,12 +87,62 @@ assessment_instrument = [
 (18, "CSBI", "SASI (T-SCORE)"),
 (19, "Eyberg Child Behavior", "Intensity Raw Score")
 ]
+
+# (id, name)
+treatment_models = [
+(0, "AF-CBT", "Assertiveness"),
+(1, "AF-CBT",	"Assessment"),
+(2, "AF-CBT",	"Behavior Recognition and Management"),
+(3, "AF-CBT",	"Clarification"),
+(4, "AF-CBT", "Communication"),
+(5, "AF-CBT", "Emotional Regulation"),
+(6, "AF-CBT", "Graduation"),
+(7, "AF-CBT", "Imaginal Exposure"),
+(8, "AF-CBT", "Orientation"),
+(9, "AF-CBT", "Problem-Solving"),
+(10, "AF-CBT", "Psychoeducation"),
+(11, "AF-CBT", "Reviewing Thoughts"),
+(12, "AF-CBT", "Social Skills")
+]
+
+# (Attribute Group, Attributes)
+attribute = [
+("Client Affect",	"Apathetic"),
+("Client Affect",	"Appropriate"),
+("Client Affect",	"Blunted"),
+("Client Affect",	"Exaggerated"),
+("Client Affect",	"Flat"),
+("Client Affect",	"Inappropriate"),
+("Client Affect",	"Irritable"),
+("Client Affect",	"Labile"),
+("Client Affect",	"Other"),
+("Client Affect",	"Pleasant"),
+("Client Affect",	"Stabile"),
+("Client Mood",	"Angry"),
+("Client Mood",	"Anxious"),
+("Client Mood",	"Depressed"),
+("Client Mood",	"Euphoric"),
+("Client Mood",	"Euthymic"),
+("Client Mood",	"Other"),
+("Homicidal Ideation",	"Homicidal Ideation"),
+("Homicidal Ideation",	"No Homicidal Ideation"),
+("Suicidal Ideation",	"Not Suicidal"),
+("Suicidal Ideation",	"Suicidal Ideation"),
+("Suicidal Ideation",	"Suicidal Ideation and Plan"),
+("Treatment Plan Progress",	"Met/Exceeded"),
+("Treatment Plan Progress",	"Minimal"),
+("Treatment Plan Progress",	"Moderate"),
+("Treatment Plan Progress",	"None"),
+("Treatment Plan Progress",	"Significant")
+]
+
+
 # CAC_AGENCY
 def generate_cac_agency():
     data = []
     fake = Faker()
     fake.seed_instance(0)
-    for cac in cac_data:
+    for cac in cac_agency_data:
         for _ in range(CAC_TO_AGENCY_RATIO):
             agency = {}
             # Data to be generated
@@ -106,7 +156,7 @@ def generate_cac_agency():
             agency["state_abbr"] = random.choice(state_abbreviations)
             agency["phone_number"] = fake.unique.numerify("(###)###-####")
             agency["zip_code"] = fake.postalcode()
-            agency_data.append(agency)
+            child_advocacy_center_data.append(agency)
 
 # child_advocacy_center
 def generate_child_advocacy_center():
@@ -124,7 +174,7 @@ def generate_child_advocacy_center():
         cac["state_abbr"] = random.choice(state_abbreviations)
         cac["phone_number"] = fake.unique.numerify("(###)###-####")
         cac["zip_code"] = fake.postalcode()
-        cac_data.append(cac)
+        cac_agency_data.append(cac)
 
 # TODO: Fix Nones
 def generate_person(amount: int):
@@ -133,7 +183,7 @@ def generate_person(amount: int):
     for _ in range(amount):
         person = {}
         
-        person["cac_id"] = random.choice(cac_data)["cac_id"]        # Choose a random cac
+        person["cac_id"] = random.choice(cac_agency_data)["cac_id"]        # Choose a random cac
         person["person_id"] = fake.unique.random_number(digits=10)
         # Generates a male or female randomly.
         x = 0 if fake.random_int(min=0, max=1) == 0 else 1
@@ -191,7 +241,7 @@ def generator_case_person(amount: int):
         case["education_level"] = school_data["level"] if age < 18 else random.choice(["GED", "No_GED", "Associates", "Bachelors", "Masters", "Doctorate"])
         case["income_level"] = random.choice(["Low", "Medium", "High"])
         #FIXME: AGE CHECK PLEASE ZANE
-        case["martial_status"] = random.choice(["Single", "Married", "Divocred", "Widowed", "Seperated", "Anullued"])
+        case["martial_status"] = random.choice(["Single", "Married", "Divorced", "Widowed", "Seperated", "Anullued"])
         #TODO: Get Clarification
         case["relationship"] = "placeholder"
         case["case_role"] = random.choice(["Victim", "Family", "Aggressor"])
@@ -258,7 +308,7 @@ def generator_case_va_session_log(amount: int):
         session["case_id"] = person["case_id"]
         session["case_va_session_id"] = fake.unique.random_number(digits = 9)
         session["start_time"], session["end_time"] = util.generate_meeting_times()
-        session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=agency_data, value="agency_id")
+        session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
         #[ ] Not sure if this is the right format for this object, need to check.
         session["session_date"] = fake.date_time_between(start_date=datetime.strptime(person["cac_recieved_date"], "%Y-%m-%d"))
         session["session_status"] = fake.random_int(min=0, max=7)
@@ -314,14 +364,14 @@ def generator_case_mh_assessments(amount: int):
         assessment["case_id"] = case["case_id"]
         #FIXME: Ask about this value
         assessment["assessment_id"] = fake.unique.random_number(digits = 6)
-        assessment["mh_provider_agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=agency_data, value="agency_id")
+        assessment["mh_provider_agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
         #FIXME: What does this mean
         assessment["timing_id"] = None
         #FIXME: repeat, what to do here
         # asssessment["assessment_id"] = ...
         #TODO: Fill in
         assessment["session_date"] = None
-        assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=agency_data, value="agency_id")
+        assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
         assessment["provider_employee_id"] = None
         temp = random.choice(assessment_instrument)
         assessment["assessment_instrument_id"] = temp[0]
@@ -340,8 +390,8 @@ def generator_case_mh_assessment_measure_scores(amount: int):
         assessment["case_id"] = case["case_id"]
         assessment["assessment_id"] = case["assessment_id"]
         assessment["instruments_id"] = case["assessment_instrument_id"]
-        # FIXME: pick a value
-        assessment["mh_assessment_scores"] = None
+        # FIXME: determine a way to get specific values (from a, b depending on description)
+        assessment["mh_assessment_scores"] = fake.random_int(min=0, max=100)
         
         case_mh_assessment_measure_scores_data.append(assessment)
 
@@ -407,6 +457,76 @@ def generator_mh_treatment_plan(amount: int):
         
         case_mh_treatment_plans_data.append(treatment)
         
+# FIXME: Maybe Review and ensure this one is correct with case vs person
+def generator_mh_session_attendee(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        person = random.choice(person_data)
+        session = {}
+        session["person_id"] = person["person_id"]
+        session["cac_id"] = person["cac_id"]
+        session["case_mh_session_attendee_id"] = fake.unique.random_number(digits = 8)  
+        session["case_mh_session_id"] = util.find_column(key = session["cac_id"], column="cac_id", table=case_mh_session_log_enc_data, value="case_mh_session_id")
+        
+        case_mh_session_attendee_data.append(session)
+    
+def generator_mh_session_attribute_group(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        attendee = random.choice(case_mh_session_attendee_data)
+        group = {}
+        group["id"] = fake.unique.random_number(digits = 7)
+        group["cac_id"] = attendee["cac_id"]
+        group["case_id"] = util.find_column(key = group["cac_id"], column="cac_id", table=cac_case_data, value="case_id")
+        group["case_mh_session_id"] = attendee["case_mh_session_id"]
+        temp = random.choice(attribute)
+        group["Description"] = temp[0]
+        group["Attributes"] = temp[1]
+        group["value"] = fake.random_int(min=0, max=100)
+        
+        case_mh_attribute_group_data.append(group)
+        
+def generator_mh_provider_log(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        case = random.choice(cac_case_data)
+        log = {}
+        log["agency_id"] = None
+        log["case_id"] = case["case_id"]
+        log["case_number"] = case["case_number"]
+        log["id"] = fake.unique.random_number(digits = 5)
+        log["lead_employee_id"] = None
+        log["therapy_accepted"] = None
+        log["therapy_complete_date"] = None
+        log["therapy_end_reason_id"] = None
+        log["therapy_offered_date"] = None
+        log["therapy_record_created"] = None
+        
+        case_mh_provider_log_data.append(log)
+        
+def generator_mh_service_barriers(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(amount):
+        barrier = {}
+        barrier["id"] = fake.unique.random_number(digits = 10)
+        barrier["number_of_miles"] = None
+        barrier["barrier_id"] = None
+        
+        case_mh_service_barriers_data.append(barrier)
+        
+def generator_mh_treatment_models(amount: int):
+    fake = Faker()
+    fake.seed_instance(0)
+    for temp in treatment_models:
+        instrument = {}
+        instrument["id"] = temp[0]
+        instrument["Name"] = temp[1]
+        
+        case_mh_treatment_models_data.append(instrument)
         
 if __name__ == "__main__":
     print("[bold blue]NCA-Trak-Mock Data Generator")
@@ -423,15 +543,62 @@ if __name__ == "__main__":
     generator_case_va_session_log(amount=n // 2)
     generator_case_va_session_attendee(amount=n // 4)
     generator_case_va_session_service(n // 4)
-
+    generator_case_mh_assessments_instruments(n // 4)
+    generator_case_mh_assessments(n // 4)
+    generator_case_mh_assessment_measure_scores(n // 4)
+    generator_mh_assessment_diagnosis_log(n // 4)
+    generator_mh_session_log_enc(n // 4)
+    generator_mh_treatment_plan(n // 4)
+    generator_mh_session_attendee(n // 4)
+    generator_mh_session_attribute_group(n // 4)
+    generator_mh_provider_log(n // 4)
+    generator_mh_service_barriers(n // 4)
+    generator_mh_treatment_models(n // 4)
+    
+    util.write_to_csv(dict=cac_agency_data, name="cac_agency_data")
+    util.write_to_csv(dict=child_advocacy_center_data, name="child_advocacy_center_data")
+    util.write_to_csv(dict=person_data, name="person_data")
+    util.write_to_csv(dict=case_person_data, name="case_person_data")
+    util.write_to_csv(dict=cac_case_data, name="cac_case_data")
+    util.write_to_csv(dict=case_va_session_log_data, name="case_va_session_log_data")
+    util.write_to_csv(dict=case_va_session_attendee_data, name="case_va_session_attendee_data")
+    util.write_to_csv(dict=case_va_session_service_data, name="case_va_session_service_data")
+    util.write_to_csv(dict=case_mh_assessments_data, name="case_mh_assessments_data")
+    util.write_to_csv(dict=case_mh_assessment_instruments_data, name="case_mh_assessment_instruments_data")
+    util.write_to_csv(dict=case_mh_assessment_measure_scores_data, name="case_mh_assessment_measure_scores_data")
+    util.write_to_csv(dict=case_mh_diagonosis_log_data, name="case_mh_diagonosis_log_data")
+    util.write_to_csv(dict=case_mh_session_log_enc_data, name="case_mh_session_log_enc_data")
+    util.write_to_csv(dict=case_mh_treatment_plans_data, name="case_mh_treatment_plans_data")
+    util.write_to_csv(dict=case_mh_session_attendee_data, name="case_mh_session_attendee_data")
+    util.write_to_csv(dict=case_mh_attribute_group_data, name="case_mh_attribute_group_data")
+    util.write_to_csv(dict=case_mh_provider_log_data, name="case_mh_provider_log_data")
+    util.write_to_csv(dict=case_mh_service_barriers_data, name="case_mh_service_barriers_data")
+    util.write_to_csv(dict=case_mh_treatment_models_data, name="case_mh_treatment_models_data")
+    #util.write_to_csv(dict=state_data, name="state_data")
+    #util.write_to_csv(dict=employee_data, name="employee_data")
+    #util.write_to_csv(dict=employee_account_data, name="employee_account_data")
     
     # Print Testing
     #print(cac_data)
     #print(agency_data)
     #print(person_data)
     #print(case_person_data)
-    print(cac_case_data)
-    print(case_va_session_log_data)
-    print(case_va_session_attendee_data)
-    print(case_va_session_service_data)
+    #print(cac_case_data)
+    #print(case_va_session_log_data)
+    #print(case_va_session_attendee_data)
+    #print(case_va_session_service_data)
+    #print(case_mh_assessments_data)
+    #print(case_mh_assessment_instruments_data)
+    #print(case_mh_assessment_measure_scores_data)
+    #print(case_mh_diagonosis_log_data)
+    #print(case_mh_session_log_enc_data)
+    #print(case_mh_treatment_plans_data)
+    #print(case_mh_session_attendee_data)
+    #print(case_mh_attribute_group_data)
+    #print(case_mh_provider_log_data)
+    #print(case_mh_service_barriers_data)
+    #print(case_mh_treatment_models_data)
+    #print(state_data)
+    #print(employee_data)
+    #print(employee_account_data)
     
