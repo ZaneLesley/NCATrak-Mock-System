@@ -1,15 +1,6 @@
 import psycopg2
+import os
 from config import load_config
-
-def execute_command(command):
-
-    try:
-        config = load_config()
-        with psycopg2.connect(**config) as conn:
-            with conn.cursor() as cur:
-                cur.execute(command)
-    except (psycopg2.DatabaseError, Exception) as error:
-        print(error)
 
 tables_to_create = [
     "state",
@@ -32,29 +23,42 @@ tables_to_create = [
     "case_mh_assessment_diagnosis",
     "case_mh_treatment_model",
     "case_mh_treatment_plan",
-    "case_mh_provider"
+    "case_mh_provider",
     "case_mh_service_barriers"
 ]
 
-if __name__ == '__main__':
+# Wrapper function to simplify syntax for calling a try-except block with the database connection
+def execute_command(command):
 
+    try:
+        config = load_config()
+        with psycopg2.connect(**config) as conn:
+            with conn.cursor() as cur:
+                cur.execute(command)
+    except (psycopg2.DatabaseError, Exception) as error:
+        print(error)
+
+if __name__ == '__main__':
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    
     # Delete all existing tables so the new database can be built
     print("Deleting old database tables...")
-    delete_tables_file = open("app/database/delete_tables.sql", "r")
-    commands = delete_tables_file.read().split(";")
-    for command in commands:
-        if not command == "":
-            execute_command(command)
-    delete_tables_file.close()
-    
-    for table_name in tables_to_create:
-        print(f"Creating new table {table_name}")
-        sql_file_name = f"app/database/data_tables/{table_name}_table.sql"
-        sql_file = open(sql_file_name, "r")
-        commands = sql_file.read().split(";")
+    delete_tables_file_path = os.path.join(base_dir, "delete_tables.sql")
+    with open(delete_tables_file_path, "r") as delete_tables_file:
+        commands = delete_tables_file.read().split(";")
         for command in commands:
             if not command == "":
                 execute_command(command)
-        sql_file.close()
+        delete_tables_file.close()
+    
+    # Create new tables from the above list
+    for table_name in tables_to_create:
+        print(f"Creating new table {table_name}")
+        sql_file_path = os.path.join(base_dir, "data_tables", f"{table_name}_table.sql")
+        with open(sql_file_path, "r") as sql_file:
+            commands = sql_file.read().split(";")
+            for command in commands:
+                if not command == "":
+                    execute_command(command)
 
     print("All database tables created. Databases will need to be repopulated using generated data.")
