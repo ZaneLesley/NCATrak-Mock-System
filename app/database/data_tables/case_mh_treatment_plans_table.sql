@@ -1,13 +1,13 @@
-CREATE TABLE case_mh_treatment_plan (
-    treatment_plan_id INTEGER PRIMARY KEY,
+CREATE TABLE case_mh_treatment_plans (
+    authorized_status_id INTEGER,
     cac_id SMALLINT NOT NULL,
     case_id INTEGER NOT NULL,
-    authorized_status_id INTEGER,
     duration INTEGER,
     duration_unit VARCHAR(255),
-    planned_start_date DATE,
+    id INTEGER PRIMARY KEY,
     planned_end_date DATE,
     planned_review_date DATE,
+    planned_start_date DATE,
     provider_agency_id INTEGER,
     provider_employee_id INTEGER,
     treatment_model_id INTEGER,
