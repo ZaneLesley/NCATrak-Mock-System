@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 import random
-import csv
 import os
 from rich import print
+import pandas as pd
 
 # Function to generate random start and end times within the range
 def generate_meeting_times():
@@ -25,16 +25,13 @@ def find_column(key: str, column: str, table: list, value: str) -> dict:
             return item[value]
     return None
 
-def write_to_csv(dict: list, name: str):
-    filename = name + ".csv"
+def write_to_csv(data: list, name: str):
+    df = pd.DataFrame(data)
+    
     folder = "csvs"
     os.makedirs(folder, exist_ok=True)
     filename = os.path.join(folder, name + ".csv")
     
-    with open(filename, mode='w', newline='') as file:
-        writer = csv.DictWriter(file, fieldnames=dict[0].keys())
-        writer.writeheader()
-        writer.writerows(dict)
-    
+    df.to_csv(filename, index=False)    
     print(f"[green]Successfully wrote data to {filename}.")
     

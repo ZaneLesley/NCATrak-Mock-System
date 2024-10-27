@@ -6,6 +6,5 @@ CREATE TABLE child_advocacy_center (
     city VARCHAR(20),
     state_abbr VARCHAR(2),
     phone_number VARCHAR(20),
-    zip_code VARCHAR(20),
-    FOREIGN KEY(state_abbr) REFERENCES state_table(state_abbr)
+    zip_code VARCHAR(20)
 );

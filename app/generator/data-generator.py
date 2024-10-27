@@ -18,8 +18,8 @@ PERSON_AGE_CUTOFF = 15
 
 # Data Tables table name + data = variable name, refer to .xlsx for tables
 #FIXME: fix some of the table names here
-cac_agency_data = []
 child_advocacy_center_data = []
+cac_agency_data = []
 person_data = []
 case_person_data = []
 cac_case_data = []
@@ -137,7 +137,7 @@ attribute = [
 ]
 
 # child_advocacy_center
-def generate_child_advocacy_center():
+def generate_cac_agency():
     fake = Faker()
     fake.seed_instance(0)
     for _ in range(CAC_TO_GENERATE):
@@ -152,14 +152,14 @@ def generate_child_advocacy_center():
         cac["state_abbr"] = random.choice(state_abbreviations)
         cac["phone_number"] = fake.unique.numerify("(###)###-####")
         cac["zip_code"] = fake.postalcode()
-        cac_agency_data.append(cac)
+        child_advocacy_center_data.append(cac)
 
 # CAC_AGENCY
-def generate_cac_agency():
+def generate_child_advocacy_center():
     data = []
     fake = Faker()
     fake.seed_instance(0)
-    for cac in cac_agency_data:
+    for cac in child_advocacy_center_data:
         for _ in range(CAC_TO_AGENCY_RATIO):
             agency = {}
             # Data to be generated
@@ -173,7 +173,7 @@ def generate_cac_agency():
             agency["state_abbr"] = random.choice(state_abbreviations)
             agency["phone_number"] = fake.unique.numerify("(###)###-####")
             agency["zip_code"] = fake.postalcode()
-            child_advocacy_center_data.append(agency)
+            cac_agency_data.append(agency)
 
 # TODO: Fix Nones
 def generate_person(amount: int):
@@ -182,7 +182,7 @@ def generate_person(amount: int):
     for _ in range(amount):
         person = {}
         
-        person["cac_id"] = random.choice(cac_agency_data)["cac_id"]        # Choose a random cac
+        person["cac_id"] = random.choice(child_advocacy_center_data)["cac_id"]        # Choose a random cac
         person["person_id"] = fake.unique.random_number(digits=10)
         # Generates a male or female randomly.
         x = 0 if fake.random_int(min=0, max=1) == 0 else 1
@@ -297,8 +297,7 @@ def generator_cac_case(amount: int):
         case["va_services_end_date"] = None
         case["va_services_offered_date"] = None
         cac_case_data.append(case)
-        
-        
+         
 def generator_case_va_session_log(amount: int):
     fake = Faker()
     fake.seed_instance(0)
@@ -309,7 +308,7 @@ def generator_case_va_session_log(amount: int):
         session["case_id"] = person["case_id"]
         session["case_va_session_id"] = fake.unique.random_number(digits = 9)
         session["start_time"], session["end_time"] = util.generate_meeting_times()
-        session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
+        session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         #[ ] Not sure if this is the right format for this object, need to check.
         session["session_date"] = fake.date_time_between(start_date=person["cac_recieved_date"])
         session["session_status"] = fake.random_int(min=0, max=7)
@@ -365,7 +364,7 @@ def generator_case_mh_assessments(amount: int):
         assessment["case_id"] = case["case_id"]
         #FIXME: Ask about this value
         assessment["assessment_id"] = fake.unique.random_number(digits = 6)
-        assessment["mh_provider_agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
+        assessment["mh_provider_agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         #FIXME: What does this mean
         assessment["timing_id"] = None
         #FIXME: repeat, what to do here
@@ -373,7 +372,7 @@ def generator_case_mh_assessments(amount: int):
         #TODO: Fill in
         assessment["session_date"] = None
         assessment["assessment_date"] = None
-        assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
+        assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         assessment["provider_employee_id"] = None
         temp = random.choice(assessment_instrument)
         assessment["assessment_instrument_id"] = temp[0]
@@ -497,7 +496,7 @@ def generator_mh_provider_log(amount: int):
     for _ in range(amount):
         case = random.choice(cac_case_data)
         log = {}
-        log["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
+        log["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         log["case_id"] = case["case_id"]
         log["case_number"] = case["case_number"]
         log["id"] = fake.unique.random_number(digits = 5)
@@ -539,8 +538,8 @@ if __name__ == "__main__":
     print("[yellow]Generating Data...")
     # Call to make
     # TODO: Clean up calls, idk how yet...
-    generate_child_advocacy_center()
     generate_cac_agency()
+    generate_child_advocacy_center()
     generate_person(amount = n)
     generator_case_person(amount= n * n)
     generator_cac_case(amount= n)
@@ -559,34 +558,33 @@ if __name__ == "__main__":
     generator_mh_service_barriers(n // 4)
     generator_mh_treatment_models(n // 4)
     
-    """
-    util.write_to_csv(dict=cac_agency_data, name="cac_agency_data")
-    util.write_to_csv(dict=child_advocacy_center_data, name="child_advocacy_center_data")
-    util.write_to_csv(dict=person_data, name="person_data")
-    util.write_to_csv(dict=case_person_data, name="case_person_data")
-    util.write_to_csv(dict=cac_case_data, name="cac_case_data")
-    util.write_to_csv(dict=case_va_session_log_data, name="case_va_session_log_data")
-    util.write_to_csv(dict=case_va_session_attendee_data, name="case_va_session_attendee_data")
-    util.write_to_csv(dict=case_va_session_service_data, name="case_va_session_service_data")
-    util.write_to_csv(dict=case_mh_assessments_data, name="case_mh_assessments_data")
-    util.write_to_csv(dict=case_mh_assessment_instruments_data, name="case_mh_assessment_instruments_data")
-    util.write_to_csv(dict=case_mh_assessment_measure_scores_data, name="case_mh_assessment_measure_scores_data")
-    util.write_to_csv(dict=case_mh_diagonosis_log_data, name="case_mh_diagonosis_log_data")
-    util.write_to_csv(dict=case_mh_session_log_enc_data, name="case_mh_session_log_enc_data")
-    util.write_to_csv(dict=case_mh_treatment_plans_data, name="case_mh_treatment_plans_data")
-    util.write_to_csv(dict=case_mh_session_attendee_data, name="case_mh_session_attendee_data")
-    util.write_to_csv(dict=case_mh_attribute_group_data, name="case_mh_attribute_group_data")
-    util.write_to_csv(dict=case_mh_provider_log_data, name="case_mh_provider_log_data")
-    util.write_to_csv(dict=case_mh_service_barriers_data, name="case_mh_service_barriers_data")
-    util.write_to_csv(dict=case_mh_treatment_models_data, name="case_mh_treatment_models_data")
+    util.write_to_csv(data=cac_agency_data, name="cac_agency_data")
+    util.write_to_csv(data=child_advocacy_center_data, name="child_advocacy_center_data")
+    util.write_to_csv(data=person_data, name="person_data")
+    util.write_to_csv(data=case_person_data, name="case_person_data")
+    util.write_to_csv(data=cac_case_data, name="cac_case_data")
+    util.write_to_csv(data=case_va_session_log_data, name="case_va_session_log_data")
+    util.write_to_csv(data=case_va_session_attendee_data, name="case_va_session_attendee_data")
+    util.write_to_csv(data=case_va_session_service_data, name="case_va_session_service_data")
+    util.write_to_csv(data=case_mh_assessments_data, name="case_mh_assessments_data")
+    util.write_to_csv(data=case_mh_assessment_instruments_data, name="case_mh_assessment_instruments_data")
+    util.write_to_csv(data=case_mh_assessment_measure_scores_data, name="case_mh_assessment_measure_scores_data")
+    util.write_to_csv(data=case_mh_diagonosis_log_data, name="case_mh_diagonosis_log_data")
+    util.write_to_csv(data=case_mh_session_log_enc_data, name="case_mh_session_log_enc_data")
+    util.write_to_csv(data=case_mh_treatment_plans_data, name="case_mh_treatment_plans_data")
+    util.write_to_csv(data=case_mh_session_attendee_data, name="case_mh_session_attendee_data")
+    util.write_to_csv(data=case_mh_attribute_group_data, name="case_mh_attribute_group_data")
+    util.write_to_csv(data=case_mh_provider_log_data, name="case_mh_provider_log_data")
+    util.write_to_csv(data=case_mh_service_barriers_data, name="case_mh_service_barriers_data")
+    util.write_to_csv(data=case_mh_treatment_models_data, name="case_mh_treatment_models_data")
     #util.write_to_csv(dict=state_data, name="state_data")
     #util.write_to_csv(dict=employee_data, name="employee_data")
     #util.write_to_csv(dict=employee_account_data, name="employee_account_data")
-    """
-    
     # Print Testing
+    """
     for key, value in case_mh_session_attendee_data[0].items():
         print(f"Key: {key}, {type(value)}, value: {value}")
+    """
     #print(cac_agency_data)
     #print(child_advocacy_center_data)
     #print(person_data)
