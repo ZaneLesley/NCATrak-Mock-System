@@ -8,6 +8,5 @@ CREATE TABLE cac_agency (
     state_abbr VARCHAR(2),
     phone_number VARCHAR(20),
     zip_code VARCHAR(20),
-    FOREIGN KEY(cac_id) REFERENCES child_advocacy_center(cac_id),
-    FOREIGN KEY(state_abbr) REFERENCES state_table(state_abbr)
+    FOREIGN KEY(cac_id) REFERENCES child_advocacy_center(cac_id)
 );

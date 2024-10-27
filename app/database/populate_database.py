@@ -86,4 +86,7 @@ if __name__ == '__main__':
         with open(data_file_path, "r") as file:
             df = pd.read_csv(file)
             data = [tuple(row) for row in df.itertuples(index=False, name=None)]
+            file.close()
+        
         execute_command(insert_query, data, name=table_name[0])
+        
