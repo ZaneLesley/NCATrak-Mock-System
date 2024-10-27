@@ -41,21 +41,6 @@ state_data = []
 employee_data = []
 employee_account_data = []
 
-# Custom Fields
-religions = ["Christianity", "Islam", "Hinduism", "Buddhism", "Other"]
-
-races = [
-    "White",
-    "Black or African American",
-    "Asian",
-    "Hispanic or Latino",
-    "Native American",
-    "Pacific Islander",
-    "Middle Eastern",
-    "Mixed Race",
-    "Other",
-]
-
 state_abbreviations = [
 "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
 "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
@@ -183,81 +168,38 @@ def generate_person(amount: int):
         person = {}
         
         person["cac_id"] = random.choice(child_advocacy_center_data)["cac_id"]        # Choose a random cac
-        person["person_id"] = fake.unique.random_number(digits=10)
+        person["person_id"] = fake.unique.random_number(digits=9)
         # Generates a male or female randomly.
         x = 0 if fake.random_int(min=0, max=1) == 0 else 1
         person["first_name"] = fake.first_name_male() if x == 0 else fake.first_name_female()
-        person["middle_initial"] = fake.first_name_male()[0]  # Middle Initial
+        person["middle_initial"] = fake.first_name_male() if x == 0 else fake.first_name_female()
         person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
         person["suffix"] = None
-        person["birthdate"] = fake.date_of_birth(minimum_age=3, maximum_age=100).strftime('%d-%m-%Y')
+        person["date_of_birth"] = fake.date_of_birth(minimum_age=3, maximum_age=100)
         #TODO: Put this in a utility file
-        birthdate = datetime.strptime(person["birthdate"], '%d-%m-%Y')
+        birthdate = person["date_of_birth"]
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
         person["gender"] = "M" if x == 0 else "F"
-        person["language"] = fake.language_name()
-        person["race"] = random.choice(races)
-        person["religion"] = random.choice(religions)
+        person["language_id"] = None
+        person["race_id"] = None
+        person["religion_id"] = None
         person["prior_convictions"] = False if (age <= PERSON_AGE_CUTOFF) else fake.boolean(chance_of_getting_true = 10)
         person["convicted_against_children"] = False if (age <= PERSON_AGE_CUTOFF) else fake.boolean(chance_of_getting_true = 10)
         person["sexual_offender"] = False if (age <= PERSON_AGE_CUTOFF) else fake.boolean(chance_of_getting_true = 10)
         person["sexual_predator"] = False if (age <= PERSON_AGE_CUTOFF) else fake.boolean(chance_of_getting_true = 10)
         person_data.append(person)
 
-#TODO: Figure out how this exactly works, is there multiple of these types of cases per person.
-def generator_case_person(amount: int):
-    fake = Faker()
-    fake.add_provider(SchoolProvider)
-    fake.seed_instance(0)
-    for _ in range(amount):
-        person  = random.choice(person_data)   
-        case = {}
-             
-        case["person_id"] = person["person_id"]
-        case["case_id"] = fake.unique.random_number(digits = 9)
-        case["cac_id"] = person["cac_id"]
-        birthdate = datetime.strptime(person["birthdate"], '%d-%m-%Y')
-        today = datetime.today()
-        age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
-        # TODO: Check if it is Months / Days
-        case["age"] = age
-        case["age_unit"] = "year"
-        case["addr_line_1"] = fake.street_address()
-        case["addr_line_2"] = None
-        city = fake.unique.city()
-        case["city"] = city
-        case["state_abbr"] = random.choice(state_abbreviations)
-        case["zip_code"] = fake.postalcode()
-        case["phone_number"] = fake.unique.numerify("(###)###-####")
-        #FIXME: Set Chances / NULL
-        case["phone_number"] = fake.unique.numerify("(###)###-####")
-        case["phone_number"] = fake.unique.numerify("(###)###-####")
-        school_data = fake.school_object()
-        case["school_or_employer"] = school_data["school"] if age < 18 else fake.job()
-        case["custody"] = fake.boolean()
-        #TODO: Get Clarification on these
-        case["education_level"] = school_data["level"] if age < 18 else random.choice(["GED", "No_GED", "Associates", "Bachelors", "Masters", "Doctorate"])
-        case["income_level"] = random.choice(["Low", "Medium", "High"])
-        #FIXME: AGE CHECK PLEASE ZANE
-        case["martial_status"] = random.choice(["Single", "Married", "Divorced", "Widowed", "Seperated", "Anullued"])
-        #TODO: Get Clarification
-        case["relationship"] = "placeholder"
-        case["case_role"] = random.choice(["Victim", "Family", "Aggressor"])
-        case["same_household"] = fake.boolean()
-        case["victim_status_id"] = fake.unique.random_number(digits = 8)
-        case_person_data.append(case)
-        
 def generator_cac_case(amount: int):
     fake = Faker()
     fake.seed_instance(0)
     counter = 0
     for _ in range(amount):
-        person = random.choice(case_person_data)
+        person = random.choice(person_data)
         case = {}
         
         case["cac_id"] = person["cac_id"]
-        case["case_id"] = person["case_id"]
+        case["case_id"] = fake.unique.random_number(digits = 9)
         # Autogenerated case number that contains the year the case was created 
         # followed by a dash and an sequential integer indicating the ordinal value that the case was entered.
         case_date = fake.date_object()
@@ -297,6 +239,49 @@ def generator_cac_case(amount: int):
         case["va_services_end_date"] = None
         case["va_services_offered_date"] = None
         cac_case_data.append(case)
+        
+#TODO: Figure out how this exactly works, is there multiple of these types of cases per person.
+def generator_case_person(amount: int):
+    fake = Faker()
+    fake.add_provider(SchoolProvider)
+    fake.seed_instance(0)
+    temp = cac_case_data.copy()
+    for _ in range(amount):
+        person  = random.choice(temp)
+        temp.remove(person)   
+        case = {}
+
+        # FIXME: Is the person ID unique?
+        case["person_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=person_data, value="person_id")
+        case["case_id"] = person["case_id"]
+        case["cac_id"] = person["cac_id"]
+        birthdate = util.find_column(key = person["cac_id"], column="cac_id", table=person_data, value="date_of_birth")
+        today = datetime.today()
+        age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
+        # TODO: Check if it is Months / Days
+        case["age"] = age
+        case["age_unit"] = "year"
+        case["addr_line_1"] = fake.street_address()
+        case["addr_line_2"] = None
+        city = fake.unique.city()
+        case["city"] = city
+        case["state_abbr"] = random.choice(state_abbreviations)
+        case["zip_code"] = fake.postalcode()
+        case["cell_phone_number"] = fake.unique.numerify("(###)###-####")
+        #FIXME: Set Chances / NULL
+        case["home_phone_number"] = fake.unique.numerify("(###)###-####")
+        case["phone_number"] = fake.unique.numerify("(###)###-####")
+        school_data = fake.school_object()
+        case["school_or_employer"] = school_data["school"] if age < 18 else fake.job()
+        case["custody"] = fake.boolean()
+        case["education_level"] = None
+        case["income_level"] = None
+        case["martial_status"] = None
+        case["relationship"] = None
+        case["case_role"] = None
+        case["same_household"] = fake.boolean()
+        case["victim_status_id"] = fake.unique.random_number(digits = 8)
+        case_person_data.append(case)
          
 def generator_case_va_session_log(amount: int):
     fake = Faker()
@@ -307,7 +292,8 @@ def generator_case_va_session_log(amount: int):
         session["cac_id"] = person["cac_id"]
         session["case_id"] = person["case_id"]
         session["case_va_session_id"] = fake.unique.random_number(digits = 9)
-        session["start_time"], session["end_time"] = util.generate_meeting_times()
+        session["start_time"] = fake.date_time_between(start_date=person["cac_recieved_date"])
+        session["end_time"] = util.generate_meeting_times(start_datetime=session["start_time"])
         session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         #[ ] Not sure if this is the right format for this object, need to check.
         session["session_date"] = fake.date_time_between(start_date=person["cac_recieved_date"])
@@ -541,8 +527,8 @@ if __name__ == "__main__":
     generate_cac_agency()
     generate_child_advocacy_center()
     generate_person(amount = n)
-    generator_case_person(amount= n * n)
-    generator_cac_case(amount= n)
+    generator_cac_case(amount= n * 2)
+    generator_case_person(amount= n * 2)
     generator_case_va_session_log(amount=n // 2)
     generator_case_va_session_attendee(amount=n // 4)
     generator_case_va_session_service(n // 4)
@@ -577,9 +563,9 @@ if __name__ == "__main__":
     util.write_to_csv(data=case_mh_provider_log_data, name="case_mh_provider_log_data")
     util.write_to_csv(data=case_mh_service_barriers_data, name="case_mh_service_barriers_data")
     util.write_to_csv(data=case_mh_treatment_models_data, name="case_mh_treatment_models_data")
-    #util.write_to_csv(dict=state_data, name="state_data")
-    #util.write_to_csv(dict=employee_data, name="employee_data")
-    #util.write_to_csv(dict=employee_account_data, name="employee_account_data")
+    #util.write_to_csv(data=state_data, name="state_data")
+    #util.write_to_csv(data=employee_data, name="employee_data")
+    #util.write_to_csv(data=employee_account_data, name="employee_account_data")
     # Print Testing
     """
     for key, value in case_mh_session_attendee_data[0].items():

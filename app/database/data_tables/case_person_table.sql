@@ -24,6 +24,5 @@ CREATE TABLE case_person (
     FOREIGN KEY(person_id) REFERENCES person(person_id),
     FOREIGN KEY(case_id) REFERENCES cac_case(case_id),
     FOREIGN KEY(cac_id) REFERENCES child_advocacy_center(cac_id),
-    FOREIGN KEY(state_abbr) REFERENCES state_table(state_abbr),
     PRIMARY KEY (person_id, case_id)
 );
