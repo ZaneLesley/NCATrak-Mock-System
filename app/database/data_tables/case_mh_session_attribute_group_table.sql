@@ -1,5 +1,5 @@
 CREATE TABLE case_mh_session_attribute_group (
-    attribute_group_id INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     cac_id SMALLINT NOT NULL,
     case_id INTEGER NOT NULL,
     case_mh_session_id INTEGER NOT NULL,

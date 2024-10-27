@@ -136,6 +136,23 @@ attribute = [
 ("Treatment Plan Progress",	"Significant")
 ]
 
+# child_advocacy_center
+def generate_child_advocacy_center():
+    fake = Faker()
+    fake.seed_instance(0)
+    for _ in range(CAC_TO_GENERATE):
+        cac = {}
+        # Data to be generated
+        cac["cac_id"] = fake.unique.random_int(min = 1, max = CAC_TO_GENERATE + CAC_TO_GENERATE)
+        city = fake.unique.city()
+        cac["agency_name"] = city + " Child Advocacy Center"
+        cac["addr_line_1"] = fake.street_address()
+        cac["addr_line_2"] = None
+        cac["city"] = city
+        cac["state_abbr"] = random.choice(state_abbreviations)
+        cac["phone_number"] = fake.unique.numerify("(###)###-####")
+        cac["zip_code"] = fake.postalcode()
+        cac_agency_data.append(cac)
 
 # CAC_AGENCY
 def generate_cac_agency():
@@ -157,24 +174,6 @@ def generate_cac_agency():
             agency["phone_number"] = fake.unique.numerify("(###)###-####")
             agency["zip_code"] = fake.postalcode()
             child_advocacy_center_data.append(agency)
-
-# child_advocacy_center
-def generate_child_advocacy_center():
-    fake = Faker()
-    fake.seed_instance(0)
-    for _ in range(CAC_TO_GENERATE):
-        cac = {}
-        # Data to be generated
-        cac["cac_id"] = fake.unique.random_int(min = 1, max = CAC_TO_GENERATE + CAC_TO_GENERATE)
-        city = fake.unique.city()
-        cac["agency_name"] = city + " Child Advocacy Center"
-        cac["addr_line_1"] = fake.street_address()
-        cac["addr_line_2"] = None
-        cac["city"] = city
-        cac["state_abbr"] = random.choice(state_abbreviations)
-        cac["phone_number"] = fake.unique.numerify("(###)###-####")
-        cac["zip_code"] = fake.postalcode()
-        cac_agency_data.append(cac)
 
 # TODO: Fix Nones
 def generate_person(amount: int):
@@ -268,7 +267,7 @@ def generator_cac_case(amount: int):
         case["cac_recieved_date"] = case_date
         case["case_closed_date"] = random.choice([fake.date_time_between(
             start_date=datetime.combine(case_date, datetime.min.time())).date(), None])
-        case["case_reason_id"] = fake.unique.random_number(digits = 8) if case["case_closed_date"] != None else None
+        case["closed_reason_id"] = fake.unique.random_number(digits = 8) if case["case_closed_date"] != None else None
         case["created_date"] = case_date
         #FIXME: Think of how to do this part
         case["mh_lead_employee_id"] = None
@@ -276,6 +275,7 @@ def generator_cac_case(amount: int):
         case["mh_case_number"] = None
         case["mh_mdt_ready"] = None
         case["mh_na"] = None
+        case["mh_referral_agency_id"] = None
         case["mh_referral_date"] = None
         case["mh_therapy_accepted"] = None
         case["mh_therapy_complete_date"] = None
@@ -311,7 +311,7 @@ def generator_case_va_session_log(amount: int):
         session["start_time"], session["end_time"] = util.generate_meeting_times()
         session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
         #[ ] Not sure if this is the right format for this object, need to check.
-        session["session_date"] = fake.date_time_between(start_date=datetime.strptime(person["cac_recieved_date"], "%Y-%m-%d"))
+        session["session_date"] = fake.date_time_between(start_date=person["cac_recieved_date"])
         session["session_status"] = fake.random_int(min=0, max=7)
         
         case_va_session_log_data.append(session)
@@ -372,6 +372,7 @@ def generator_case_mh_assessments(amount: int):
         # asssessment["assessment_id"] = ...
         #TODO: Fill in
         assessment["session_date"] = None
+        assessment["assessment_date"] = None
         assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
         assessment["provider_employee_id"] = None
         temp = random.choice(assessment_instrument)
@@ -392,7 +393,7 @@ def generator_case_mh_assessment_measure_scores(amount: int):
         assessment["assessment_id"] = case["assessment_id"]
         assessment["instruments_id"] = case["assessment_instrument_id"]
         # FIXME: determine a way to get specific values (from a, b depending on description)
-        assessment["mh_assessment_scores"] = fake.random_int(min=0, max=100)
+        assessment["mh_assessment_scores"] = None
         
         case_mh_assessment_measure_scores_data.append(assessment)
 
@@ -403,7 +404,7 @@ def generator_mh_assessment_diagnosis_log(amount: int):
         case = random.choice(cac_case_data)
         log = {}
         log["case_id"] = case["case_id"]
-        log["diagonsis_date"] = fake.date()
+        log["diagonsis_date"] = fake.date_object()
         log["mh_provider_agency"] = None
         
         case_mh_diagonosis_log_data.append(log)
@@ -467,6 +468,7 @@ def generator_mh_session_attendee(amount: int):
         session = {}
         session["person_id"] = person["person_id"]
         session["cac_id"] = person["cac_id"]
+        session["case_id"] = util.find_column(key = session["person_id"], column="person_id", table=case_person_data, value="case_id")
         session["case_mh_session_attendee_id"] = fake.unique.random_number(digits = 8)  
         session["case_mh_session_id"] = util.find_column(key = session["cac_id"], column="cac_id", table=case_mh_session_log_enc_data, value="case_mh_session_id")
         
@@ -483,9 +485,9 @@ def generator_mh_session_attribute_group(amount: int):
         group["case_id"] = util.find_column(key = group["cac_id"], column="cac_id", table=cac_case_data, value="case_id")
         group["case_mh_session_id"] = attendee["case_mh_session_id"]
         temp = random.choice(attribute)
-        group["Description"] = temp[0]
-        group["Attributes"] = temp[1]
-        group["value"] = fake.random_int(min=0, max=100)
+        group["attribute_group_description"] = temp[0]
+        group["attributes"] = temp[1]
+        group["attribute_value"] = fake.random_int(min=0, max=100)
         
         case_mh_attribute_group_data.append(group)
         
@@ -495,11 +497,12 @@ def generator_mh_provider_log(amount: int):
     for _ in range(amount):
         case = random.choice(cac_case_data)
         log = {}
-        log["agency_id"] = None
+        log["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=child_advocacy_center_data, value="agency_id")
         log["case_id"] = case["case_id"]
         log["case_number"] = case["case_number"]
         log["id"] = fake.unique.random_number(digits = 5)
         log["lead_employee_id"] = None
+        log["provider_type_id"] = None
         log["therapy_accepted"] = None
         log["therapy_complete_date"] = None
         log["therapy_end_reason_id"] = None
@@ -582,7 +585,7 @@ if __name__ == "__main__":
     """
     
     # Print Testing
-    for key, value in cac_case_data[0].items():
+    for key, value in case_mh_session_attendee_data[0].items():
         print(f"Key: {key}, {type(value)}, value: {value}")
     #print(cac_agency_data)
     #print(child_advocacy_center_data)
