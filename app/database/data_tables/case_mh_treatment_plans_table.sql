@@ -16,5 +16,5 @@ CREATE TABLE case_mh_treatment_plans (
     FOREIGN KEY(case_id) REFERENCES cac_case(case_id),
     FOREIGN KEY(provider_agency_id) REFERENCES cac_agency(agency_id),
     FOREIGN KEY(provider_employee_id) REFERENCES employee(employee_id),
-    FOREIGN KEY(treatment_model_id) REFERENCES case_mh_treatment_model(treatment_model_id)
+    FOREIGN KEY(treatment_model_id) REFERENCES case_mh_treatment_models(id)
 );
