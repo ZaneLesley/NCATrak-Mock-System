@@ -324,9 +324,9 @@ def generator_case_va_session_service(amount: int):
         
         session["cac_id"] = case["cac_id"] 
         session["case_va_session_id"] = case["case_va_session_id"] 
-        session["case_va_session_service_id"] = fake.unique.random_number(digits = 10)
+        session["case_va_session_service_id"] = fake.unique.random_number(digits = 9)
         #FIXME: Check what this can be
-        session["service_type_id"] = None
+        session["service_type_id"] = random.randint(1, 5)
         
         case_va_session_service_data.append(session)
 
@@ -449,9 +449,9 @@ def generator_mh_session_attendee(amount: int):
     fake = Faker()
     fake.seed_instance(0)
     for _ in range(amount):
-        person = random.choice(person_data)
+        person = random.choice(case_mh_session_log_enc_data)
         session = {}
-        session["person_id"] = person["person_id"]
+        session["person_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=case_person_data, value="person_id")
         session["cac_id"] = person["cac_id"]
         session["case_id"] = util.find_column(key = session["person_id"], column="person_id", table=case_person_data, value="case_id")
         session["case_mh_session_attendee_id"] = fake.unique.random_number(digits = 8)  
@@ -501,7 +501,7 @@ def generator_mh_service_barriers(amount: int):
     fake.seed_instance(0)
     for _ in range(amount):
         barrier = {}
-        barrier["id"] = fake.unique.random_number(digits = 10)
+        barrier["id"] = fake.unique.random_number(digits = 9)
         barrier["number_of_miles"] = None
         barrier["barrier_id"] = None
         

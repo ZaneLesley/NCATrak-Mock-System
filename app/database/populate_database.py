@@ -3,7 +3,7 @@ from config import load_config
 import psycopg2
 import pandas as pd
 import numpy as np
-
+from rich import print
 # Global
 
 tables_to_fill = [
@@ -44,10 +44,10 @@ data_to_get = [
 "case_mh_assessments_data.csv",
 "case_mh_assessment_measure_scores_data.csv",
 "case_mh_diagonosis_log_data.csv",
-"case_mh_treatment_models_data.csv"
+"case_mh_treatment_models_data.csv",
 "case_mh_treatment_plans_data.csv",
 "case_mh_provider_log_data.csv",
-"case_mh_service_barriers_data.csv",
+"case_mh_service_barriers_data.csv"
 ]
     
 
@@ -60,11 +60,12 @@ def execute_command(command, data, name):
                 if (data):
                     cur.executemany(command, data)
                     conn.commit()
-                    print(f"Data Successfully Added")
+                    print(f"[yellow]{name} [green]Successfully Added")
                 else:
-                    print(f"No Data inputted for {name}")
+                    print(f"[red]No Data inputted for [yellow]{name}")
     except (psycopg2.DatabaseError, Exception) as error:
-        print(error)
+        print(f"[red]{error} on [yellow]{name}")
+        exit()
         
 if __name__ == '__main__':
     for i in range(len(tables_to_fill)):
@@ -90,5 +91,6 @@ if __name__ == '__main__':
             df = df.replace(np.nan, None)
             data = [tuple(row) for row in df.itertuples(index=False, name=None)]
             file.close()
-        execute_command(insert_query, data, name=table_name[0])
+        execute_command(insert_query, data, name=table_name)
+print(f"[bold][blue]All Data Successfully Added")
         

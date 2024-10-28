@@ -6,7 +6,7 @@ CREATE TABLE case_person (
     age_unit VARCHAR(20),
     address_line_1 VARCHAR(200),
     address_line_2 VARCHAR(200),
-    city VARCHAR(20),
+    city VARCHAR(50),
     state_abbr VARCHAR(2),
     zip VARCHAR(20),
     cell_phone_number VARCHAR(200),
