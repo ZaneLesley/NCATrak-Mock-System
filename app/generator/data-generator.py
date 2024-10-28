@@ -131,12 +131,12 @@ def generate_cac_agency():
         cac["cac_id"] = fake.unique.random_int(min = 1, max = CAC_TO_GENERATE + CAC_TO_GENERATE)
         city = fake.unique.city()
         cac["agency_name"] = city + " Child Advocacy Center"
-        cac["addr_line_1"] = fake.street_address()
-        cac["addr_line_2"] = None
+        cac["address_line_1"] = fake.street_address()
+        cac["address_line_2"] = None
         cac["city"] = city
         cac["state_abbr"] = random.choice(state_abbreviations)
         cac["phone_number"] = fake.unique.numerify("(###)###-####")
-        cac["zip_code"] = fake.postalcode()
+        cac["zip"] = fake.postalcode()
         child_advocacy_center_data.append(cac)
 
 # CAC_AGENCY
@@ -261,25 +261,25 @@ def generator_case_person(amount: int):
         # TODO: Check if it is Months / Days
         case["age"] = age
         case["age_unit"] = "year"
-        case["addr_line_1"] = fake.street_address()
-        case["addr_line_2"] = None
+        case["address_line_1"] = fake.street_address()
+        case["address_line_2"] = None
         city = fake.unique.city()
         case["city"] = city
         case["state_abbr"] = random.choice(state_abbreviations)
-        case["zip_code"] = fake.postalcode()
+        case["zip"] = fake.postalcode()
         case["cell_phone_number"] = fake.unique.numerify("(###)###-####")
         #FIXME: Set Chances / NULL
         case["home_phone_number"] = fake.unique.numerify("(###)###-####")
-        case["phone_number"] = fake.unique.numerify("(###)###-####")
+        case["work_phone_number"] = fake.unique.numerify("(###)###-####")
         school_data = fake.school_object()
-        case["school_or_employer"] = school_data["school"] if age < 18 else fake.job()
         case["custody"] = fake.boolean()
-        case["education_level"] = None
-        case["income_level"] = None
-        case["martial_status"] = None
-        case["relationship"] = None
-        case["case_role"] = None
+        case["education_level_id"] = None
+        case["income_level_id"] = None
+        case["marital_status_id"] = None
+        case["relationship_id"] = None
+        case["role_id"] = None
         case["same_household"] = fake.boolean()
+        case["school_or_employer"] = school_data["school"] if age < 18 else fake.job()
         case["victim_status_id"] = fake.unique.random_number(digits = 8)
         case_person_data.append(case)
          

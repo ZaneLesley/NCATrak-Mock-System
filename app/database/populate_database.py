@@ -12,20 +12,20 @@ tables_to_fill = [
 "person",
 "cac_case",
 "case_person",
-"case_va_session",
+"case_va_session_log",
 "case_va_session_attendee",
 "case_va_session_service",
+"case_mh_session_log_enc",
+"case_mh_session_attendee",
+"case_mh_session_attribute_group",
 "case_mh_assessment_instrument",
 "case_mh_assessment",
 "case_mh_assessment_measure_scores",
 "case_mh_assessment_diagnosis",
-"case_mh_session",
-"case_mh_treatment_plan",
-"case_mh_session_attendee",
-"case_mh_session_attribute_group",
+"case_mh_treatment_models",
+"case_mh_treatment_plans",
 "case_mh_provider",
 "case_mh_service_barriers"
-"case_mh_treatment_model",
 ]
 
 data_to_get = [
@@ -37,17 +37,17 @@ data_to_get = [
 "case_va_session_log_data.csv",
 "case_va_session_attendee_data.csv",
 "case_va_session_service_data.csv",
-"case_mh_assessments_data.csv",
-"case_mh_assessment_instruments_data.csv",
-"case_mh_assessment_measure_scores_data.csv",
-"case_mh_diagonosis_log_data.csv",
 "case_mh_session_log_enc_data.csv",
-"case_mh_treatment_plans_data.csv",
 "case_mh_session_attendee_data.csv",
 "case_mh_attribute_group_data.csv",
+"case_mh_assessment_instruments_data.csv",
+"case_mh_assessments_data.csv",
+"case_mh_assessment_measure_scores_data.csv",
+"case_mh_diagonosis_log_data.csv",
+"case_mh_treatment_models_data.csv"
+"case_mh_treatment_plans_data.csv",
 "case_mh_provider_log_data.csv",
 "case_mh_service_barriers_data.csv",
-"case_mh_treatment_models_data.csv"
 ]
     
 

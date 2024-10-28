@@ -4,11 +4,11 @@ import os
 from rich import print
 import pandas as pd
 
-# Function to generate random start and end times within the range
 def generate_meeting_times(start_datetime: datetime):
     meeting_duration = timedelta(hours=random.randint(1, 4))
     end_datetime = start_datetime + meeting_duration
-    return start_datetime, end_datetime
+    end_timestamp = end_datetime.strftime('%Y-%m-%d %H:%M:%S')
+    return end_timestamp
 
 def find_column(key: str, column: str, table: list, value: str) -> dict:
     for item in table:
