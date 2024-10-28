@@ -3,7 +3,7 @@ database.ini
 __pycache__/
 data.csv
 .idea/
-
+csvs/
 
 # Github python .gitignore
 # Byte-compiled / optimized / DLL files
