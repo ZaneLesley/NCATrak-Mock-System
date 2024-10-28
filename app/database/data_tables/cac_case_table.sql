@@ -33,7 +33,6 @@ CREATE TABLE cac_case (
     va_services_offered_date DATE,
     va_services_end_date DATE,
     FOREIGN KEY(cac_id) REFERENCES child_advocacy_center(cac_id),
-    FOREIGN KEY(mh_lead_employee_id) REFERENCES employee(employee_id),
     FOREIGN KEY(mh_agency_id) REFERENCES cac_agency(agency_id),
     FOREIGN KEY(mh_referral_agency_id) REFERENCES cac_agency(agency_id),
     FOREIGN KEY(va_agency_id) REFERENCES cac_agency(agency_id),

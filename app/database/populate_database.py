@@ -2,6 +2,7 @@ import os
 from config import load_config
 import psycopg2
 import pandas as pd
+import numpy as np
 
 # Global
 
@@ -9,8 +10,8 @@ tables_to_fill = [
 "child_advocacy_center",
 "cac_agency",
 "person",
-"case_person",
 "cac_case",
+"case_person",
 "case_va_session",
 "case_va_session_attendee",
 "case_va_session_service",
@@ -31,8 +32,8 @@ data_to_get = [
 "child_advocacy_center_data.csv",
 "cac_agency_data.csv",
 "person_data.csv",
-"case_person_data.csv",
 "cac_case_data.csv",
+"case_person_data.csv",
 "case_va_session_log_data.csv",
 "case_va_session_attendee_data.csv",
 "case_va_session_service_data.csv",
@@ -85,8 +86,9 @@ if __name__ == '__main__':
         data = []
         with open(data_file_path, "r") as file:
             df = pd.read_csv(file)
+            # Fix nan to None so SQL can read it (https://stackoverflow.com/questions/14162723/replacing-pandas-or-numpy-nan-with-a-none-to-use-with-mysqldb)
+            df = df.replace(np.nan, None)
             data = [tuple(row) for row in df.itertuples(index=False, name=None)]
             file.close()
-        
         execute_command(insert_query, data, name=table_name[0])
         
