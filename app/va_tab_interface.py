@@ -7,6 +7,9 @@ import people_interface
 import MH_basic_interface
 import MH_assessment
 import MH_treatmentPlan_interface
+from database.config import load_config
+from database.connect import connect
+import psycopg2
 
 class va_interface(tk.Frame):
 
@@ -87,29 +90,31 @@ class va_interface(tk.Frame):
         va_frame.pack(anchor="center", pady=10, padx=10)
         ttk.Label(va_frame, text="VA").pack()
 
-        def add_new_session_popup():
-            popup = tk.Toplevel(self)
-            popup.title("Add New Session")
-            popup.geometry("600x500")
+        def get_all_agencies():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_agency;")
+                        agencies = cur.fetchall()
+                        return agencies
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
         def add_agency_popup():
             popup = tk.Toplevel(self)
             popup.title("New Agency")
             popup.geometry("600x500")
 
-            existing_agency = [
-                "CAC of Anytown",
-                "Child Guidance",
-                "FBI",
-                "Mercy Hospital",
-                "Police Department"
-            ]
+            agencies = get_all_agencies()
+            agency_names = [agency[2] for agency in agencies]
 
             ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the desired agency is on this list then click 'Use Agency'.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the agency is not on the list enter the agency name below and click 'Save'.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
             agency_listbox = tk.Listbox(popup, height=5)
-            for person in existing_agency:
+            for person in agencies:
                 agency_listbox.insert(tk.END, person)
             agency_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
@@ -146,61 +151,31 @@ class va_interface(tk.Frame):
             ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
-        #------------------------------
+        def get_all_personnel():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select employee_id, first_name, last_name from employee;")
+                        personnel = cur.fetchall()
+                        return personnel
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
-        def add_agency_popup():
-            popup = tk.Toplevel(self)
-            popup.title("New Agency")
-            popup.geometry("600x500")
-
-            existing_agency = [
-                "CAC of Anytown",
-                "Child Guidance",
-                "FBI",
-                "Mercy Hospital",
-                "Police Department"
-            ]
-
-            ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
-            ttk.Label(popup, text="If the desired agency is on this list then click 'Use Agency'.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-            ttk.Label(popup, text="If the agency is not on the list enter the agency name below and click 'Save'.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-            agency_listbox = tk.Listbox(popup, height=5)
-            for person in existing_agency:
-                agency_listbox.insert(tk.END, person)
-            agency_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
-
-            # Entry fields for case agency
-            ttk.Label(popup, text="Agency Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            agency_name_entry = ttk.Entry(popup, foreground='white')
-            agency_name_entry.grid(row=5, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Address Line 1", foreground='black').grid(row=6, column=0, padx=5, pady=5)
-            address_line1_entry = ttk.Entry(popup)
-            address_line1_entry.grid(row=6, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Address Line 2", foreground='black').grid(row=7, column=0, padx=5, pady=5)
-            address_line2_entry = ttk.Entry(popup)
-            address_line2_entry.grid(row=7, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="City").grid(row=8, column=0, padx=5, pady=5)
-            city_entry = ttk.Entry(popup)
-            city_entry.grid(row=8, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="State").grid(row=9, column=0, padx=5, pady=5)
-            state_entry = ttk.Combobox(popup)
-            state_entry.grid(row=9, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Zip Code").grid(row=10, column=0, padx=5, pady=5)
-            zipcode_entry = ttk.Entry(popup)
-            zipcode_entry.grid(row=10, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Phone Number").grid(row=11, column=0, padx=5, pady=5)
-            phone_entry = ttk.Entry(popup)
-            phone_entry.grid(row=11, column=1, padx=5, pady=5)
-
-            # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+        def insert_new_personnel(email, first, last, title, number):
+            sqlQuery = """insert into employee (employee_id, agency_id, cac_id, email_addr, 
+            first_name, last_name, job_title, phone_number)
+            values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (2, 64669736, 1, email, first, last, title, number))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
         def add_personnel_popup():
             popup = tk.Toplevel(self)
@@ -208,25 +183,20 @@ class va_interface(tk.Frame):
             popup.geometry("800x600")
 
             # existing personnel 
-            existing_personnel = [
-                "Bob Dylan",
-                "Freddie Mercury",
-                "Mike Jackson",
-                "Adele",
-                "Elvis Presley"
-            ]
+            personnelList = get_all_personnel()
+            personnel_names = [personnel[1] + " " + personnel[2] for personnel in personnelList]
 
             ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
             ttk.Label(popup, text="Instead click Cancel to return to the previous screen and select them from the person pick list.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
             personnel_listbox = tk.Listbox(popup, height=5)
-            for person in existing_personnel:
+            for person in personnel_names:
                 personnel_listbox.insert(tk.END, person)
             personnel_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
             # Entry fields for case agency
             ttk.Label(popup, text="First Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            first_name = ttk.Entry(popup, foreground='white')
+            first_name = ttk.Entry(popup, foreground='black')
             first_name.grid(row=5, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Last Name", foreground='black').grid(row=6, column=0, padx=5, pady=5)
@@ -254,7 +224,7 @@ class va_interface(tk.Frame):
             phone_entry.grid(row=11, column=1, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Save", command=lambda: [insert_new_personnel(email_entry.get(), first_name.get(), last_name.get(), job_title_entry.get(), phone_entry.get()), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
 
@@ -268,12 +238,16 @@ class va_interface(tk.Frame):
         date_entry = DateEntry(referral_frame)
         date_entry.grid(row=0, column=1, padx=5, pady=5)
 
+        agencies = get_all_agencies()
+
         ttk.Label(referral_frame, text="Referral Source").grid(row=1, column=0, sticky="w")
-        referral_source = ttk.Combobox(referral_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
+        referral_source = ttk.Combobox(referral_frame, values=agencies)
         referral_source.grid(row=1, column=1, padx=5, pady=5)
 
+        persons = get_all_personnel()
+
         ttk.Label(referral_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-        person_entry = ttk.Combobox(referral_frame, values=["Person 1", "Person 2"]) 
+        person_entry = ttk.Combobox(referral_frame, values=persons) 
         person_entry.grid(row=2, column=1, padx=5, pady=5)
 
         ttk.Button(referral_frame, text="Add Referral Source", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
@@ -288,14 +262,18 @@ class va_interface(tk.Frame):
         va_casenum_entry = ttk.Entry(vas_frame) 
         va_casenum_entry.grid(row=0, column=1, padx=5, pady=5)
 
+        agencies = get_all_agencies()
+
         ttk.Label(vas_frame, text="Agency").grid(row=1, column=0, padx=5, pady=5)
-        agency_entry = ttk.Combobox(vas_frame, values=["Person 1", "Person 2"]) 
+        agency_entry = ttk.Combobox(vas_frame, values=agencies) 
         agency_entry.grid(row=1, column=1, padx=5, pady=5)
 
         ttk.Button(vas_frame, text="Add Agency", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
 
+        persons = get_all_personnel()
+
         ttk.Label(vas_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-        person_entry = ttk.Combobox(vas_frame, values=["Person 1", "Person 2"]) 
+        person_entry = ttk.Combobox(vas_frame, values=persons) 
         person_entry.grid(row=2, column=1, padx=5, pady=5) 
 
         ttk.Button(vas_frame, text="Add Person", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
@@ -341,6 +319,18 @@ class va_interface(tk.Frame):
         #------------------------------
 
         # VAS Log Information
+        def add_new_session(date, start, end, status):
+            sqlQuery = """insert into case_va_session_log(cac_id, case_id, case_va_session_id, start_time, end_time, va_provider_agency_id, session_date, session_status)
+             VALUES(%s, %s, %s, %s, %s, %s, %s, %s);"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (3, 757172936, 00000000, start, end, 51706749, date, status))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
         def add_new_session_popup():
             popup = tk.Toplevel(self)
@@ -473,29 +463,44 @@ class va_interface(tk.Frame):
             session_custom_three_entry.grid(row=29, column=1, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=31, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Save", command=lambda: [add_new_session(session_date_entry.get_date(), start_time_entry.get(), end_start_entry.get(), session_status_entry.get()), popup.destroy()]).grid(row=31, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=31, column=1, padx=5, pady=5)
 
+        def get_all_sessions():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select session_date, start_time, end_time, session_status from case_va_session_log;")
+                        sessions = cur.fetchall()
+                        return sessions
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
         vas_log_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services Log", padx=10, pady=10)
         vas_log_frame.pack(fill="x", padx=10, pady=5)
+
+        sessions = get_all_sessions()
 
         ttk.Button(vas_log_frame, text="Add New Session Log", command=add_new_session_popup).grid(row=0, column=0, padx=5, pady=5)
         ttk.Button(vas_log_frame, text="Details").grid(row=0, column=1, padx=5, pady=5)
         ttk.Button(vas_log_frame, text="Newer Records").grid(row=0, column=2, padx=5, pady=5)
         ttk.Button(vas_log_frame, text="Older Records").grid(row=0, column=3, padx=5, pady=5)
+        
+        rowCounter = 2
 
         ttk.Label(vas_log_frame, text="Date").grid(row=1, column=1)
-        session_date = ttk.Entry(vas_log_frame).grid(row=2, column=1)
-
         ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=2)
-        start_time = ttk.Entry(vas_log_frame).grid(row=2, column=2)
-
         ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=3)
-        end_time = ttk.Entry(vas_log_frame).grid(row=2, column=3)
-
         ttk.Label(vas_log_frame, text="Status").grid(row=1, column=4)
-        session_status = ttk.Entry(vas_log_frame).grid(row=2, column=4)
+
+        for session in sessions:
+            ttk.Label(vas_log_frame, text=session[0]).grid(row=rowCounter, column=1)
+            ttk.Label(vas_log_frame, text=session[1]).grid(row=rowCounter, column=2)
+            ttk.Label(vas_log_frame, text=session[2]).grid(row=rowCounter, column=3)
+            ttk.Label(vas_log_frame, text=session[3]).grid(row=rowCounter, column=4)
+            rowCounter += 1
         #------------------------------
 
         # Crime Compensation Application Section
@@ -565,6 +570,34 @@ class va_interface(tk.Frame):
             ttk.Button(popup, text="Edit", command=lambda: [popup.destroy()]).grid(row=2, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Delete", command=lambda: [popup.destroy()]).grid(row=2, column=1, padx=5, pady=5)
 
+        def insert_new_screening(date, personnel, instrument):
+            sqlQuery = """insert into case_mh_assessment (cac_id, case_id, assessment_id, 
+                                    mh_provider_agency_id, session_date, agency_id, provider_employee_id, 
+                                    assessment_instrument_id)
+                                    values(%s, %s, %s, %s, %s, %s, %s, %s);"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (1, 302621084, 12345678, 64669736, date, 64669736, personnel, instrument))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_all_instruments():
+            sqlQuery = """select * from case_mh_assessment_instrument;"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery)
+                        instruments = cur.fetchall()
+                        return instruments
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()        
+
         def add_new_screening_popup():
             popup = tk.Toplevel(self)
             popup.title("Add New Screening")
@@ -579,18 +612,30 @@ class va_interface(tk.Frame):
             screening_instrument_entry = ttk.Combobox(popup)
             screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
 
+            instruments = get_all_instruments()
+            instrument_names = [instrument[1] for instrument in instruments]
+
+            screening_instrument_entry = ttk.Combobox(popup, values=instruments)
+            screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
+
             ttk.Button(popup, text="Add Screening Instrument", command=edit_screening_instrument_popup).grid(row=1, column=2, padx=5, pady=5)
 
             ttk.Label(popup, text="Screening Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
             screening_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
             screening_date_entry.grid(row=2, column=1, padx=5, pady=5)
 
+            agencies = get_all_agencies()
+            agency_names = [agency[2] for agency in agencies]
+
             ttk.Label(popup, text="Provider Agency", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-            provider_agency_entry = ttk.Combobox(popup)
+            provider_agency_entry = ttk.Combobox(popup, values=agencies)
             provider_agency_entry.grid(row=3, column=1, padx=5, pady=5)
 
+            personnel = get_all_personnel()
+            print(personnel)
+
             ttk.Label(popup, text="Provider Personnel", foreground='black').grid(row=4, column=0, padx=5, pady=5)
-            provider_personnel_entry = ttk.Combobox(popup) 
+            provider_personnel_entry = ttk.Combobox(popup, values=personnel) 
             provider_personnel_entry.grid(row=4, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Functional Impairment").grid(row=5, column=0, padx=5, pady=5)
@@ -602,9 +647,26 @@ class va_interface(tk.Frame):
             _screening_commets_entry.grid(row=6, column=1, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Update", command=lambda: [insert_new_screening(screening_date_entry.get_date(), provider_personnel_entry.get()[0], screening_instrument_entry.get()[0]), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
+        def get_all_screenings():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""select case_mh_assessment_instrument.assessment_name, 
+                                    case_mh_assessment.session_date, 
+                                    employee.first_name,
+                                    employee.last_name 
+                                    from case_mh_assessment
+                                    join case_mh_assessment_instrument on case_mh_assessment.assessment_instrument_id = case_mh_assessment_instrument.instrument_id
+                                    join employee on case_mh_assessment.provider_employee_id = employee.employee_id;""")
+                        screenings = cur.fetchall()
+                        return screenings
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
         screenings_frame = tk.LabelFrame(scrollable_frame, text="Screenings Given", padx=10, pady=10)
         screenings_frame.pack(fill="x", padx=10, pady=5)
@@ -612,23 +674,21 @@ class va_interface(tk.Frame):
         #Add New Screening button
         ttk.Button(screenings_frame, text="Add New Screening", command=add_new_screening_popup).grid(row=0, column=0, padx=5, pady=5)
 
+        screenings = get_all_screenings()
+        rowCounter = 2
+
         ttk.Label(screenings_frame, text="Action").grid(row=1, column=0, padx=5, pady=5)
-        date_requested = ttk.Label(screenings_frame)  
-        date_requested.grid(row=2, column=1, padx=5, pady=5)
-
-
         ttk.Label(screenings_frame, text="Screening Instrument Name").grid(row=1, column=2, padx=5, pady=5)
-        requested_by = ttk.Combobox(screenings_frame, values=["Person 1", "Person 2"])  
-        requested_by.grid(row=2, column=2, padx=5, pady=5)
-
         ttk.Label(screenings_frame, text="Date").grid(row=1, column=3, padx=5, pady=5)
-        by_subpeona = ttk.Combobox(screenings_frame, values=["Person 1", "Person 2"])  
-        by_subpeona.grid(row=2, column=3, padx=5, pady=5)
-
-
         ttk.Label(screenings_frame, text="Provider Personnel").grid(row=1, column=4, padx=5, pady=5)
-        authorized_by = ttk.Combobox(screenings_frame, values=["Person 1", "Person 2"])  
-        authorized_by.grid(row=2, column=4, padx=5, pady=5)
+
+        #ttk.Label(screenings_frame, text=screening[0]).grid(row=2, column=1, padx=5, pady=5) Actions
+
+        for screening in screenings:
+         ttk.Label(screenings_frame, text=screening[0]).grid(row=rowCounter, column=2, padx=5, pady=5)
+         ttk.Label(screenings_frame, text=screening[1]).grid(row=rowCounter, column=3, padx=5, pady=5)
+         ttk.Label(screenings_frame, text=screening[2] + " " + screening[3]).grid(row=rowCounter, column=4, padx=5, pady=5)
+         rowCounter += 1
 
         #--------------------------------------
 
