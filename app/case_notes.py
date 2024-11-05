@@ -581,3 +581,4 @@ class case_notes_interface(tk.Frame):
 
     def upload_last_page(self):
         messagebox.showinfo("Pagination", "Last page clicked (Uploads).")
+
