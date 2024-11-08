@@ -4,9 +4,17 @@ import psycopg2
 from configparser import ConfigParser
 import os
 from datetime import datetime
+from tkinter import ttk
+import Generaltab_interface
+import MH_basic_interface
+import MH_assessment
+import MH_treatmentPlan_interface
+import va_tab_interface
+import case_notes
+
 
 # -------------------- Internal Mappings --------------------
-# Define your roles and relationships here
+# Define roles and relationships here
 ROLE_MAPPING = {
     'Alleged Offender': 1,
     'Witness': 2,
@@ -49,6 +57,60 @@ class PeopleInterface(tk.Frame):
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
+
+        # Create a canvas and a scrollbar
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        #  window in the canvas
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        # scrollbar to canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # row counter for grid management
+        row_counter = 2
+
+        # Use grid over pack for interface linking
+        canvas.grid(row=row_counter, column=0, sticky="nsew")
+        scrollbar.grid(row=row_counter, column=1, sticky="ns")
+        row_counter += 1
+
+        button1 = ttk.Button(self, text="General", 
+                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.grid(row=0, column=0, padx=5, pady=5)
+
+        button2 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
+
+        button4 = ttk.Button(self, text="Mental Health - Assessment", 
+                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
+        button4.grid(row=0, column=3, padx=5, pady=5)
+
+        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
+                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
+        button5.grid(row=0, column=4, padx=5, pady=5)
+
+        button6 = ttk.Button(self, text="VA", 
+                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
+        button6.grid(row=0, column=5, padx=5, pady=5)
+        
+        button7 = ttk.Button(self, text="Case Notes", 
+                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
+        button7.grid(row=0, column=6, padx=5, pady=5)
+
 
         # -------------------- Save and Cancel Buttons --------------------
         buttons_frame = tk.Frame(self)
