@@ -10,6 +10,7 @@ import MH_treatmentPlan_interface
 from database.config import load_config
 from database.connect import connect
 import psycopg2
+import random
 
 class va_interface(tk.Frame):
 
@@ -171,7 +172,7 @@ class va_interface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute(sqlQuery, (2, 64669736, 1, email, first, last, title, number))
+                        cur.execute(sqlQuery, (random.randint(1, 99999999), 64669736, 1, email, first, last, title, number))
                         conn.commit
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
@@ -547,7 +548,21 @@ class va_interface(tk.Frame):
 
         #--------------------------------
         # -Screenings Given Section
-        def edit_screening_instrument_popup():
+
+        def insert_new_instrument(name):
+            sqlQuery = """insert into case_mh_assessment_instrument (instrument_id, assessment_name)
+                                    values(%s, %s);"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (random.randint(1, 999999), name))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def add_screening_instrument_popup():
             popup = tk.Toplevel(self)
             popup.title("Edit Screening Instrument")
             popup.geometry("800x500")
@@ -555,8 +570,8 @@ class va_interface(tk.Frame):
             ttk.Label(popup, text="Action", foreground='black').grid(row=1, column=0, padx=5, pady=5)
 
             ttk.Label(popup, text="Screening Instrument Name", foreground='black').grid(row=1, column=2, padx=5, pady=5)
-            screening_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
-            screening_date_entry.grid(row=2, column=2, padx=5, pady=5)
+            instrument_name_entry = ttk.Entry(popup, width=12)
+            instrument_name_entry.grid(row=2, column=2, padx=5, pady=5)
 
             ttk.Label(popup, text="Source", foreground='black').grid(row=1, column=3, padx=5, pady=5)
             provider_agency_entry = ttk.Combobox(popup)
@@ -567,7 +582,7 @@ class va_interface(tk.Frame):
             provider_personnel_entry.grid(row=2, column=4, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Edit", command=lambda: [popup.destroy()]).grid(row=2, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Save", command=lambda: [insert_new_instrument(instrument_name_entry.get()), popup.destroy()]).grid(row=2, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Delete", command=lambda: [popup.destroy()]).grid(row=2, column=1, padx=5, pady=5)
 
         def insert_new_screening(date, personnel, instrument):
@@ -579,7 +594,7 @@ class va_interface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute(sqlQuery, (1, 302621084, 12345678, 64669736, date, 64669736, personnel, instrument))
+                        cur.execute(sqlQuery, (1, 302621084, random.randint(1, 99999999), 64669736, date, 64669736, personnel, instrument))
                         conn.commit
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
@@ -605,12 +620,12 @@ class va_interface(tk.Frame):
 
             ttk.Label(popup, text="* Instrument, Agency, and Personnel Fields are Required").grid(row=0, column=0, padx=5, pady=5)
 
-            ttk.Label(popup, text="Scores of this Screening's Measures").grid(row=0, column=4, padx=5, pady=5)
-            ttk.Entry(popup).grid(row=1, column=4, padx=5, pady=5)
-
             ttk.Label(popup, text="Screening Instrument", foreground='black').grid(row=1, column=0, padx=5, pady=5)
             screening_instrument_entry = ttk.Combobox(popup)
             screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
+
+            ttk.Label(popup, text="Scores of this Screening's Measures").grid(row=2, column=0, padx=5, pady=5)
+            ttk.Label(popup).grid(row=2, column=1, padx=5, pady=5)
 
             instruments = get_all_instruments()
             instrument_names = [instrument[1] for instrument in instruments]
@@ -618,33 +633,32 @@ class va_interface(tk.Frame):
             screening_instrument_entry = ttk.Combobox(popup, values=instruments)
             screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
 
-            ttk.Button(popup, text="Add Screening Instrument", command=edit_screening_instrument_popup).grid(row=1, column=2, padx=5, pady=5)
+            ttk.Button(popup, text="Add Screening Instrument", command=add_screening_instrument_popup).grid(row=1, column=2, padx=5, pady=5)
 
-            ttk.Label(popup, text="Screening Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Screening Date", foreground='black').grid(row=3, column=0, padx=5, pady=5)
             screening_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
-            screening_date_entry.grid(row=2, column=1, padx=5, pady=5)
+            screening_date_entry.grid(row=3, column=1, padx=5, pady=5)
 
             agencies = get_all_agencies()
             agency_names = [agency[2] for agency in agencies]
 
-            ttk.Label(popup, text="Provider Agency", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Provider Agency", foreground='black').grid(row=4, column=0, padx=5, pady=5)
             provider_agency_entry = ttk.Combobox(popup, values=agencies)
-            provider_agency_entry.grid(row=3, column=1, padx=5, pady=5)
+            provider_agency_entry.grid(row=4, column=1, padx=5, pady=5)
 
             personnel = get_all_personnel()
-            print(personnel)
 
-            ttk.Label(popup, text="Provider Personnel", foreground='black').grid(row=4, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Provider Personnel", foreground='black').grid(row=5, column=0, padx=5, pady=5)
             provider_personnel_entry = ttk.Combobox(popup, values=personnel) 
-            provider_personnel_entry.grid(row=4, column=1, padx=5, pady=5)
+            provider_personnel_entry.grid(row=5, column=1, padx=5, pady=5)
 
-            ttk.Label(popup, text="Functional Impairment").grid(row=5, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Functional Impairment").grid(row=6, column=0, padx=5, pady=5)
             functional_impairment_entry = ttk.Entry(popup)
-            functional_impairment_entry.grid(row=5, column=1, padx=5, pady=5)
+            functional_impairment_entry.grid(row=6, column=1, padx=5, pady=5)
 
-            ttk.Label(popup, text="Comments").grid(row=6, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Comments").grid(row=7, column=0, padx=5, pady=5)
             _screening_commets_entry = ttk.Entry(popup)
-            _screening_commets_entry.grid(row=6, column=1, padx=5, pady=5)
+            _screening_commets_entry.grid(row=7, column=1, padx=5, pady=5)
 
             # Update and Cancel buttons
             ttk.Button(popup, text="Update", command=lambda: [insert_new_screening(screening_date_entry.get_date(), provider_personnel_entry.get()[0], screening_instrument_entry.get()[0]), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
