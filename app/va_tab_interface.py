@@ -91,6 +91,18 @@ class va_interface(tk.Frame):
         va_frame.pack(anchor="center", pady=10, padx=10)
         ttk.Label(va_frame, text="VA").pack()
 
+        def get_all_states():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from state_table;")
+                        states = cur.fetchall()
+                        return states
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
         def get_all_agencies():
             try:
                 config = load_config()
@@ -103,25 +115,45 @@ class va_interface(tk.Frame):
                 print(f"{error}")
                 exit()
 
+        def insert_new_agency(name, address1, address2, city, state, zipcode, phone):
+            sqlQuery = """insert into cac_agency (agency_id, cac_id, agency_name, addr_line_1, 
+            addr_line_2, city, state_abbr, phone_number, zip_code)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (random.randint(1, 99999999), 1, name, address1, address2, city, state, 
+                                               phone, zipcode))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
         def add_agency_popup():
             popup = tk.Toplevel(self)
             popup.title("New Agency")
             popup.geometry("600x500")
 
             agencies = get_all_agencies()
-            agency_names = [agency[2] for agency in agencies]
+
+            states = get_all_states()
+            stateAbbr = []
+
+            for state in states:
+                stateAbbr.append(state[0])
 
             ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the desired agency is on this list then click 'Use Agency'.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the agency is not on the list enter the agency name below and click 'Save'.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
             agency_listbox = tk.Listbox(popup, height=5)
-            for person in agencies:
-                agency_listbox.insert(tk.END, person)
+            for agency in agencies:
+                agency_listbox.insert(tk.END, agency)
             agency_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
             # Entry fields for case agency
             ttk.Label(popup, text="Agency Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            agency_name_entry = ttk.Entry(popup, foreground='white')
+            agency_name_entry = ttk.Entry(popup)
             agency_name_entry.grid(row=5, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Address Line 1", foreground='black').grid(row=6, column=0, padx=5, pady=5)
@@ -137,7 +169,7 @@ class va_interface(tk.Frame):
             city_entry.grid(row=8, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="State").grid(row=9, column=0, padx=5, pady=5)
-            state_entry = ttk.Combobox(popup)
+            state_entry = ttk.Combobox(popup, values=stateAbbr)
             state_entry.grid(row=9, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Zip Code").grid(row=10, column=0, padx=5, pady=5)
@@ -148,8 +180,11 @@ class va_interface(tk.Frame):
             phone_entry = ttk.Entry(popup)
             phone_entry.grid(row=11, column=1, padx=5, pady=5)
 
+
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Save", command=lambda: [insert_new_agency(agency_name_entry.get(), address_line1_entry.get(), address_line2_entry.get(), 
+                                                                              city_entry.get(), state_entry.get(), zipcode_entry.get(), phone_entry.get()
+                                                                              ), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
         def get_all_personnel():
