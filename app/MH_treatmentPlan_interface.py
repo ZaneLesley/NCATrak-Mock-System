@@ -4,6 +4,8 @@ from tkcalendar import DateEntry
 from tkinter import filedialog
 import psycopg2
 import configparser
+from faker import Faker
+
 
 # Import other modules for navigation
 import Generaltab_interface
@@ -105,23 +107,83 @@ class MH_treatment_plan_interface(tk.Frame):
             print(f"Error fetching provider agencies: {error}")
             return []
 
-    def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date):
-        """Saves a new treatment plan into the database."""
+    # def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date):
+    #     """Saves a new treatment plan into the database."""
+    #     try:
+    #         with self.conn.cursor() as cur:
+    #             insert_query = """
+    #                 INSERT INTO case_mh_treatment_plans (treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date)
+    #                 VALUES (%s, %s, %s, %s, %s)
+    #             """
+    #             cur.execute(insert_query, (model_id, agency_id, cac_id, start_date, end_date))
+    #             self.conn.commit()
+    #             messagebox.showinfo("Success", "Treatment plan added successfully.")
+    #     except Exception as error:
+    #         print(f"Error saving treatment plan: {error}")
+    #         messagebox.showerror("Error", "Failed to save the treatment plan.")
+    #         self.conn.rollback()
+    def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date, case_id, authorized_status_id):
+        """Saves a new treatment plan into the database with a randomly generated unique ID."""
+        fake = Faker()
+        fake.seed_instance(0)  # Ensure consistent results if needed
+
         try:
             with self.conn.cursor() as cur:
-                insert_query = """
-                    INSERT INTO case_mh_treatment_plans (treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date)
-                    VALUES (%s, %s, %s, %s, %s)
-                """
-                cur.execute(insert_query, (model_id, agency_id, cac_id, start_date, end_date))
-                self.conn.commit()
-                messagebox.showinfo("Success", "Treatment plan added successfully.")
+                while True:
+                    # Generate a random unique ID
+                    random_id = fake.unique.random_number(digits=9)
+
+                    # Check if the ID already exists in the database
+                    cur.execute("SELECT 1 FROM case_mh_treatment_plans WHERE id = %s", (random_id,))
+                    if cur.fetchone() is None:
+                        # If the ID is unique, proceed to insert the new record
+                        insert_query = """
+                            INSERT INTO case_mh_treatment_plans 
+                            (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date, case_id, authorized_status_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        """
+                        cur.execute(insert_query, (
+                            random_id, model_id, agency_id, cac_id, start_date, end_date, case_id, authorized_status_id
+                        ))
+                        self.conn.commit()
+                        messagebox.showinfo("Success", "Treatment plan added successfully.")
+                        break  # Exit the loop after successful insertion
+
         except Exception as error:
             print(f"Error saving treatment plan: {error}")
             messagebox.showerror("Error", "Failed to save the treatment plan.")
             self.conn.rollback()
 
+    # def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date):
+    #     """Saves a new treatment plan into the database with a randomly generated unique ID."""
+    #     fake = Faker()
+    #     fake.seed_instance(0)  # Ensure consistent results if needed
 
+    #     try:
+    #         with self.conn.cursor() as cur:
+    #             while True:
+    #                 # Generate a random unique ID
+    #                 random_id = fake.unique.random_number(digits=9)
+
+    #                 # Check if the ID already exists in the database
+    #                 cur.execute("SELECT 1 FROM case_mh_treatment_plans WHERE id = %s", (random_id,))
+    #                 if cur.fetchone() is None:
+    #                     # If the ID is unique, proceed to insert the new record
+    #                     insert_query = """
+    #                         INSERT INTO case_mh_treatment_plans 
+    #                         (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date)
+    #                         VALUES (%s, %s, %s, %s, %s, %s)
+    #                     """
+    #                     cur.execute(insert_query, (random_id, model_id, agency_id, cac_id, start_date, end_date))
+    #                     self.conn.commit()
+    #                     messagebox.showinfo("Success", "Treatment plan added successfully.")
+    #                     break  # Exit the loop after successful insertion
+
+    #     except Exception as error:
+    #         print(f"Error saving treatment plan: {error}")
+    #         messagebox.showerror("Error", "Failed to save the treatment plan.")
+    #         self.conn.rollback()
+            
     def add_treatment_plan_popup(self):
         """Popup window for adding a new treatment plan."""
         popup = tk.Toplevel(self)
@@ -160,16 +222,31 @@ class MH_treatment_plan_interface(tk.Frame):
         ttk.Label(popup, text="Planned End Date").grid(row=5, column=0, padx=10, pady=5, sticky="w")
         end_date_entry = DateEntry(popup, width=20)
         end_date_entry.grid(row=5, column=1, padx=10, pady=5)
-
+        
+        # Case ID
+        ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
+        case_id_entry = ttk.Entry(popup, width=40)
+        case_id_entry.grid(row=6, column=1, padx=10, pady=5)
+        
+        # Authorized Status ID
+        ttk.Label(popup, text="Authorized Status ID").grid(row=7, column=0, padx=10, pady=5, sticky="w")
+        authorized_status_var = tk.StringVar()
+        authorized_status_dropdown = ttk.Combobox(popup, textvariable=authorized_status_var, values=[0, 1, 2, 3, 4], width=40)
+        authorized_status_dropdown.grid(row=7, column=1, padx=10, pady=5)
+        
         # Save button
         def save_action():
             model_id = int(treatment_model_var.get().split(" - ")[0])  # Extract ID from "ID - Name" format
             agency_id = int(provider_agency_var.get())
             cac_id = int(cac_id_var.get())
-            self.save_treatment_plan(model_id, agency_id, cac_id, start_date_entry.get_date(), end_date_entry.get_date())
+            case_id = case_id_entry.get().strip()
+            authorized_status_id = int(authorized_status_var.get())
+            self.save_treatment_plan(
+                        model_id, agency_id, cac_id, start_date_entry.get_date(), end_date_entry.get_date(),
+                        case_id, authorized_status_id)            
             popup.destroy()
 
-        ttk.Button(popup, text="Save", command=save_action).grid(row=6, column=0, columnspan=2, pady=10)
+        ttk.Button(popup, text="Save", command=save_action).grid(row=10, column=0, columnspan=2, pady=10)
    
     def get_cac_ids(self):
         """Fetches available CAC IDs for the dropdown."""
