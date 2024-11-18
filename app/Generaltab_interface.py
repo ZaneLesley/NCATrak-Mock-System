@@ -8,6 +8,10 @@ import MH_assessment
 import MH_treatmentPlan_interface
 import va_tab_interface
 import case_notes
+from database.config import load_config
+from database.connect import connect
+import psycopg2
+import random
 
 class GeneraltabInterface(tk.Frame):
     
@@ -93,6 +97,19 @@ class GeneraltabInterface(tk.Frame):
         general_frame = tk.Frame(scrollable_frame)
         general_frame.pack(anchor="center", pady=10)
         ttk.Label(general_frame, text="Case Tracking").pack()
+
+        def get_all_cases():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""select cac_case.mh_referral_date, cac_agency.agency_name, employee.first_name, employee.last_name,   
+                                    from cac_case;""")
+                        cases = cur.fetchall()
+                        return cases
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
 
         # Function to create edit case details
@@ -217,31 +234,31 @@ class GeneraltabInterface(tk.Frame):
 
         # Date (with DateEntry for calendar selection)
         ttk.Label(cases_frame, text="Service").grid(row=0, column=1, padx=5, pady=5)
-        service_field = ttk.Entry(cases_frame)
+        service_field = ttk.Label(cases_frame)
         service_field.grid(row=1, column=1, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Referral Date").grid(row=0, column=2, sticky="w")
-        referral_date = ttk.Combobox(cases_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
+        referral_date = ttk.Label(cases_frame, text="Test Date")
         referral_date.grid(row=1, column=2, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Referred By").grid(row=0, column=3, padx=5, pady=5)
-        referred_by_field = ttk.Combobox(cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        referred_by_field = ttk.Label(cases_frame, text="Placeholder")
         referred_by_field.grid(row=1, column=3, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Providing Agency").grid(row=0, column=4, padx=5, pady=5)
-        providing_agency = ttk.Combobox(cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        providing_agency = ttk.Label(cases_frame, text="test agency")  
         providing_agency.grid(row=1, column=4, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Primary Contact").grid(row=0, column=5, padx=5, pady=5)
-        primary_contact = ttk.Combobox(cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        primary_contact = ttk.Label(cases_frame, text="Temp")  
         primary_contact.grid(row=1, column=5, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Status").grid(row=0, column=6, padx=5, pady=5)
-        status_field = ttk.Combobox(cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        status_field = ttk.Label(cases_frame, text="Temp")  
         status_field.grid(row=1, column=6, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Status Date").grid(row=0, column=7, padx=5, pady=5)
-        status_date = ttk.Combobox(cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        status_date = ttk.Label(cases_frame, text="Temp date")  
         status_date.grid(row=1, column=7, padx=5, pady=5)
 
         # Add the "Edit" button next to the personnel dropdown
@@ -249,30 +266,69 @@ class GeneraltabInterface(tk.Frame):
 
         #------------------------------
 
+        def get_all_states():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from state_table;")
+                        states = cur.fetchall()
+                        return states
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_all_agencies():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_agency;")
+                        agencies = cur.fetchall()
+                        return agencies
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+        
+        def insert_new_agency(name, address1, address2, city, state, zipcode, phone):
+            sqlQuery = """insert into cac_agency (agency_id, cac_id, agency_name, addr_line_1, 
+            addr_line_2, city, state_abbr, phone_number, zip_code)
+            values (%s, %s, %s, %s, %s, %s, %s, %s, %s)"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (random.randint(1, 99999999), 1, name, address1, address2, city, state, 
+                                               phone, zipcode))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
         def add_agency_popup():
             popup = tk.Toplevel(self)
             popup.title("New Agency")
             popup.geometry("600x500")
 
-            existing_agency = [
-                "CAC of Anytown",
-                "Child Guidance",
-                "FBI",
-                "Mercy Hospital",
-                "Police Department"
-            ]
+            agencies = get_all_agencies()
+
+            states = get_all_states()
+            stateAbbr = []
+
+            for state in states:
+                stateAbbr.append(state[0])
 
             ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the desired agency is on this list then click 'Use Agency'.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the agency is not on the list enter the agency name below and click 'Save'.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
             agency_listbox = tk.Listbox(popup, height=5)
-            for person in existing_agency:
-                agency_listbox.insert(tk.END, person)
+            for agency in agencies:
+                agency_listbox.insert(tk.END, agency)
             agency_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
             # Entry fields for case agency
             ttk.Label(popup, text="Agency Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            agency_name_entry = ttk.Entry(popup, foreground='white')
+            agency_name_entry = ttk.Entry(popup)
             agency_name_entry.grid(row=5, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Address Line 1", foreground='black').grid(row=6, column=0, padx=5, pady=5)
@@ -288,7 +344,7 @@ class GeneraltabInterface(tk.Frame):
             city_entry.grid(row=8, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="State").grid(row=9, column=0, padx=5, pady=5)
-            state_entry = ttk.Combobox(popup)
+            state_entry = ttk.Combobox(popup, values=stateAbbr)
             state_entry.grid(row=9, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Zip Code").grid(row=10, column=0, padx=5, pady=5)
@@ -299,9 +355,38 @@ class GeneraltabInterface(tk.Frame):
             phone_entry = ttk.Entry(popup)
             phone_entry.grid(row=11, column=1, padx=5, pady=5)
 
+
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Save", command=lambda: [insert_new_agency(agency_name_entry.get(), address_line1_entry.get(), address_line2_entry.get(), 
+                                                                              city_entry.get(), state_entry.get(), zipcode_entry.get(), phone_entry.get()
+                                                                              ), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+
+        def get_all_personnel():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select employee_id, first_name, last_name from employee;")
+                        personnel = cur.fetchall()
+                        return personnel
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def insert_new_personnel(email, first, last, title, number):
+            sqlQuery = """insert into employee (employee_id, agency_id, cac_id, email_addr, 
+            first_name, last_name, job_title, phone_number)
+            values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (random.randint(1, 99999999), 64669736, 1, email, first, last, title, number))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
 
         def add_personnel_popup():
             popup = tk.Toplevel(self)
@@ -309,25 +394,20 @@ class GeneraltabInterface(tk.Frame):
             popup.geometry("800x600")
 
             # existing personnel 
-            existing_personnel = [
-                "Bob Dylan",
-                "Freddie Mercury",
-                "Mike Jackson",
-                "Adele",
-                "Elvis Presley"
-            ]
+            personnelList = get_all_personnel()
+            personnel_names = [personnel[1] + " " + personnel[2] for personnel in personnelList]
 
             ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
             ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
             ttk.Label(popup, text="Instead click Cancel to return to the previous screen and select them from the person pick list.", foreground='black').grid(row=3, column=0, padx=5, pady=5)
             personnel_listbox = tk.Listbox(popup, height=5)
-            for person in existing_personnel:
+            for person in personnel_names:
                 personnel_listbox.insert(tk.END, person)
             personnel_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
             # Entry fields for case agency
             ttk.Label(popup, text="First Name", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            first_name = ttk.Entry(popup, foreground='white')
+            first_name = ttk.Entry(popup, foreground='black')
             first_name.grid(row=5, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Last Name", foreground='black').grid(row=6, column=0, padx=5, pady=5)
@@ -355,7 +435,7 @@ class GeneraltabInterface(tk.Frame):
             phone_entry.grid(row=11, column=1, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Save", command=lambda: [insert_new_personnel(email_entry.get(), first_name.get(), last_name.get(), job_title_entry.get(), phone_entry.get()), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
 
