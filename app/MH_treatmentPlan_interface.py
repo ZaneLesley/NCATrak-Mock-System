@@ -106,22 +106,7 @@ class MH_treatment_plan_interface(tk.Frame):
         except Exception as error:
             print(f"Error fetching provider agencies: {error}")
             return []
-
-    # def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date):
-    #     """Saves a new treatment plan into the database."""
-    #     try:
-    #         with self.conn.cursor() as cur:
-    #             insert_query = """
-    #                 INSERT INTO case_mh_treatment_plans (treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date)
-    #                 VALUES (%s, %s, %s, %s, %s)
-    #             """
-    #             cur.execute(insert_query, (model_id, agency_id, cac_id, start_date, end_date))
-    #             self.conn.commit()
-    #             messagebox.showinfo("Success", "Treatment plan added successfully.")
-    #     except Exception as error:
-    #         print(f"Error saving treatment plan: {error}")
-    #         messagebox.showerror("Error", "Failed to save the treatment plan.")
-    #         self.conn.rollback()
+           
     def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date, case_id, authorized_status_id):
         """Saves a new treatment plan into the database with a randomly generated unique ID."""
         fake = Faker()
@@ -153,36 +138,6 @@ class MH_treatment_plan_interface(tk.Frame):
             print(f"Error saving treatment plan: {error}")
             messagebox.showerror("Error", "Failed to save the treatment plan.")
             self.conn.rollback()
-
-    # def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date):
-    #     """Saves a new treatment plan into the database with a randomly generated unique ID."""
-    #     fake = Faker()
-    #     fake.seed_instance(0)  # Ensure consistent results if needed
-
-    #     try:
-    #         with self.conn.cursor() as cur:
-    #             while True:
-    #                 # Generate a random unique ID
-    #                 random_id = fake.unique.random_number(digits=9)
-
-    #                 # Check if the ID already exists in the database
-    #                 cur.execute("SELECT 1 FROM case_mh_treatment_plans WHERE id = %s", (random_id,))
-    #                 if cur.fetchone() is None:
-    #                     # If the ID is unique, proceed to insert the new record
-    #                     insert_query = """
-    #                         INSERT INTO case_mh_treatment_plans 
-    #                         (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date)
-    #                         VALUES (%s, %s, %s, %s, %s, %s)
-    #                     """
-    #                     cur.execute(insert_query, (random_id, model_id, agency_id, cac_id, start_date, end_date))
-    #                     self.conn.commit()
-    #                     messagebox.showinfo("Success", "Treatment plan added successfully.")
-    #                     break  # Exit the loop after successful insertion
-
-    #     except Exception as error:
-    #         print(f"Error saving treatment plan: {error}")
-    #         messagebox.showerror("Error", "Failed to save the treatment plan.")
-    #         self.conn.rollback()
             
     def add_treatment_plan_popup(self):
         """Popup window for adding a new treatment plan."""
