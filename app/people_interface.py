@@ -12,32 +12,6 @@ import MH_treatmentPlan_interface
 import va_tab_interface
 import case_notes
 
-
-# -------------------- Internal Mappings --------------------
-# Define roles and relationships here
-ROLE_MAPPING = {
-    'Alleged Offender': 1,
-    'Witness': 2,
-    'Victim': 3,
-    'Friend': 4,
-    'Family Member': 5,
-    # Add more roles as needed
-}
-
-RELATIONSHIP_MAPPING = {
-    'Boyfriend': 1,
-    'Girlfriend': 2,
-    'Friend': 3,
-    'Sibling': 4,
-    'Parent': 5,
-    'Colleague': 6,
-    # Add more relationships as needed
-}
-
-# Reverse mappings for display purposes
-ROLE_REVERSE_MAPPING = {v: k for k, v in ROLE_MAPPING.items()}
-RELATIONSHIP_REVERSE_MAPPING = {v: k for k, v in RELATIONSHIP_MAPPING.items()}
-
 class PeopleInterface(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
@@ -69,7 +43,7 @@ class PeopleInterface(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        #  window in the canvas
+        # window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
         # scrollbar to canvas
@@ -83,52 +57,57 @@ class PeopleInterface(tk.Frame):
         scrollbar.grid(row=row_counter, column=1, sticky="ns")
         row_counter += 1
 
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
+        # Navigation Buttons (assuming 'controller' is provided)
+        # Note: Adjusted to remove 'controller' since it's not defined
+        # You can re-add 'controller' parameter if needed
+        button_frame = ttk.Frame(self)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
 
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
+        button1 = ttk.Button(button_frame, text="General",
+                             command=lambda: self.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.pack(side='left', padx=5)
 
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
+        button2 = ttk.Button(button_frame, text="People",
+                             command=lambda: self.show_frame(PeopleInterface))
+        button2.pack(side='left', padx=5)
 
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
+        button3 = ttk.Button(button_frame, text="Mental Health - Basic",
+                             command=lambda: self.show_frame(MH_basic_interface.MHBasicInterface))
+        button3.pack(side='left', padx=5)
 
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
+        button4 = ttk.Button(button_frame, text="Mental Health - Assessment",
+                             command=lambda: self.show_frame(MH_assessment.MHassessment))
+        button4.pack(side='left', padx=5)
 
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-        
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
+        button5 = ttk.Button(button_frame, text="Mental Health - Treatment Plan",
+                             command=lambda: self.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
+        button5.pack(side='left', padx=5)
 
+        button6 = ttk.Button(button_frame, text="VA",
+                             command=lambda: self.show_frame(va_tab_interface.va_interface))
+        button6.pack(side='left', padx=5)
+
+        button7 = ttk.Button(button_frame, text="Case Notes",
+                             command=lambda: self.show_frame(case_notes.case_notes_interface))
+        button7.pack(side='left', padx=5)
 
         # -------------------- Save and Cancel Buttons --------------------
-        buttons_frame = tk.Frame(self)
-        buttons_frame.grid(row=0, column=0, padx=10, pady=5, sticky='w')
+        save_cancel_frame = tk.Frame(self)
+        save_cancel_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')
 
-        save_button = ttk.Button(buttons_frame, text="Save", command=self.save_changes)
+        save_button = ttk.Button(save_cancel_frame, text="Save", command=self.save_changes)
         save_button.pack(side='left', padx=5)
 
-        cancel_button = ttk.Button(buttons_frame, text="Cancel", command=self.cancel_changes)
+        cancel_button = ttk.Button(save_cancel_frame, text="Cancel", command=self.cancel_changes)
         cancel_button.pack(side='left', padx=5)
 
         # -------------------- Header --------------------
         header_label = ttk.Label(self, text="PEOPLE ASSOCIATED WITH CASE", font=('Helvetica', 16))
-        header_label.grid(row=1, column=0, padx=10, pady=10, sticky='w')
+        header_label.grid(row=2, column=0, padx=10, pady=10, sticky='w')
 
         # -------------------- Search Fields --------------------
         search_frame = tk.Frame(self)
-        search_frame.grid(row=2, column=0, padx=10, pady=5, sticky='w')
+        search_frame.grid(row=3, column=0, padx=10, pady=5, sticky='w')
 
         search_label = ttk.Label(search_frame, text="Search:")
         search_label.pack(side='left', padx=(0, 5))
@@ -139,12 +118,12 @@ class PeopleInterface(tk.Frame):
 
         # -------------------- Add Button --------------------
         add_button = ttk.Button(self, text="+ Add", command=self.add_person)
-        add_button.grid(row=3, column=0, padx=10, pady=5, sticky='w')
+        add_button.grid(row=4, column=0, padx=10, pady=5, sticky='w')
 
         # -------------------- Main Table --------------------
         table_frame = tk.Frame(self)
-        table_frame.grid(row=4, column=0, padx=10, pady=10, sticky='nsew')
-        self.grid_rowconfigure(4, weight=1)
+        table_frame.grid(row=5, column=0, padx=10, pady=10, sticky='nsew')
+        self.grid_rowconfigure(5, weight=1)
 
         # Define columns
         columns = ("Action", "Name", "Age", "Date of Birth", "Role", "Relationship To Victim", "Same Household", "Custody")
@@ -185,7 +164,7 @@ class PeopleInterface(tk.Frame):
 
         # -------------------- Additional Checkbox and Comments --------------------
         additional_frame = tk.Frame(self)
-        additional_frame.grid(row=5, column=0, padx=10, pady=10, sticky='w')
+        additional_frame.grid(row=6, column=0, padx=10, pady=10, sticky='w')
 
         checkbox_var = tk.BooleanVar()
         checkbox = ttk.Checkbutton(additional_frame, text="Alleged Offender Name Unknown", variable=checkbox_var)
@@ -196,6 +175,11 @@ class PeopleInterface(tk.Frame):
 
         comments_text = tk.Text(additional_frame, height=5, width=100)
         comments_text.grid(row=2, column=0, pady=5, sticky='w')
+
+    # -------------------- Navigation Function Placeholder --------------------
+    def show_frame(self, frame_class):
+        # Placeholder for navigation function
+        pass
 
     # -------------------- Database Connection and Functions --------------------
     def get_connection(self):
@@ -259,7 +243,7 @@ class PeopleInterface(tk.Frame):
             query = """
                 SELECT p.person_id, p.first_name || ' ' || p.last_name AS name, 
                 DATE_PART('year', AGE(p.date_of_birth)) AS age, p.date_of_birth, 
-                cp.role_id, cp.relationship_id, cp.same_household, cp.custody
+                cp.same_household, cp.custody
                 FROM person p
                 JOIN case_person cp ON p.person_id = cp.person_id
                 WHERE cp.case_id = %s;
@@ -275,10 +259,8 @@ class PeopleInterface(tk.Frame):
                 name = row[1] if row[1] else 'N/A'
                 age = int(row[2]) if row[2] else 'N/A'
                 dob = row[3].strftime('%Y-%m-%d') if row[3] else 'N/A'
-                role_id = row[4] if row[4] else None
-                relationship_id = row[5] if row[5] else None
-                role = ROLE_REVERSE_MAPPING.get(role_id, 'N/A') if role_id else 'N/A'
-                relationship = RELATIONSHIP_REVERSE_MAPPING.get(relationship_id, 'N/A') if relationship_id else 'N/A'
+                role = 'N/A'
+                relationship = 'N/A'
                 values = ('', name, age, dob, role, relationship, '', '')
                 self.tree.insert("", "end", iid=person_id, values=values)
         except Exception as e:
@@ -434,10 +416,8 @@ class PeopleInterface(tk.Frame):
             if search_text in name.lower():
                 age = int(row[2]) if row[2] else 'N/A'
                 dob = row[3].strftime('%Y-%m-%d') if row[3] else 'N/A'
-                role_id = row[4] if row[4] else None
-                relationship_id = row[5] if row[5] else None
-                role = ROLE_REVERSE_MAPPING.get(role_id, 'N/A') if role_id else 'N/A'
-                relationship = RELATIONSHIP_REVERSE_MAPPING.get(relationship_id, 'N/A') if relationship_id else 'N/A'
+                role = 'N/A'
+                relationship = 'N/A'
                 values = ('', name, age, dob, role, relationship, '', '')
                 self.tree.insert("", "end", iid=person_id, values=values)
 
@@ -468,21 +448,13 @@ class AddPersonForm(tk.Toplevel):
         self.fields = {}
 
         # Define field names
-        field_names = ['First Name', 'Last Name', 'Date of Birth (YYYY-MM-DD)', 'Gender (M/F)', 'Role', 'Relationship To Victim']
+        field_names = ['First Name', 'Last Name', 'Date of Birth (YYYY-MM-DD)', 'Gender (M/F)']
         for idx, field in enumerate(field_names):
             label = ttk.Label(self, text=field)
             label.grid(row=idx, column=0, padx=10, pady=5, sticky='e')
-            if field in ['Role', 'Relationship To Victim']:
-                if field == 'Role':
-                    combobox = ttk.Combobox(self, values=list(ROLE_MAPPING.keys()), state='readonly')
-                else:
-                    combobox = ttk.Combobox(self, values=list(RELATIONSHIP_MAPPING.keys()), state='readonly')
-                combobox.grid(row=idx, column=1, padx=10, pady=5, sticky='w')
-                self.fields[field] = combobox
-            else:
-                entry = ttk.Entry(self)
-                entry.grid(row=idx, column=1, padx=10, pady=5, sticky='w')
-                self.fields[field] = entry
+            entry = ttk.Entry(self)
+            entry.grid(row=idx, column=1, padx=10, pady=5, sticky='w')
+            self.fields[field] = entry
 
         # Save and Cancel Buttons
         buttons_frame = tk.Frame(self)
@@ -497,7 +469,7 @@ class AddPersonForm(tk.Toplevel):
     def save_person(self):
         try:
             # Validate required fields
-            required_fields = ['First Name', 'Last Name', 'Date of Birth (YYYY-MM-DD)', 'Role', 'Relationship To Victim']
+            required_fields = ['First Name', 'Last Name', 'Date of Birth (YYYY-MM-DD)']
             for field in required_fields:
                 if not self.fields[field].get().strip():
                     messagebox.showwarning("Validation Error", f"{field} is required.")
@@ -511,19 +483,9 @@ class AddPersonForm(tk.Toplevel):
                 messagebox.showwarning("Validation Error", "Date of Birth must be in YYYY-MM-DD format.")
                 return
 
-            role_name = self.fields['Role'].get().strip()
-            relationship_name = self.fields['Relationship To Victim'].get().strip()
-
-            # Map role and relationship names to IDs
-            role_id = ROLE_MAPPING.get(role_name)
-            relationship_id = RELATIONSHIP_MAPPING.get(relationship_name)
-
-            if role_id is None:
-                messagebox.showwarning("Validation Error", f"Invalid Role: {role_name}")
-                return
-
-            if relationship_id is None:
-                messagebox.showwarning("Validation Error", f"Invalid Relationship To Victim: {relationship_name}")
+            gender = self.fields['Gender (M/F)'].get().strip().upper()
+            if gender not in ['M', 'F']:
+                messagebox.showwarning("Validation Error", "Gender must be 'M' or 'F'.")
                 return
 
             cur = self.conn.cursor()
@@ -538,17 +500,17 @@ class AddPersonForm(tk.Toplevel):
 
             person_data = (
                 person_id, self.cac_id, self.fields['First Name'].get(), self.fields['Last Name'].get(),
-                dob, self.fields['Gender (M/F)'].get().upper()
+                dob, gender
             )
             cur.execute(insert_person_query, person_data)
 
             # Insert into case_person table
             insert_case_person_query = """
-                INSERT INTO case_person (person_id, case_id, cac_id, role_id, relationship_id)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO case_person (person_id, case_id, cac_id)
+                VALUES (%s, %s, %s)
             """
             case_person_data = (
-                person_id, self.case_id, self.cac_id, role_id, relationship_id
+                person_id, self.case_id, self.cac_id
             )
             cur.execute(insert_case_person_query, case_person_data)
             self.conn.commit()
@@ -593,19 +555,6 @@ class EditPersonForm(AddPersonForm):
                 messagebox.showerror("Error", "Person not found.")
                 self.destroy()
                 return
-
-            # Fetch case_person data
-            case_person_query = """
-                SELECT role_id, relationship_id FROM case_person 
-                WHERE person_id = %s AND case_id = %s
-            """
-            cur.execute(case_person_query, (self.person_id, self.case_id))
-            case_person = cur.fetchone()
-            if not case_person:
-                messagebox.showerror("Error", "Case-Person association not found.")
-                cur.close()
-                self.destroy()
-                return
             cur.close()
 
             # Populate fields
@@ -613,16 +562,6 @@ class EditPersonForm(AddPersonForm):
             self.fields['Last Name'].insert(0, person[1] if person[1] else '')
             self.fields['Date of Birth (YYYY-MM-DD)'].insert(0, person[2].strftime('%Y-%m-%d') if person[2] else '')
             self.fields['Gender (M/F)'].insert(0, person[3] if person[3] else '')
-
-            # Map role_id and relationship_id back to names
-            role_id = case_person[0]
-            relationship_id = case_person[1]
-
-            role_name = ROLE_REVERSE_MAPPING.get(role_id, 'N/A') if role_id else ''
-            relationship_name = RELATIONSHIP_REVERSE_MAPPING.get(relationship_id, 'N/A') if relationship_id else ''
-
-            self.fields['Role'].set(role_name)
-            self.fields['Relationship To Victim'].set(relationship_name)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load person data: {e}")
             self.destroy()
@@ -630,7 +569,7 @@ class EditPersonForm(AddPersonForm):
     def save_person(self):
         try:
             # Validate required fields
-            required_fields = ['First Name', 'Last Name', 'Date of Birth (YYYY-MM-DD)', 'Role', 'Relationship To Victim']
+            required_fields = ['First Name', 'Last Name', 'Date of Birth (YYYY-MM-DD)']
             for field in required_fields:
                 if not self.fields[field].get().strip():
                     messagebox.showwarning("Validation Error", f"{field} is required.")
@@ -644,19 +583,9 @@ class EditPersonForm(AddPersonForm):
                 messagebox.showwarning("Validation Error", "Date of Birth must be in YYYY-MM-DD format.")
                 return
 
-            role_name = self.fields['Role'].get().strip()
-            relationship_name = self.fields['Relationship To Victim'].get().strip()
-
-            # Map role and relationship names to IDs
-            role_id = ROLE_MAPPING.get(role_name)
-            relationship_id = RELATIONSHIP_MAPPING.get(relationship_name)
-
-            if role_id is None:
-                messagebox.showwarning("Validation Error", f"Invalid Role: {role_name}")
-                return
-
-            if relationship_id is None:
-                messagebox.showwarning("Validation Error", f"Invalid Relationship To Victim: {relationship_name}")
+            gender = self.fields['Gender (M/F)'].get().strip().upper()
+            if gender not in ['M', 'F']:
+                messagebox.showwarning("Validation Error", "Gender must be 'M' or 'F'.")
                 return
 
             cur = self.conn.cursor()
@@ -667,19 +596,9 @@ class EditPersonForm(AddPersonForm):
             """
             person_data = (
                 self.fields['First Name'].get(), self.fields['Last Name'].get(), dob,
-                self.fields['Gender (M/F)'].get().upper(), self.person_id
+                gender, self.person_id
             )
             cur.execute(update_person_query, person_data)
-
-            # Update case_person table
-            update_case_person_query = """
-                UPDATE case_person SET role_id = %s, relationship_id = %s
-                WHERE person_id = %s AND case_id = %s
-            """
-            case_person_data = (
-                role_id, relationship_id, self.person_id, self.case_id
-            )
-            cur.execute(update_case_person_query, case_person_data)
             self.conn.commit()
             cur.close()
             messagebox.showinfo("Success", "Person updated successfully.")
