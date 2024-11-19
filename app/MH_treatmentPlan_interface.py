@@ -13,6 +13,8 @@ import people_interface
 import MH_basic_interface
 import MH_assessment
 import va_tab_interface
+import case_notes
+import sv_ttk
 
 class MH_treatment_plan_interface(tk.Frame):
 
@@ -24,12 +26,33 @@ class MH_treatment_plan_interface(tk.Frame):
         self.grid_columnconfigure(0, weight=1)
 
         # Navigation buttons
-        buttons = [("General", Generaltab_interface.GeneraltabInterface),
-                   ("People", people_interface.people_interface),
-                   ("Mental Health - Basic", MH_basic_interface.MHBasicInterface),
-                   ("Mental Health - Assessment", MH_assessment.MHassessment),
-                   ("Mental Health - Treatment Plan", MH_treatment_plan_interface),
-                   ("VA", va_tab_interface.va_interface)]
+        button1 = ttk.Button(self, text="General", 
+                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.grid(row=0, column=0, padx=5, pady=5)
+        
+        button2 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface.people_interface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
+
+        button4 = ttk.Button(self, text="Mental Health - Assessment", 
+                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
+        button4.grid(row=0, column=3, padx=5, pady=5)
+
+        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
+                            command=lambda: controller.show_frame(MH_treatment_plan_interface))
+        button5.grid(row=0, column=4, padx=5, pady=5)
+
+        button6 = ttk.Button(self, text="VA", 
+                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
+        button6.grid(row=0, column=5, padx=5, pady=5)
+        
+        button7 = ttk.Button(self, text="Case Notes", 
+                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
+        button7.grid(row=0, column=6, padx=5, pady=5)
         
         for idx, (text, frame) in enumerate(buttons):
             button = ttk.Button(self, text=text, command=lambda f=frame: controller.show_frame(f))

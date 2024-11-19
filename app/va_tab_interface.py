@@ -7,6 +7,7 @@ import people_interface
 import MH_basic_interface
 import MH_assessment
 import MH_treatmentPlan_interface
+import case_notes
 
 class va_interface(tk.Frame):
 
@@ -44,6 +45,9 @@ class va_interface(tk.Frame):
                             command=lambda: controller.show_frame(va_interface))
         button6.grid(row=0, column=5, padx=5, pady=5)
         
+        button7 = ttk.Button(self, text="Case Notes", 
+                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
+        button7.grid(row=0, column=6, padx=5, pady=5)
         
         # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
