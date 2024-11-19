@@ -199,15 +199,15 @@ class GeneraltabInterface(tk.Frame):
             what_records_entry.grid(row=7, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Date Released").grid(row=8, column=0, padx=5, pady=5)
-            date_released_entry = ttk.Entry(popup)
+            date_released_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
             date_released_entry.grid(row=8, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Date to be returned (if applicable)").grid(row=9, column=0, padx=5, pady=5)
-            tobe_returned_date_entry = ttk.Entry(popup)
+            tobe_returned_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
             tobe_returned_date_entry.grid(row=9, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Date Returned").grid(row=10, column=0, padx=5, pady=5)
-            returned_date_entry = ttk.Entry(popup)
+            returned_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
             returned_date_entry.grid(row=10, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Testing field 1").grid(row=11, column=0, padx=5, pady=5)
@@ -447,20 +447,24 @@ class GeneraltabInterface(tk.Frame):
         date_entry = DateEntry(case_information_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         date_entry.grid(row=0, column=1, padx=5, pady=5)
 
+        agencies = get_all_agencies() 
+
         ttk.Label(case_information_frame, text="Main Agency Involved").grid(row=1, column=0, padx=5, pady=5)
-        main_agency = ttk.Combobox(case_information_frame, values=["DCS - Anderson Co.", "DCS - Hamilton Co."])
+        main_agency = ttk.Combobox(case_information_frame, values=agencies)
         main_agency.grid(row=1, column=1, padx=5, pady=5)
         add_agency = ttk.Button(case_information_frame, text="+ Add", command=add_agency_popup)
         add_agency.grid(row=1, column=2, padx=5, pady=5)
 
+        personnel = get_all_personnel()
+
         ttk.Label(case_information_frame, text="Main Personnel Involved").grid(row=2, column=0, padx=5, pady=5)
-        main_personnel = ttk.Combobox(case_information_frame, values=["Person 1", "Person 2"])  
+        main_personnel = ttk.Combobox(case_information_frame, values=personnel)  
         main_personnel.grid(row=2, column=1, padx=5, pady=5)
         add_personnel = ttk.Button(case_information_frame, text="+ Add", command=add_personnel_popup)  
         add_personnel.grid(row=2, column=2, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Case Closed Reason").grid(row=3, column=0, padx=5, pady=5)
-        close_reason = ttk.Combobox(case_information_frame, values=["Person 1", "Person 2"]) 
+        close_reason = ttk.Combobox(case_information_frame, values=["Reason 1", "Reason 2", "Reason 3", "Reason 4"]) 
         close_reason.grid(row=3, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Case Close Date").grid(row=4, column=0, padx=5, pady=5)
@@ -468,11 +472,11 @@ class GeneraltabInterface(tk.Frame):
         close_date.grid(row=4, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Survey Complete (1)").grid(row=5, column=0, padx=5, pady=5)
-        survey_complete = ttk.Combobox(case_information_frame, values=["Person 1", "Person 2"])  
+        survey_complete = ttk.Combobox(case_information_frame, values=["Yes", "No"])  
         survey_complete.grid(row=5, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Follow Up Survey Complete (2)").grid(row=6, column=0, padx=5, pady=5)
-        followup_survey = DateEntry(case_information_frame, width=12, background='darkblue', foreground='white', borderwidth=2) 
+        followup_survey = ttk.Combobox(case_information_frame, values=["Yes", "No"])  
         followup_survey.grid(row=6, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="CAC Case # (3)").grid(row=7, column=0, padx=5, pady=5)
@@ -508,7 +512,7 @@ class GeneraltabInterface(tk.Frame):
         Denied.grid(row=10, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Test 5").grid(row=11, column=0, padx=5, pady=5)
-        test5 = ttk.Combobox(case_information_frame, values=["Person 1", "Person 2"])  
+        test5 = ttk.Combobox(case_information_frame, values=["Yes", "No"])  
         test5.grid(row=11, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="General - Custom Field 6").grid(row=12, column=0, padx=5, pady=5)
@@ -539,12 +543,12 @@ class GeneraltabInterface(tk.Frame):
 
         # CAC Case Number
         ttk.Label(linked_cases_frame, text="CAC Case Number").grid(row=1, column=6, padx=5, pady=5)
-        case_number = ttk.Combobox(linked_cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        case_number = ttk.Combobox(linked_cases_frame, values=["CAC Case Number 1", "CAC Case Number 2"])   
         case_number.grid(row=2, column=6, padx=5, pady=5)
 
         # Alleged Victim
         ttk.Label(linked_cases_frame, text="Alleged Victim").grid(row=1, column=7, padx=5, pady=5)
-        alleged_victim = ttk.Combobox(linked_cases_frame, values=["Person 1", "Person 2"])  # Add person options
+        alleged_victim = ttk.Combobox(linked_cases_frame, values=["Person 1", "Person 2"])   
         alleged_victim.grid(row=2, column=7, padx=5, pady=5)
 
         # Add the "Edit" button 
@@ -559,12 +563,12 @@ class GeneraltabInterface(tk.Frame):
 
         # Court Type
         ttk.Label(court_activities_frame, text="Court Type").grid(row=0, column=0, padx=5, pady=5)
-        court_type = ttk.Combobox(court_activities_frame, values=["Person 1", "Person 2"])  # Add person options
+        court_type = ttk.Combobox(court_activities_frame, values=["Type 1", "Type 2"])   
         court_type.grid(row=1, column=0, padx=5, pady=5)
 
         # Court Date
         ttk.Label(court_activities_frame, text="Court Date").grid(row=0, column=1, padx=5, pady=5)
-        court_date = ttk.Combobox(court_activities_frame, values=["Person 1", "Person 2"])  # Add person options
+        court_date =  DateEntry(court_activities_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         court_date.grid(row=1, column=1, padx=5, pady=5)
 
         #--------------------------------
@@ -574,43 +578,43 @@ class GeneraltabInterface(tk.Frame):
 
 
         ttk.Label(information_release_frame, text="Date Requested").grid(row=1, column=1, padx=5, pady=5)
-        date_requested = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        date_requested = DateEntry(information_release_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         date_requested.grid(row=2, column=1, padx=5, pady=5)
 
 
         ttk.Label(information_release_frame, text="Requested By").grid(row=1, column=2, padx=5, pady=5)
-        requested_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        requested_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])   
         requested_by.grid(row=2, column=2, padx=5, pady=5)
 
         ttk.Label(information_release_frame, text="By Subpoena").grid(row=1, column=3, padx=5, pady=5)
-        by_subpeona = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        by_subpeona = ttk.Combobox(information_release_frame, values=["Yes", "No"])   
         by_subpeona.grid(row=2, column=3, padx=5, pady=5)
 
 
         ttk.Label(information_release_frame, text="Authorized By").grid(row=1, column=4, padx=5, pady=5)
-        authorized_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        authorized_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])   
         authorized_by.grid(row=2, column=4, padx=5, pady=5)
 
         ttk.Label(information_release_frame, text="Released By").grid(row=1, column=5, padx=5, pady=5)
-        released_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        released_by = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])   
         released_by.grid(row=2, column=5, padx=5, pady=5)
 
 
         ttk.Label(information_release_frame, text="Records").grid(row=1, column=6, padx=5, pady=5)
-        records = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        records = ttk.Combobox(information_release_frame, values=["Record 1", "Record 2"])  
         records.grid(row=2, column=6, padx=5, pady=5)
 
         ttk.Label(information_release_frame, text="Date Released").grid(row=1, column=7, padx=5, pady=5)
-        date_released = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        date_released = DateEntry(information_release_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         date_released.grid(row=2, column=7, padx=5, pady=5)
 
 
         ttk.Label(information_release_frame, text="Date to be Returned").grid(row=1, column=8, padx=5, pady=5)
-        tobe_returned = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        tobe_returned = DateEntry(information_release_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         tobe_returned.grid(row=2, column=8, padx=5, pady=5)
 
         ttk.Label(information_release_frame, text="Date Returned").grid(row=1, column=9, padx=5, pady=5)
-        date_returned = ttk.Combobox(information_release_frame, values=["Person 1", "Person 2"])  # Add person options
+        date_returned = DateEntry(information_release_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         date_returned.grid(row=2, column=9, padx=5, pady=5)
 
         # Add the "Add new record" button 
@@ -624,8 +628,8 @@ class GeneraltabInterface(tk.Frame):
 
             # Create labels and entry fields
             ttk.Label(popup, text="Referred From").grid(row=0, column=0, padx=5, pady=5)
-            comment_entry = ttk.Entry(popup)
-            comment_entry.grid(row=0, column=1, padx=5, pady=5)
+            referral_from_entry = ttk.Entry(popup)
+            referral_from_entry.grid(row=0, column=1, padx=5, pady=5)
 
             ttk.Label(popup, text="Date").grid(row=1, column=0, padx=5, pady=5)
             referral_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
@@ -652,7 +656,7 @@ class GeneraltabInterface(tk.Frame):
         referral_from_entry.grid(row=2, column=1, padx=5, pady=5)
 
         ttk.Label(outside_referrals_frame, text="Referral Date").grid(row=1, column=2, padx=5, pady=5)
-        referral_date_entry = ttk.Entry(outside_referrals_frame)
+        referral_date_entry = DateEntry(outside_referrals_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         referral_date_entry.grid(row=2, column=2, padx=5, pady=5)
 
         ttk.Label(outside_referrals_frame, text="Referred To").grid(row=1, column=3, padx=5, pady=5)
