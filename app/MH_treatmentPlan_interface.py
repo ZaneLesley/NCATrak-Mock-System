@@ -22,18 +22,42 @@ class MH_treatment_plan_interface(tk.Frame):
         # Configure layout for navigation buttons and main canvas
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
+        
+        button1 = ttk.Button(self, text="General", 
+                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.grid(row=0, column=0, padx=5, pady=5)
+
+        button2 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface.people_interface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
+
+        button4 = ttk.Button(self, text="Mental Health - Assessment", 
+                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
+        button4.grid(row=0, column=3, padx=5, pady=5)
+
+        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
+                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
+        button5.grid(row=0, column=4, padx=5, pady=5)
+
+        button6 = ttk.Button(self, text="VA", 
+                            command=lambda: controller.show_frame(va_interface))
+        button6.grid(row=0, column=5, padx=5, pady=5)
 
         # Navigation buttons
-        buttons = [("General", Generaltab_interface.GeneraltabInterface),
-                   ("People", people_interface.people_interface),
-                   ("Mental Health - Basic", MH_basic_interface.MHBasicInterface),
-                   ("Mental Health - Assessment", MH_assessment.MHassessment),
-                   ("Mental Health - Treatment Plan", MH_treatment_plan_interface),
-                   ("VA", va_tab_interface.va_interface)]
+        # buttons = [("General", Generaltab_interface.GeneraltabInterface),
+        #            ("People", people_interface.people_interface),
+        #            ("Mental Health - Basic", MH_basic_interface.MHBasicInterface),
+        #            ("Mental Health - Assessment", MH_assessment.MHassessment),
+        #            ("Mental Health - Treatment Plan", MH_treatment_plan_interface),
+        #            ("TESTING!!", va_tab_interface.va_interface)]
         
-        for idx, (text, frame) in enumerate(buttons):
-            button = ttk.Button(self, text=text, command=lambda f=frame: controller.show_frame(f))
-            button.grid(row=0, column=idx, padx=5, pady=5)
+        # for idx, (text, frame) in enumerate(buttons):
+        #     button = ttk.Button(self, text=text, command=lambda f=frame: controller.show_frame(f))
+        #     button.grid(row=0, column=idx, padx=5, pady=5)
 
         # Setup scrollable canvas for the main content
         canvas = tk.Canvas(self)
