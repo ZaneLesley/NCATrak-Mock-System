@@ -5,9 +5,6 @@ from tkinter import filedialog
 import psycopg2
 import configparser
 from faker import Faker
-
-
-# Import other modules for navigation
 import Generaltab_interface
 import people_interface
 import MH_basic_interface
