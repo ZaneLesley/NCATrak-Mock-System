@@ -25,31 +25,6 @@ class MH_treatment_plan_interface(tk.Frame):
         button1 = ttk.Button(self, text="General", 
                             command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
         button1.grid(row=0, column=0, padx=5, pady=5)
-
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
-
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-
-        # Navigation buttons
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
         
         button2 = ttk.Button(self, text="People", 
                             command=lambda: controller.show_frame(people_interface.people_interface))
@@ -74,10 +49,6 @@ class MH_treatment_plan_interface(tk.Frame):
         button7 = ttk.Button(self, text="Case Notes", 
                             command=lambda: controller.show_frame(case_notes.case_notes_interface))
         button7.grid(row=0, column=6, padx=5, pady=5)
-        
-        # for idx, (text, frame) in enumerate(buttons):
-        #     button = ttk.Button(self, text=text, command=lambda f=frame: controller.show_frame(f))
-        #     button.grid(row=0, column=idx, padx=5, pady=5)
 
         # Setup scrollable canvas for the main content
         canvas = tk.Canvas(self)
@@ -145,13 +116,13 @@ class MH_treatment_plan_interface(tk.Frame):
         """Fetches available provider agencies for the dropdown."""
         try:
             with self.conn.cursor() as cur:
-                cur.execute("SELECT agency_id FROM cac_agency")
+                cur.execute("SELECT agency_name FROM cac_agency")
                 return [str(row[0]) for row in cur.fetchall()]
         except Exception as error:
             print(f"Error fetching provider agencies: {error}")
             return []
-           
-    def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date, case_id, authorized_status_id):
+    def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date, case_id, 
+                        authorized_status_id, duration, duration_unit, planned_review_date):
         """Saves a new treatment plan into the database with a randomly generated unique ID."""
         fake = Faker()
         fake.seed_instance(0)  # Ensure consistent results if needed
@@ -168,11 +139,13 @@ class MH_treatment_plan_interface(tk.Frame):
                         # If the ID is unique, proceed to insert the new record
                         insert_query = """
                             INSERT INTO case_mh_treatment_plans 
-                            (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date, case_id, authorized_status_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                            (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date, 
+                            case_id, authorized_status_id, duration, duration_unit, planned_review_date)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """
                         cur.execute(insert_query, (
-                            random_id, model_id, agency_id, cac_id, start_date, end_date, case_id, authorized_status_id
+                            random_id, model_id, agency_id, cac_id, start_date, end_date, case_id, 
+                            authorized_status_id, duration, duration_unit, planned_review_date
                         ))
                         self.conn.commit()
                         messagebox.showinfo("Success", "Treatment plan added successfully.")
@@ -206,12 +179,6 @@ class MH_treatment_plan_interface(tk.Frame):
         provider_agency_dropdown = ttk.Combobox(popup, textvariable=provider_agency_var, values=self.get_provider_agencies(), width=40)
         provider_agency_dropdown.grid(row=2, column=1, padx=(10, 0), pady=5, sticky="w")
 
-        # CAC ID
-        ttk.Label(popup, text="CAC ID").grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        cac_id_var = tk.StringVar()
-        cac_id_dropdown = ttk.Combobox(popup, textvariable=cac_id_var, values=self.get_cac_ids(), width=40)
-        cac_id_dropdown.grid(row=3, column=1, padx=(10, 0), pady=5, sticky="w")
-
         # Planned Start Date
         ttk.Label(popup, text="Planned Start Date").grid(row=4, column=0, padx=10, pady=5, sticky="w")
         start_date_entry = DateEntry(popup, width=20)
@@ -233,29 +200,70 @@ class MH_treatment_plan_interface(tk.Frame):
         authorized_status_dropdown = ttk.Combobox(popup, textvariable=authorized_status_var, values=[0, 1, 2, 3, 4], width=40)
         authorized_status_dropdown.grid(row=7, column=1, padx=10, pady=5)
         
-        # Save button
+        # Duration
+        ttk.Label(popup, text="Duration").grid(row=8, column=0, padx=10, pady=5, sticky="w")
+        duration_var = tk.StringVar()
+        duration_entry = ttk.Entry(popup, textvariable=duration_var, width=40)
+        duration_entry.grid(row=8, column=1, padx=10, pady=5)
+
+        # Duration Unit
+        ttk.Label(popup, text="Duration Unit").grid(row=9, column=0, padx=10, pady=5, sticky="w")
+        duration_unit_var = tk.StringVar()
+        duration_unit_dropdown = ttk.Combobox(popup, textvariable=duration_unit_var, values=["days", "weeks", "months"], width=40)
+        duration_unit_dropdown.grid(row=9, column=1, padx=10, pady=5)
+
+        # Planned Review Date
+        ttk.Label(popup, text="Planned Review Date").grid(row=10, column=0, padx=10, pady=5, sticky="w")
+        planned_review_date_entry = DateEntry(popup, width=20)
+        planned_review_date_entry.grid(row=10, column=1, padx=10, pady=5)
+        
+   
         def save_action():
             model_id = int(treatment_model_var.get().split(" - ")[0])  # Extract ID from "ID - Name" format
-            agency_id = int(provider_agency_var.get())
-            cac_id = int(cac_id_var.get())
+            agency_name = provider_agency_var.get()
+            agency_id = self.get_agency_id_by_name(agency_name)  # Fetch agency_id based on selected agency name
+            cac_id = self.get_cac_id_by_agency(agency_name)  # Fetch cac_id based on selected agency name
             case_id = case_id_entry.get().strip()
             authorized_status_id = int(authorized_status_var.get())
+            
+            duration = int(duration_var.get().strip())
+            duration_unit = duration_unit_var.get()
+            planned_review_date = planned_review_date_entry.get_date()
+            
             self.save_treatment_plan(
-                        model_id, agency_id, cac_id, start_date_entry.get_date(), end_date_entry.get_date(),
-                        case_id, authorized_status_id)            
+                model_id, agency_id, cac_id, start_date_entry.get_date(), end_date_entry.get_date(),
+                case_id, authorized_status_id, duration, duration_unit, planned_review_date
+            )
             popup.destroy()
 
-        ttk.Button(popup, text="Save", command=save_action).grid(row=10, column=0, columnspan=2, pady=10)
-   
-    def get_cac_ids(self):
-        """Fetches available CAC IDs for the dropdown."""
+        ttk.Button(popup, text="Save", command=save_action).grid(row=12, column=0, columnspan=2, pady=10)
+
+    def get_cac_id_by_agency(self, agency_name):
+        """Fetches the CAC ID for a given agency name."""
         try:
             with self.conn.cursor() as cur:
-                cur.execute("SELECT cac_id FROM child_advocacy_center")
-                return [str(row[0]) for row in cur.fetchall()]
+                cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
+                result = cur.fetchone()
+                print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
+                return result[0] if result else None
+            
         except Exception as error:
-            print(f"Error fetching CAC IDs: {error}")
-            return []
+            print(f"Error fetching CAC ID for agency '{agency_name}': {error}")
+            return None
+        
+    def get_agency_id_by_name(self, agency_name):
+        """Fetches the Agency ID for a given agency name."""
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
+                result = cur.fetchone()
+                print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
+                return result[0] if result else None
+        except Exception as error:
+            print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
+            return None
+
+
 
 
 
