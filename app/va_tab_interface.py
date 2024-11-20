@@ -99,7 +99,8 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select * from state_table;")
                         states = cur.fetchall()
-                        return states
+                        stateMap = {state[0]: state[1] for state in states}
+                        return stateMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -111,7 +112,8 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select * from cac_agency;")
                         agencies = cur.fetchall()
-                        return agencies
+                        agencyMap = {agency[2]: agency[0] for agency in agencies}
+                        return agencyMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -134,59 +136,66 @@ class va_interface(tk.Frame):
         def add_agency_popup():
             popup = tk.Toplevel(self)
             popup.title("New Agency")
-            popup.geometry("600x500")
+            popup.geometry("550x550")
 
             agencies = get_all_agencies()
 
             states = get_all_states()
-            stateAbbr = []
 
-            for state in states:
-                stateAbbr.append(state[0])
+            popup.grid_columnconfigure(0, weight=1)  
+            popup.grid_columnconfigure(1, weight=1)  
+            popup.grid_rowconfigure(3, weight=1)  
 
-            ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
-            ttk.Label(popup, text="If the desired agency is on this list do not add again.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-            ttk.Label(popup, text="If the agency is not on the list enter agency information into fields marked with (*) and click 'Save'.", foreground='red').grid(row=3, column=0, padx=5, pady=5)
-            agency_listbox = tk.Listbox(popup, height=5)
-            for agency in agencies:
-                agency_listbox.insert(tk.END, agency)
-            agency_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
 
-            # Entry fields for case agency
-            ttk.Label(popup, text="Agency Name *", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            agency_name_entry = ttk.Entry(popup)
-            agency_name_entry.grid(row=5, column=1, padx=5, pady=5)
+            ttk.Label(popup, text="Below is a list of existing agencies.", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            ttk.Label(popup, text="If the desired agency is on this list do not add again.", foreground='black').grid(row=1, column=0, padx=5, pady=5, sticky='w')
+            ttk.Label(popup, text="If the agency is not on the list enter agency information into fields marked with (*) and click 'Save'.", foreground='red').grid(row=2, column=0, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Address Line 1 *", foreground='black').grid(row=6, column=0, padx=5, pady=5)
-            address_line1_entry = ttk.Entry(popup)
-            address_line1_entry.grid(row=6, column=1, padx=5, pady=5)
+            listbox_frame = ttk.Frame(popup)
+            listbox_frame.grid(row=3, column=0, padx=10, pady=10, sticky='w')
 
-            ttk.Label(popup, text="Address Line 2", foreground='black').grid(row=7, column=0, padx=5, pady=5)
-            address_line2_entry = ttk.Entry(popup)
-            address_line2_entry.grid(row=7, column=1, padx=5, pady=5)
+            # Add a scrollbar for the listbox
+            scrollbar = ttk.Scrollbar(listbox_frame, orient="vertical")
 
-            ttk.Label(popup, text="City *").grid(row=8, column=0, padx=5, pady=5)
-            city_entry = ttk.Entry(popup)
-            city_entry.grid(row=8, column=1, padx=5, pady=5)
+            # Listbox with adjusted width and integrated scrollbar
+            agency_listbox = tk.Listbox(listbox_frame, height=10, width=50, yscrollcommand=scrollbar.set)
+            scrollbar.config(command=agency_listbox.yview)
+            for agency_name in agencies.keys():
+                agency_listbox.insert(tk.END, agency_name)
+            agency_listbox.grid(row=0, column=0, sticky='ns')
+            scrollbar.grid(row=0, column=1, sticky='ns')
 
-            ttk.Label(popup, text="State *").grid(row=9, column=0, padx=5, pady=5)
-            state_entry = ttk.Combobox(popup, values=stateAbbr)
-            state_entry.grid(row=9, column=1, padx=5, pady=5)
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=5, column=0, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Zip Code *").grid(row=10, column=0, padx=5, pady=5)
-            zipcode_entry = ttk.Entry(popup)
-            zipcode_entry.grid(row=10, column=1, padx=5, pady=5)
+            fields = [
+                ("Agency Name *", ttk.Entry),
+                ("Address Line 1 *", ttk.Entry),
+                ("Address Line 2", ttk.Entry),
+                ("City *", ttk.Entry),
+                ("State *", ttk.Combobox),
+                ("Zip Code *", ttk.Entry),
+                ("Phone Number *", ttk.Entry),
+            ]
 
-            ttk.Label(popup, text="Phone Number *").grid(row=11, column=0, padx=5, pady=5)
-            phone_entry = ttk.Entry(popup)
-            phone_entry.grid(row=11, column=1, padx=5, pady=5)
+            entries = []
+            for idx, (label_text, widget_type) in enumerate(fields):
+                ttk.Label(field_frame, text=label_text, foreground='black').grid(row=idx, column=0, padx=5, pady=5, sticky='w')
+                if label_text == 'State *':
+                    widget = widget_type(field_frame, values=list(states.keys()))
+                else:
+                    widget = widget_type(field_frame)
+                widget.grid(row=idx, column=1, padx=5, pady=5, sticky='w')
+                entries.append(widget)
 
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=6, column=0, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [insert_new_agency(agency_name_entry.get(), address_line1_entry.get(), address_line2_entry.get(), 
-                                                                              city_entry.get(), state_entry.get(), zipcode_entry.get(), phone_entry.get()
-                                                                              ), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_agency(entries[0].get(), entries[1].get(), entries[2].get(), 
+                                                                              entries[3].get(), entries[4].get(), entries[5].get(), entries[6].get()
+                                                                              ), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5, sticky='w')
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5, sticky='w')
 
         def get_all_personnel():
             try:
@@ -195,7 +204,8 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select employee_id, first_name, last_name from employee;")
                         personnel = cur.fetchall()
-                        return personnel
+                        personMap = {(person[1] + " " + person[2]): person[0] for person in personnel}
+                        return personMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -217,52 +227,58 @@ class va_interface(tk.Frame):
         def add_personnel_popup():
             popup = tk.Toplevel(self)
             popup.title("New Personnel")
-            popup.geometry("800x600")
+            popup.geometry("550x550")
+
+            popup.grid_columnconfigure(0, weight=1)  
+            popup.grid_columnconfigure(1, weight=1) 
 
             # existing personnel 
             personnelList = get_all_personnel()
-            personnel_names = [personnel[1] + " " + personnel[2] for personnel in personnelList]
 
-            ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=1, column=0, padx=5, pady=5)
-            ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-            ttk.Label(popup, text="If the person is not on the list enter person information into fields marked with (*) and click 'Save'.", foreground='red').grid(row=3, column=0, padx=5, pady=5)
-            personnel_listbox = tk.Listbox(popup, height=5)
-            for person in personnel_names:
+            ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=1, column=0, padx=5, pady=5, sticky='w')
+            ttk.Label(popup, text="If the person is not on the list enter person information into fields marked with (*) and click 'Save'.", foreground='red').grid(row=2, column=0, padx=5, pady=5, sticky='w')
+
+            listbox_frame = ttk.Frame(popup)
+            listbox_frame.grid(row=3, column=0, padx=10, pady=10, sticky='w')
+
+            # Add a scrollbar for the listbox
+            scrollbar = ttk.Scrollbar(listbox_frame, orient="vertical")
+
+            # Listbox with adjusted width and integrated scrollbar
+            personnel_listbox = tk.Listbox(listbox_frame, height=10, width=50, yscrollcommand=scrollbar.set)
+            scrollbar.config(command=personnel_listbox.yview)
+            for person in personnelList.keys():
                 personnel_listbox.insert(tk.END, person)
-            personnel_listbox.grid(row=4, column=0, columnspan=2, padx=10, pady=5)
+            personnel_listbox.grid(row=0, column=0, sticky='ns')
+            scrollbar.grid(row=0, column=1, sticky='ns')
 
-            # Entry fields for case agency
-            ttk.Label(popup, text="First Name *", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            first_name = ttk.Entry(popup, foreground='black')
-            first_name.grid(row=5, column=1, padx=5, pady=5)
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=5, column=0, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Last Name *", foreground='black').grid(row=6, column=0, padx=5, pady=5)
-            last_name = ttk.Entry(popup)
-            last_name.grid(row=6, column=1, padx=5, pady=5)
+            fields = [
+                ("First Name *", ttk.Entry),
+                ("Last Name *", ttk.Entry),
+                ("Preface", ttk.Entry),
+                ("Credentials", ttk.Entry),
+                ("Job title *", ttk.Entry),
+                ("Email", ttk.Entry),
+                ("Phone Number *", ttk.Entry),
+            ]
 
-            ttk.Label(popup, text="Preface", foreground='black').grid(row=7, column=0, padx=5, pady=5)
-            preface_entry = ttk.Entry(popup)
-            preface_entry.grid(row=7, column=1, padx=5, pady=5)
+            entries = []
+            for idx, (label_text, widget_type) in enumerate(fields):
+                ttk.Label(field_frame, text=label_text, foreground='black').grid(row=idx, column=0, padx=5, pady=5, sticky='w')
+                widget = widget_type(field_frame)
+                widget.grid(row=idx, column=1, padx=5, pady=5, sticky='w')
+                entries.append(widget)
 
-            ttk.Label(popup, text="Credentials").grid(row=8, column=0, padx=5, pady=5)
-            credentials_entry = ttk.Entry(popup)
-            credentials_entry.grid(row=8, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Job Title *").grid(row=9, column=0, padx=5, pady=5)
-            job_title_entry = ttk.Entry(popup)
-            job_title_entry.grid(row=9, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Email").grid(row=10, column=0, padx=5, pady=5)
-            email_entry = ttk.Entry(popup)
-            email_entry.grid(row=10, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Phone *").grid(row=11, column=0, padx=5, pady=5)
-            phone_entry = ttk.Entry(popup)
-            phone_entry.grid(row=11, column=1, padx=5, pady=5)
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=6, column=0, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [insert_new_personnel(email_entry.get(), first_name.get(), last_name.get(), job_title_entry.get(), phone_entry.get()), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_personnel(entries[5].get(), entries[0].get(), entries[1].get(), entries[4].get(), entries[6].get()), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
 
 
@@ -278,13 +294,13 @@ class va_interface(tk.Frame):
         agencies = get_all_agencies()
 
         ttk.Label(referral_frame, text="Referral Source").grid(row=1, column=0, sticky="w")
-        referral_source = ttk.Combobox(referral_frame, values=agencies)
+        referral_source = ttk.Combobox(referral_frame, values=list(agencies.keys()))
         referral_source.grid(row=1, column=1, padx=5, pady=5)
 
         persons = get_all_personnel()
 
         ttk.Label(referral_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-        person_entry = ttk.Combobox(referral_frame, values=persons) 
+        person_entry = ttk.Combobox(referral_frame, values=list(persons.keys())) 
         person_entry.grid(row=2, column=1, padx=5, pady=5)
 
         ttk.Button(referral_frame, text="Add Referral Source", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
@@ -302,7 +318,7 @@ class va_interface(tk.Frame):
         agencies = get_all_agencies()
 
         ttk.Label(vas_frame, text="Agency").grid(row=1, column=0, padx=5, pady=5)
-        agency_entry = ttk.Combobox(vas_frame, values=agencies) 
+        agency_entry = ttk.Combobox(vas_frame, values=list(agencies.keys())) 
         agency_entry.grid(row=1, column=1, padx=5, pady=5)
 
         ttk.Button(vas_frame, text="Add Agency", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
@@ -310,7 +326,7 @@ class va_interface(tk.Frame):
         persons = get_all_personnel()
 
         ttk.Label(vas_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-        person_entry = ttk.Combobox(vas_frame, values=persons) 
+        person_entry = ttk.Combobox(vas_frame, values=list(persons.keys())) 
         person_entry.grid(row=2, column=1, padx=5, pady=5) 
 
         ttk.Button(vas_frame, text="Add Person", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
@@ -386,14 +402,19 @@ class va_interface(tk.Frame):
             popup.title("New Session")
             popup.geometry("800x900")
 
+            popup.grid_columnconfigure(0, weight=1)  
+            popup.grid_columnconfigure(1, weight=1) 
+
             rowCounter = 0
 
-            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=rowCounter, column=0, padx=5, pady=5)
-            rowCounter += 1
+            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 
             # Entry fields for case details
-            ttk.Label(popup, text="Session Date *").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_date_entry = DateEntry(popup, background='darkblue', foreground='white', borderwidth=2)
+            ttk.Label(field_frame, text="Session Date *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_date_entry = DateEntry(field_frame, background='darkblue', foreground='white', borderwidth=2)
             session_date_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
@@ -404,60 +425,60 @@ class va_interface(tk.Frame):
             for time in times:
                 formattedTimes.append(time.split(" ")[1])
 
-            ttk.Label(popup, text="Start Time *").grid(row=rowCounter, column=0, padx=5, pady=5)
-            start_time_entry = ttk.Combobox(popup, values=formattedTimes)
+            ttk.Label(field_frame, text="Start Time *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            start_time_entry = ttk.Combobox(field_frame, values=formattedTimes)
             start_time_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="End Time *").grid(row=rowCounter, column=0, padx=5, pady=5)
-            end_start_entry = ttk.Combobox(popup, values=formattedTimes) 
+            ttk.Label(field_frame, text="End Time *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            end_start_entry = ttk.Combobox(field_frame, values=formattedTimes) 
             end_start_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Prep").grid(row=rowCounter, column=0, padx=5, pady=5)
-            prep_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Prep").grid(row=rowCounter, column=0, padx=5, pady=5)
+            prep_entry = ttk.Combobox(field_frame)
             prep_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Session Status *").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_status_entry = ttk.Combobox(popup, values=['1', '2', '3', '4'])
+            ttk.Label(field_frame, text="Session Status *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_status_entry = ttk.Combobox(field_frame, values=['1', '2', '3', '4'])
             session_status_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Funding Source").grid(row=rowCounter, column=0, padx=5, pady=5)
-            funding_source_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Funding Source").grid(row=rowCounter, column=0, padx=5, pady=5)
+            funding_source_entry = ttk.Combobox(field_frame)
             funding_source_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Location").grid(row=rowCounter, column=0, padx=5, pady=5)
-            location_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Location").grid(row=rowCounter, column=0, padx=5, pady=5)
+            location_entry = ttk.Combobox(field_frame)
             location_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Provider Agency").grid(row=rowCounter, column=0, padx=5, pady=5)
-            provider_agency_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Provider Agency").grid(row=rowCounter, column=0, padx=5, pady=5)
+            provider_agency_entry = ttk.Combobox(field_frame)
             provider_agency_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Provider Employee").grid(row=rowCounter, column=0, padx=5, pady=5)
-            provider_employee_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Provider Employee").grid(row=rowCounter, column=0, padx=5, pady=5)
+            provider_employee_entry = ttk.Combobox(field_frame)
             provider_employee_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="Attendees").grid(row=rowCounter, column=0, padx=5, pady=5)
+            ttk.Label(field_frame, text="Attendees").grid(row=rowCounter, column=0, padx=5, pady=5)
             rowCounter += 1
             attendee1Check = tk.BooleanVar(value=False)
             attendee2Check = tk.BooleanVar(value=False)
             attendee3Check = tk.BooleanVar(value=False)
             attendee4Check = tk.BooleanVar(value=False)
-            attendee1 = ttk.Checkbutton(popup, text="Billie Badguys", variable=attendee1Check).grid(row=rowCounter, column=1, sticky="w")
-            attendee2 = ttk.Checkbutton(popup, text="Bobbie RRose", variable=attendee2Check).grid(row=rowCounter, column=2, sticky="w")
+            attendee1 = ttk.Checkbutton(field_frame, text="Billie Badguys", variable=attendee1Check).grid(row=rowCounter, column=1, sticky="w")
+            attendee2 = ttk.Checkbutton(field_frame, text="Bobbie RRose", variable=attendee2Check).grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
-            attendee3 = ttk.Checkbutton(popup, text="Candi Rose", variable=attendee3Check).grid(row=rowCounter, column=1, sticky="w")
-            attendee4 = ttk.Checkbutton(popup, text="Cindi Rose", variable=attendee4Check).grid(row=rowCounter, column=2, sticky="w")
+            attendee3 = ttk.Checkbutton(field_frame, text="Candi Rose", variable=attendee3Check).grid(row=rowCounter, column=1, sticky="w")
+            attendee4 = ttk.Checkbutton(field_frame, text="Cindi Rose", variable=attendee4Check).grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            ttk.Label(popup, text="Services Provided").grid(row=rowCounter, column=0, padx=5, pady=5)
+            ttk.Label(field_frame, text="Services Provided").grid(row=rowCounter, column=0, padx=5, pady=5)
             service1Check = tk.BooleanVar(value=False)
             service2Check = tk.BooleanVar(value=False)
             service3Check = tk.BooleanVar(value=False)
@@ -489,90 +510,93 @@ class va_interface(tk.Frame):
             service29Check = tk.BooleanVar(value=False)
             service30Check = tk.BooleanVar(value=False)
             rowCounter += 1
-            service1 = ttk.Checkbutton(popup, text="Legal Services", variable=service1Check).grid(row=rowCounter, column=1, sticky="w")
-            service2 = ttk.Checkbutton(popup, text="Transportation", variable=service2Check).grid(row=rowCounter, column=2, sticky="w")
+            service1 = ttk.Checkbutton(field_frame, text="Legal Services", variable=service1Check).grid(row=rowCounter, column=1, sticky="w")
+            service2 = ttk.Checkbutton(field_frame, text="Transportation", variable=service2Check).grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service3 = ttk.Checkbutton(popup, text="Victim Support", variable=service3Check).grid(row=12, column=1, sticky="w")
-            service4 = ttk.Checkbutton(popup, text="1-2 Week Follow-up Call", variable=service4Check).grid(row=12, column=2, sticky="w")
+            service3 = ttk.Checkbutton(field_frame, text="Victim Support", variable=service3Check).grid(row=12, column=1, sticky="w")
+            service4 = ttk.Checkbutton(field_frame, text="1-2 Week Follow-up Call", variable=service4Check).grid(row=12, column=2, sticky="w")
             rowCounter += 1
 
-            service5 = ttk.Checkbutton(popup, text="2. Personal Court Education", variable=service5Check).grid(row=13, column=1, sticky="w")
-            service6 = ttk.Checkbutton(popup, text="24 -- hour crisis line cal", variable=service6Check).grid(row=13, column=2, sticky="w")
+            service5 = ttk.Checkbutton(field_frame, text="2. Personal Court Education", variable=service5Check).grid(row=13, column=1, sticky="w")
+            service6 = ttk.Checkbutton(field_frame, text="24 -- hour crisis line cal", variable=service6Check).grid(row=13, column=2, sticky="w")
             rowCounter += 1
 
-            service7 = ttk.Checkbutton(popup, text="3a. Info & Support - MDT response", variable=service7Check).grid(row=14, column=1, sticky="w")
-            service8 = ttk.Checkbutton(popup, text="3b. Information & Support - Court", variable=service8Check).grid(row=14, column=2, sticky="w")
+            service7 = ttk.Checkbutton(field_frame, text="3a. Info & Support - MDT response", variable=service7Check).grid(row=14, column=1, sticky="w")
+            service8 = ttk.Checkbutton(field_frame, text="3b. Information & Support - Court", variable=service8Check).grid(row=14, column=2, sticky="w")
             rowCounter += 1
 
-            service9 = ttk.Checkbutton(popup, text="3bi Personal advocacy", variable=service9Check).grid(row=15, column=1, sticky="w")
-            service10 = ttk.Checkbutton(popup, text="6--8 Week Follow-up Call", variable=service10Check).grid(row=15, column=2, sticky="w")
+            service9 = ttk.Checkbutton(field_frame, text="3bi Personal advocacy", variable=service9Check).grid(row=15, column=1, sticky="w")
+            service10 = ttk.Checkbutton(field_frame, text="6--8 Week Follow-up Call", variable=service10Check).grid(row=15, column=2, sticky="w")
             rowCounter += 1
 
-            service11 = ttk.Checkbutton(popup, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam", variable=service11Check).grid(row=16, column=1, sticky="w")
-            service12 = ttk.Checkbutton(popup, text="Collected Survey", variable=service12Check).grid(row=16, column=2, sticky="w")
+            service11 = ttk.Checkbutton(field_frame, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam", variable=service11Check).grid(row=16, column=1, sticky="w")
+            service12 = ttk.Checkbutton(field_frame, text="Collected Survey", variable=service12Check).grid(row=16, column=2, sticky="w")
             rowCounter += 1
 
-            service13 = ttk.Checkbutton(popup, text="Criminal Justice support/advocacy", variable=service13Check).grid(row=17, column=1, sticky="w")
-            service14 = ttk.Checkbutton(popup, text="Compensation Claim Filing", variable=service14Check).grid(row=17, column=2, sticky="w")
+            service13 = ttk.Checkbutton(field_frame, text="Criminal Justice support/advocacy", variable=service13Check).grid(row=17, column=1, sticky="w")
+            service14 = ttk.Checkbutton(field_frame, text="Compensation Claim Filing", variable=service14Check).grid(row=17, column=2, sticky="w")
             rowCounter += 1
 
-            service15 = ttk.Checkbutton(popup, text="Emergency Crisis Intervention", variable=service15Check).grid(row=18, column=1, sticky="w")
-            service16 = ttk.Checkbutton(popup, text="Crisis Counseling", variable=service16Check).grid(row=18, column=2, sticky="w")
+            service15 = ttk.Checkbutton(field_frame, text="Emergency Crisis Intervention", variable=service15Check).grid(row=18, column=1, sticky="w")
+            service16 = ttk.Checkbutton(field_frame, text="Crisis Counseling", variable=service16Check).grid(row=18, column=2, sticky="w")
             rowCounter += 1
 
-            service17 = ttk.Checkbutton(popup, text="Gave Educational Information", variable=service17Check).grid(row=19, column=1, sticky="w")
-            service18 = ttk.Checkbutton(popup, text="Follow-up", variable=service18Check).grid(row=19, column=2, sticky="w")
+            service17 = ttk.Checkbutton(field_frame, text="Gave Educational Information", variable=service17Check).grid(row=19, column=1, sticky="w")
+            service18 = ttk.Checkbutton(field_frame, text="Follow-up", variable=service18Check).grid(row=19, column=2, sticky="w")
             rowCounter += 1
 
-            service19 = ttk.Checkbutton(popup, text="Homeless support group", variable=service19Check).grid(row=20, column=1, sticky="w")
-            service20 = ttk.Checkbutton(popup, text="Initial Meeting with Caregiver", variable=service20Check).grid(row=20, column=2, sticky="w")
+            service19 = ttk.Checkbutton(field_frame, text="Homeless support group", variable=service19Check).grid(row=20, column=1, sticky="w")
+            service20 = ttk.Checkbutton(field_frame, text="Initial Meeting with Caregiver", variable=service20Check).grid(row=20, column=2, sticky="w")
             rowCounter += 1
 
-            service21 = ttk.Checkbutton(popup, text="Initial Telephone Call", variable=service21Check).grid(row=21, column=1, sticky="w")
-            service22 = ttk.Checkbutton(popup, text="Mailed Brochure", variable=service22Check).grid(row=21, column=2, sticky="w")
+            service21 = ttk.Checkbutton(field_frame, text="Initial Telephone Call", variable=service21Check).grid(row=21, column=1, sticky="w")
+            service22 = ttk.Checkbutton(field_frame, text="Mailed Brochure", variable=service22Check).grid(row=21, column=2, sticky="w")
             rowCounter += 1
 
-            service23 = ttk.Checkbutton(popup, text="Orientation to Center for FI", variable=service23Check).grid(row=22, column=1, sticky="w")
-            service24 = ttk.Checkbutton(popup, text="Post Interview Crisis Counseling", variable=service24Check).grid(row=22, column=2, sticky="w")
+            service23 = ttk.Checkbutton(field_frame, text="Orientation to Center for FI", variable=service23Check).grid(row=22, column=1, sticky="w")
+            service24 = ttk.Checkbutton(field_frame, text="Post Interview Crisis Counseling", variable=service24Check).grid(row=22, column=2, sticky="w")
             rowCounter += 1
 
-            service25 = ttk.Checkbutton(popup, text="Pre-Interview Family Call", variable=service25Check).grid(row=23, column=1, sticky="w")
-            service26 = ttk.Checkbutton(popup, text="Shelter/safehouse Referral", variable=service26Check).grid(row=23, column=2, sticky="w")
+            service25 = ttk.Checkbutton(field_frame, text="Pre-Interview Family Call", variable=service25Check).grid(row=23, column=1, sticky="w")
+            service26 = ttk.Checkbutton(field_frame, text="Shelter/safehouse Referral", variable=service26Check).grid(row=23, column=2, sticky="w")
             rowCounter += 1
 
-            service27 = ttk.Checkbutton(popup, text="Survey Distributed", variable=service27Check).grid(row=24, column=1, sticky="w")
-            service28 = ttk.Checkbutton(popup, text="Survey Recieved", variable=service28Check).grid(row=24, column=2, sticky="w")
+            service27 = ttk.Checkbutton(field_frame, text="Survey Distributed", variable=service27Check).grid(row=24, column=1, sticky="w")
+            service28 = ttk.Checkbutton(field_frame, text="Survey Recieved", variable=service28Check).grid(row=24, column=2, sticky="w")
             rowCounter += 1
 
-            service29 = ttk.Checkbutton(popup, text="Telephone Follow-up", variable=service29Check).grid(row=25, column=1, sticky="w")
-            service30 = ttk.Checkbutton(popup, text="Unscheduled Call", variable=service30Check).grid(row=25, column=2, sticky="w")
+            service29 = ttk.Checkbutton(field_frame, text="Telephone Follow-up", variable=service29Check).grid(row=25, column=1, sticky="w")
+            service30 = ttk.Checkbutton(field_frame, text="Unscheduled Call", variable=service30Check).grid(row=25, column=2, sticky="w")
             rowCounter += 1
 
-            ttk.Label(popup, text="Comments").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_comments_entry = ttk.Entry(popup)
+            ttk.Label(field_frame, text="Comments").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_comments_entry = ttk.Entry(field_frame)
             session_comments_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="VA Session Custom Field 1").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_custom_one_entry = ttk.Entry(popup)
+            ttk.Label(field_frame, text="VA Session Custom Field 1").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_custom_one_entry = ttk.Entry(field_frame)
             session_custom_one_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="VA Session Custom Field 2").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_custom_two_entry = ttk.Entry(popup)
+            ttk.Label(field_frame, text="VA Session Custom Field 2").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_custom_two_entry = ttk.Entry(field_frame)
             session_custom_two_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(popup, text="VA Session Custom Field 3").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_custom_three_entry = ttk.Entry(popup)
+            ttk.Label(field_frame, text="VA Session Custom Field 3").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_custom_three_entry = ttk.Entry(field_frame)
             session_custom_three_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=rowCounter, column=0, columnspan=3, pady=15)
+
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [insert_new_session(session_date_entry.get_date(), (str(session_date_entry.get_date()) + " " + start_time_entry.get()), 
-                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), session_status_entry.get()), popup.destroy()]).grid(row=rowCounter, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=rowCounter, column=1, padx=5, pady=5)
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_session(session_date_entry.get_date(), (str(session_date_entry.get_date()) + " " + start_time_entry.get()), 
+                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), session_status_entry.get()), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5)
 
         def get_all_sessions():
             try:
@@ -672,25 +696,32 @@ class va_interface(tk.Frame):
         def add_screening_instrument_popup():
             popup = tk.Toplevel(self)
             popup.title("Add New Screening Instrument")
-            popup.geometry("800x500")
+            popup.geometry("350x200")
 
-            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5)
+            popup.grid_columnconfigure(0, weight=0)  
+            popup.grid_columnconfigure(1, weight=1)
 
-            ttk.Label(popup, text="Screening Instrument Name *", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+            ttk.Label(popup, text="Screening Instrument Name *", foreground='black').grid(row=1, column=0, padx=5, pady=5, sticky='w')
             instrument_name_entry = ttk.Entry(popup)
-            instrument_name_entry.grid(row=1, column=1, padx=5, pady=5)
+            instrument_name_entry.grid(row=1, column=1, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Source", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="Source", foreground='black').grid(row=2, column=0, padx=5, pady=5, sticky='w')
             provider_agency_entry = ttk.Combobox(popup)
-            provider_agency_entry.grid(row=2, column=1, padx=5, pady=5)
+            provider_agency_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="# of Measures", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+            ttk.Label(popup, text="# of Measures", foreground='black').grid(row=3, column=0, padx=5, pady=5, sticky='w')
             provider_personnel_entry = ttk.Combobox(popup) 
-            provider_personnel_entry.grid(row=3, column=1, padx=5, pady=5)
+            provider_personnel_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
+
+
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=4, column=0, columnspan=2, pady=10)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Save", command=lambda: [insert_new_instrument(instrument_name_entry.get()), popup.destroy()]).grid(row=4, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=4, column=1, padx=5, pady=5)
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_instrument(instrument_name_entry.get()), popup.destroy()]).grid(row=4, column=0, padx=5, pady=5)
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=4, column=1, padx=5, pady=5)
 
         def insert_new_screening(date, personnel, instrument):
             sqlQuery = """insert into case_mh_assessment (cac_id, case_id, assessment_id, 
@@ -715,7 +746,8 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery)
                         instruments = cur.fetchall()
-                        return instruments
+                        instrumentMap = {instrument[1]: instrument[0] for instrument in instruments}
+                        return instrumentMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()        
@@ -723,53 +755,56 @@ class va_interface(tk.Frame):
         def add_new_screening_popup():
             popup = tk.Toplevel(self)
             popup.title("Add New Screening")
-            popup.geometry("900x500")
+            popup.geometry("550x350")
 
-            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5)
-
-            ttk.Label(popup, text="Screening Instrument *", foreground='black').grid(row=1, column=0, padx=5, pady=5)
-            screening_instrument_entry = ttk.Combobox(popup)
-            screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
-
-            ttk.Label(popup, text="Scores of this Screening's Measures").grid(row=2, column=0, padx=5, pady=5)
-            ttk.Label(popup).grid(row=2, column=1, padx=5, pady=5)
+            popup.grid_columnconfigure(0, weight=0)  
+            popup.grid_columnconfigure(1, weight=1)
 
             instruments = get_all_instruments()
-            instrument_names = [instrument[1] for instrument in instruments]
-
-            screening_instrument_entry = ttk.Combobox(popup, values=instruments)
-            screening_instrument_entry.grid(row=1, column=1, padx=5, pady=5)
-
-            ttk.Button(popup, text="Add Screening Instrument", command=add_screening_instrument_popup).grid(row=1, column=2, padx=5, pady=5)
-
-            ttk.Label(popup, text="Screening Date *", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-            screening_date_entry = DateEntry(popup, background='darkblue', foreground='white', borderwidth=2)
-            screening_date_entry.grid(row=3, column=1, padx=5, pady=5)
-
             agencies = get_all_agencies()
-            agency_names = [agency[2] for agency in agencies]
-
-            ttk.Label(popup, text="Provider Agency", foreground='black').grid(row=4, column=0, padx=5, pady=5)
-            provider_agency_entry = ttk.Combobox(popup, values=agencies)
-            provider_agency_entry.grid(row=4, column=1, padx=5, pady=5)
-
             personnel = get_all_personnel()
+            
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=1, column=0, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Provider Personnel *", foreground='black').grid(row=5, column=0, padx=5, pady=5)
-            provider_personnel_entry = ttk.Combobox(popup, values=personnel) 
-            provider_personnel_entry.grid(row=5, column=1, padx=5, pady=5)
+            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Functional Impairment").grid(row=6, column=0, padx=5, pady=5)
-            functional_impairment_entry = ttk.Entry(popup)
-            functional_impairment_entry.grid(row=6, column=1, padx=5, pady=5)
+            ttk.Label(field_frame, text="Screening Instrument *", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
-            ttk.Label(popup, text="Comments").grid(row=7, column=0, padx=5, pady=5)
-            _screening_commets_entry = ttk.Entry(popup)
-            _screening_commets_entry.grid(row=7, column=1, padx=5, pady=5)
+            screening_instrument_entry = ttk.Combobox(field_frame, values=list(instruments.keys()))
+            screening_instrument_entry.grid(row=0, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Scores of this Screening's Measures").grid(row=1, column=0, padx=5, pady=5, sticky='w')
+            ttk.Label(field_frame).grid(row=1, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Button(field_frame, text="Add Screening Instrument", command=add_screening_instrument_popup).grid(row=0, column=2, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Screening Date *", foreground='black').grid(row=2, column=0, padx=5, pady=5, sticky='w')
+            screening_date_entry = DateEntry(field_frame, background='darkblue', foreground='white', borderwidth=2)
+            screening_date_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Provider Agency", foreground='black').grid(row=3, column=0, padx=5, pady=5, sticky='w')
+            provider_agency_entry = ttk.Combobox(field_frame, values=list(agencies.keys()))
+            provider_agency_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Provider Personnel *", foreground='black').grid(row=4, column=0, padx=5, pady=5, sticky='w')
+            provider_personnel_entry = ttk.Combobox(field_frame, values=list(personnel.keys())) 
+            provider_personnel_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Functional Impairment").grid(row=5, column=0, padx=5, pady=5, sticky='w')
+            functional_impairment_entry = ttk.Entry(field_frame)
+            functional_impairment_entry.grid(row=5, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Comments").grid(row=6, column=0, padx=5, pady=5, sticky='w')
+            _screening_commets_entry = ttk.Entry(field_frame)
+            _screening_commets_entry.grid(row=6, column=1, padx=5, pady=5, sticky='w')
+
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=2, column=0, columnspan=3, pady=15)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Update", command=lambda: [insert_new_screening(screening_date_entry.get_date(), provider_personnel_entry.get()[0], screening_instrument_entry.get()[0]), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_screening(screening_date_entry.get_date(), provider_personnel_entry.get()[0], screening_instrument_entry.get()[0]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5, sticky='w')
 
         def get_all_screenings():
             try:
