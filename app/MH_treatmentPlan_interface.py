@@ -256,7 +256,6 @@ class MH_treatment_plan_interface(tk.Frame):
         }
         authorized_status_dropdown = ttk.Combobox(popup, textvariable=authorized_status_var, values=list(status_mapping.keys()), width=40)
         authorized_status_dropdown.grid(row=7, column=1, padx=10, pady=5)
-
         
         # Duration
         ttk.Label(popup, text="Duration").grid(row=8, column=0, padx=10, pady=5, sticky="w")
@@ -274,10 +273,7 @@ class MH_treatment_plan_interface(tk.Frame):
         ttk.Label(popup, text="Planned Review Date").grid(row=10, column=0, padx=10, pady=5, sticky="w")
         planned_review_date_entry = DateEntry(popup, width=20)
         planned_review_date_entry.grid(row=10, column=1, padx=10, pady=5)
-        
-
-
-
+ 
         def save_action():
             model_id = int(treatment_model_var.get().split(" - ")[0])  # Extract ID from "ID - Name" format
             agency_name = provider_agency_var.get()
@@ -302,7 +298,7 @@ class MH_treatment_plan_interface(tk.Frame):
             )
             popup.destroy()
         
-        ttk.Button(popup, text="Update", command=popup.destroy).grid(row=12, column=0, padx=5, pady=5)
+        ttk.Button(popup, text="Update", command=save_action).grid(row=12, column=0, padx=5, pady=5)
         ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=12, column=1, padx=5, pady=5)
     
     def get_cac_id_by_agency(self, agency_name):
