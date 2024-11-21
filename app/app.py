@@ -6,6 +6,7 @@ import MH_basic_interface
 import MH_assessment
 import MH_treatmentPlan_interface
 import va_tab_interface
+import case_notes
 
 class tkinterApp(tk.Tk):
     def __init__(self, *args, **kwargs):
@@ -25,7 +26,8 @@ class tkinterApp(tk.Tk):
             MH_basic_interface.MHBasicInterface,
             MH_assessment.MHassessment,
             MH_treatmentPlan_interface.MH_treatment_plan_interface,
-            va_tab_interface.va_interface
+            va_tab_interface.va_interface,
+            case_notes.case_notes_interface
         ]
         
         for F in frames_list:
@@ -36,7 +38,7 @@ class tkinterApp(tk.Tk):
         # For Testing
         #print(self.frame)
         
-        self.show_frame(MH_assessment.MHassessment)
+        self.show_frame(case_notes.case_notes_interface)
             
     
     def show_frame(self, frame_class):
