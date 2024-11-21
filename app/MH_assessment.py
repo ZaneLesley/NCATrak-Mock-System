@@ -253,7 +253,7 @@ class MHassessment(tk.Frame):
         custom_popup.geometry("400x200")
 
         # Label and entry for the new assessment instrument
-        ttk.Label(custom_popup, text="Enter Custome Assessment Instrument:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        ttk.Label(custom_popup, text="Enter New Instrument:").grid(row=0, column=0, padx=10, pady=10, sticky="w")
         new_assessment_name_var = tk.StringVar()
         new_assessment_name_entry = ttk.Entry(custom_popup, textvariable=new_assessment_name_var, width=40)
         new_assessment_name_entry.grid(row=0, column=1, padx=10, pady=10, sticky="w")
@@ -466,39 +466,3 @@ class MHassessment(tk.Frame):
         # Save and Cancel buttons
         ttk.Button(popup, text="Save", command=save_diagnosis).grid(row=6, column=0, padx=10, pady=10, sticky="w")
         ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=6, column=1, padx=10, pady=10, sticky="e")
-
-    # def add_diagnosis_popup(self):
-    #     popup = tk.Toplevel(self)
-    #     popup.title("Edit Diagnosis")
-    #     popup.geometry("400x300+100+100") 
-
-    #     # Add some padding at the top using an empty label or adjust the grid padding
-    #     ttk.Label(popup).grid(row=0, column=0, padx=10, pady=10)  # Empty label to add padding at the top
-
-    #     # Provider Agency Dropdown
-    #     ttk.Label(popup, text="Provider Agency").grid(row=1, column=0, padx=10, pady=5, sticky="w")
-    #     provider_agency_entry = ttk.Combobox(popup, values=["ABS Linkage Agreement Agency", "Agency B", "Agency C"], width=40)
-    #     provider_agency_entry.grid(row=1, column=1, padx=10, pady=5)
-    #     provider_agency_entry.current(0)  # Set default value
-
-    #     # Provider Personnel Dropdown
-    #     ttk.Label(popup, text="Provider Personnel").grid(row=2, column=0, padx=10, pady=5, sticky="w")
-    #     provider_personnel_entry = ttk.Combobox(popup, values=["Sarah Jones", "John Doe", "Jane Smith"], width=40)
-    #     provider_personnel_entry.grid(row=2, column=1, padx=10, pady=5)
-    #     provider_personnel_entry.current(0)  # Set default value
-
-    #     # Diagnosis Date
-    #     ttk.Label(popup, text="Diagnosis Date").grid(row=3, column=0, padx=10, pady=5, sticky="w")
-    #     diagnosis_date_entry = DateEntry(popup, width=18)
-    #     diagnosis_date_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
-
-    #     # ICD 10 Group Dropdown
-    #     ttk.Label(popup, text="ICD 10 Group").grid(row=4, column=0, padx=10, pady=5, sticky="w")
-    #     icd10_group_entry = ttk.Combobox(popup, values=["ICD Group A", "ICD Group B", "ICD Group C"], width=40)
-    #     icd10_group_entry.grid(row=4, column=1, padx=10, pady=5, sticky="w")
-
-    #     # Save and Cancel buttons
-    #     ttk.Button(popup, text="Update", command=popup.destroy).grid(row=6, column=0, padx=10, pady=10, sticky="w")
-    #     ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=6, column=1, padx=10, pady=10, sticky="e")
-
-        
