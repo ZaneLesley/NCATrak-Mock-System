@@ -155,6 +155,50 @@ class MH_treatment_plan_interface(tk.Frame):
             print(f"Error saving treatment plan: {error}")
             messagebox.showerror("Error", "Failed to save the treatment plan.")
             self.conn.rollback()
+
+    def add_treatment_model_popup(self):
+        """Popup for adding a new treatment model."""
+        popup = tk.Toplevel(self)
+        popup.title("Add Treatment Model")
+        popup.geometry("300x200")
+
+        # Treatment Model Name Entry
+        ttk.Label(popup, text="Treatment Model Name").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        model_name_var = tk.StringVar()
+        model_name_entry = ttk.Entry(popup, textvariable=model_name_var, width=30)
+        model_name_entry.grid(row=0, column=1, padx=10, pady=10)
+
+        def save_treatment_model():
+            model_name = model_name_var.get().strip()
+
+            if not model_name:
+                messagebox.showerror("Error", "Model name cannot be empty.")
+                return
+
+            try:
+                with self.conn.cursor() as cur:
+                    # Get the latest ID and increment it
+                    cur.execute("SELECT MAX(id) FROM case_mh_treatment_models")
+                    max_id = cur.fetchone()[0]
+                    new_id = (max_id + 1) if max_id else 1
+
+                    # Insert the new treatment model
+                    query = "INSERT INTO case_mh_treatment_models (id, model_name) VALUES (%s, %s)"
+                    cur.execute(query, (new_id, model_name))
+                    self.conn.commit()
+
+                messagebox.showinfo("Success", "Treatment model added successfully.")
+                popup.destroy()
+
+            except Exception as error:
+                print(f"Error saving treatment model: {error}")
+                self.conn.rollback()
+                messagebox.showerror("Error", "Failed to add treatment model.")
+
+        # Save and Cancel Buttons
+        ttk.Button(popup, text="Save", command=save_treatment_model).grid(row=2, column=0, padx=10, pady=10)
+        ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=2, column=1, padx=10, pady=10)
+
             
     def add_treatment_plan_popup(self):
         """Popup window for adding a new treatment plan."""
@@ -172,6 +216,10 @@ class MH_treatment_plan_interface(tk.Frame):
         treatment_model_var = tk.StringVar()
         treatment_model_dropdown = ttk.Combobox(popup, textvariable=treatment_model_var, values=self.get_treatment_models(), width=40)
         treatment_model_dropdown.grid(row=1, column=1, padx=(10, 0), pady=5, sticky="w")
+        
+        ## add button for treatment model
+        ttk.Button(popup, text="Add", command=self.add_treatment_model_popup).grid(row=1, column=2, padx=5, pady=5)
+
 
         # Provider Agency
         ttk.Label(popup, text="Provider Agency").grid(row=2, column=0, padx=10, pady=5, sticky="w")
@@ -227,7 +275,9 @@ class MH_treatment_plan_interface(tk.Frame):
         planned_review_date_entry = DateEntry(popup, width=20)
         planned_review_date_entry.grid(row=10, column=1, padx=10, pady=5)
         
-   
+
+
+
         def save_action():
             model_id = int(treatment_model_var.get().split(" - ")[0])  # Extract ID from "ID - Name" format
             agency_name = provider_agency_var.get()
@@ -252,8 +302,12 @@ class MH_treatment_plan_interface(tk.Frame):
             )
             popup.destroy()
 
-        ttk.Button(popup, text="Save", command=save_action).grid(row=12, column=0, columnspan=2, pady=10)
-
+        # ttk.Button(popup, text="Save", command=save_action).grid(row=12, column=0, padx=20, pady=10, sticky="e")
+        # ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=12, column=1, padx=20, pady=10, sticky="w")
+        
+        ttk.Button(popup, text="Update", command=popup.destroy).grid(row=12, column=0, padx=5, pady=5)
+        ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=12, column=1, padx=5, pady=5)
+    
     def get_cac_id_by_agency(self, agency_name):
         """Fetches the CAC ID for a given agency name."""
         try:
