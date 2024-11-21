@@ -194,11 +194,21 @@ class MH_treatment_plan_interface(tk.Frame):
         case_id_entry = ttk.Entry(popup, width=40)
         case_id_entry.grid(row=6, column=1, padx=10, pady=5)
         
-        # Authorized Status ID
-        ttk.Label(popup, text="Authorized Status ID").grid(row=7, column=0, padx=10, pady=5, sticky="w")
+        # Authorized Status
+        ttk.Label(popup, text="Authorized Status").grid(row=7, column=0, padx=10, pady=5, sticky="w")
         authorized_status_var = tk.StringVar()
-        authorized_status_dropdown = ttk.Combobox(popup, textvariable=authorized_status_var, values=[0, 1, 2, 3, 4], width=40)
+        status_mapping = {
+            "Approved": 1,
+            "Authorized": 2,
+            "Cancelled": 3,
+            "Rejected": 4,
+            "Denied": 5,
+            "In Progress": 6,
+            "Not Needed": 7
+        }
+        authorized_status_dropdown = ttk.Combobox(popup, textvariable=authorized_status_var, values=list(status_mapping.keys()), width=40)
         authorized_status_dropdown.grid(row=7, column=1, padx=10, pady=5)
+
         
         # Duration
         ttk.Label(popup, text="Duration").grid(row=8, column=0, padx=10, pady=5, sticky="w")
@@ -224,7 +234,13 @@ class MH_treatment_plan_interface(tk.Frame):
             agency_id = self.get_agency_id_by_name(agency_name)  # Fetch agency_id based on selected agency name
             cac_id = self.get_cac_id_by_agency(agency_name)  # Fetch cac_id based on selected agency name
             case_id = case_id_entry.get().strip()
-            authorized_status_id = int(authorized_status_var.get())
+            # authorized_status_id = int(authorized_status_var.get())
+            selected_status = authorized_status_var.get()
+            authorized_status_id = status_mapping.get(selected_status, None)  # Map text to corresponding integer
+            
+            if authorized_status_id is None:
+                messagebox.showerror("Error", "Invalid authorized status selected.")
+                return
             
             duration = int(duration_var.get().strip())
             duration_unit = duration_unit_var.get()
