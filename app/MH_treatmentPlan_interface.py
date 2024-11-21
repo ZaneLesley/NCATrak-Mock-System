@@ -301,9 +301,6 @@ class MH_treatment_plan_interface(tk.Frame):
                 case_id, authorized_status_id, duration, duration_unit, planned_review_date
             )
             popup.destroy()
-
-        # ttk.Button(popup, text="Save", command=save_action).grid(row=12, column=0, padx=20, pady=10, sticky="e")
-        # ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=12, column=1, padx=20, pady=10, sticky="w")
         
         ttk.Button(popup, text="Update", command=popup.destroy).grid(row=12, column=0, padx=5, pady=5)
         ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=12, column=1, padx=5, pady=5)
