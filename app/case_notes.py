@@ -390,7 +390,6 @@ class AddSessionForm(tk.Toplevel):
 
 class case_notes_interface(tk.Frame):
     def __init__(self, parent, controller):
-<<<<<<< HEAD
         tk.Frame.__init__(self, parent)
 
         self.grid_rowconfigure(2, weight=1)
@@ -419,7 +418,6 @@ class case_notes_interface(tk.Frame):
         ]
         self.type_mapping = {name: idx for idx, name in enumerate(self.type_options, start=1)}
         self.type_reverse_mapping = {idx: name for name, idx in self.type_mapping.items()}
-=======
         
         tk.Frame.__init__(self, parent)
         
@@ -468,7 +466,6 @@ class case_notes_interface(tk.Frame):
             "<Configure>",
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
->>>>>>> 6b777083961ad93448a4ce69dc01ac5290ac3264
 
         # Setup notebook for tabs
         self.notebook = ttk.Notebook(self)
@@ -829,7 +826,6 @@ class case_notes_interface(tk.Frame):
     def upload_last_page(self):
         messagebox.showinfo("Pagination", "Last page clicked (Uploads).")
 
-<<<<<<< HEAD
     def on_closing(self):
         if hasattr(self, 'cur') and self.cur:
             self.cur.close()
@@ -855,5 +851,3 @@ class App(tk.Tk):
 if __name__ == '__main__':
     app = App()
     app.mainloop()
-=======
->>>>>>> 6b777083961ad93448a4ce69dc01ac5290ac3264
