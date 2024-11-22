@@ -75,6 +75,8 @@ class MHassessment(tk.Frame):
         canvas.grid(row=2, column=0, sticky="nsew")
         scrollbar.grid(row=2, column=1, sticky="ns")
         
+        ##connect to db
+        self.conn = self.connect_to_db()
         
         # Assessments Given Section
         assessments_frame = tk.LabelFrame(scrollable_frame, text="Assessments Given", padx=10, pady=10)
@@ -128,27 +130,23 @@ class MHassessment(tk.Frame):
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
 
-    def load_config(self, filename=None, section='postgresql'):
-        """Load database configuration from the ini file."""
-        
-        cwd = os.path.dirname(os.path.abspath(__file__))
-        database_dir= os.path.join(cwd, "database")
-        if filename is None:
-                filename = os.path.join(database_dir, "database.ini")
-        else:
-                filename = os.path.join(database_dir, filename)
-      
-        parser = ConfigParser()
-        parser.read(filename)
-        config = {}
-        if parser.has_section(section):
-            params = parser.items(section)
-            for param in params:
-                config[param[0]] = param[1]
-        else:
-            raise Exception(f"Section {section} not found in {filename}")
-        return config
-
+    def connect_to_db(self):
+        """Establishes a connection to the database."""
+        try:
+            config = configparser.ConfigParser()
+            config.read('/Users/danieljacob/Desktop/Capstone_temp/NCATrak-Mock-System/app/database/database.ini')
+            db_params = {
+                'database': config['postgresql']['database'],
+                'user': config['postgresql']['user'],
+                'password': config['postgresql']['password'],
+                'host': config['postgresql']['host'],
+                # 'port': config['postgresql']['port']
+            }
+            return psycopg2.connect(**db_params)
+        except Exception as error:
+            print(f"Database connection error: {error}")
+            messagebox.showerror("Database Error", "Could not connect to the database.")
+            return None
 
     def add_assessment_popup(self):
         """Popup window for adding a new assessment."""
@@ -264,38 +262,34 @@ class MHassessment(tk.Frame):
         new_assessment_name_entry.grid(row=0, column=1, padx=10, pady=10, sticky="w")
 
         def save_new_assessment():
-            """Save a new custom assessment instrument."""
             assessment_name = new_assessment_name_var.get().strip()
             if not assessment_name:
                 messagebox.showerror("Input Error", "Assessment name cannot be empty.")
                 return
 
+            # Generate a new unique instrument_id
             try:
-                # Load the database configuration
-                config = self.load_config()
-                with psycopg2.connect(**config) as conn:
-                    with conn.cursor() as cur:
-                        # Get the latest instrument_id and increment it
-                        cur.execute("SELECT MAX(instrument_id) FROM case_mh_assessment_instrument")
-                        max_id = cur.fetchone()[0] or 0
-                        new_instrument_id = max_id + 1
+                with self.conn.cursor() as cur:
+                    cur.execute("SELECT MAX(instrument_id) FROM case_mh_assessment_instrument")
+                    max_id = cur.fetchone()[0] or 0
+                    new_instrument_id = max_id + 1
 
-                        # Insert the new assessment instrument
-                        query = """
-                            INSERT INTO case_mh_assessment_instrument (instrument_id, assessment_name)
-                            VALUES (%s, %s)
-                        """
-                        cur.execute(query, (new_instrument_id, assessment_name))
-                        conn.commit()
+                    # Insert the new assessment instrument
+                    query = """
+                        INSERT INTO case_mh_assessment_instrument (instrument_id, assessment_name)
+                        VALUES (%s, %s)
+                    """
+                    cur.execute(query, (new_instrument_id, assessment_name))
+                    self.conn.commit()
 
-                # Show success message and close the popup
-                messagebox.showinfo("Success", "New assessment instrument added successfully.")
-                custom_popup.destroy()
-
+                    # Refresh the dropdown options
+                    # assessment_instrument_dropdown["values"] = self.get_assessment_instruments()
+                    messagebox.showinfo("Success", "New assessment instrument added successfully.")
+                    custom_popup.destroy()
             except Exception as error:
+                self.conn.rollback()
                 print(f"Error adding new assessment instrument: {error}")
                 messagebox.showerror("Database Error", "Failed to add new assessment instrument.")
-
 
         # Buttons for Save and Cancel
         ttk.Button(custom_popup, text="Save", command=save_new_assessment).grid(row=1, column=0, padx=10, pady=10, sticky="w")
@@ -304,131 +298,106 @@ class MHassessment(tk.Frame):
     def get_assessment_instruments(self):
         """Fetch available assessment instruments."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT assessment_name FROM case_mh_assessment_instrument")
-                    return [row[0] for row in cur.fetchall()]
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT assessment_name FROM case_mh_assessment_instrument")
+                return [row[0] for row in cur.fetchall()]
         except Exception as error:
             print(f"Error fetching assessment instruments: {error}")
             return []
-
+        
     def get_assessment_instrument_id(self, assessment_name):
         """Fetch assessment instrument ID by name."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT instrument_id FROM case_mh_assessment_instrument WHERE assessment_name = %s", (assessment_name,))
-                    result = cur.fetchone()
-                    return result[0] if result else None
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT instrument_id FROM case_mh_assessment_instrument WHERE assessment_name = %s", (assessment_name,))
+                result = cur.fetchone()
+                return result[0] if result else None
         except Exception as error:
             print(f"Error fetching assessment instrument ID: {error}")
             return None
-
+        
     def generate_unique_id(self, table_name, column_name):
         """Generate a unique ID for a given table and column."""
         fake = Faker()
-        config = self.load_config()
         while True:
             unique_id = fake.unique.random_number(digits=9)
             try:
-                with psycopg2.connect(**config) as conn:
-                    with conn.cursor() as cur:
-                        cur.execute(f"SELECT 1 FROM {table_name} WHERE {column_name} = %s", (unique_id,))
-                        if not cur.fetchone():
-                            return unique_id
+                with self.conn.cursor() as cur:
+                    cur.execute(f"SELECT 1 FROM {table_name} WHERE {column_name} = %s", (unique_id,))
+                    if not cur.fetchone():
+                        return unique_id
             except Exception as error:
                 print(f"Error generating unique ID: {error}")
                 return None
-            
     def get_provider_agencies(self):
         """Fetches available provider agencies for the dropdown."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT agency_name FROM cac_agency")
-                    return [str(row[0]) for row in cur.fetchall()]
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT agency_name FROM cac_agency")
+                return [str(row[0]) for row in cur.fetchall()]
         except Exception as error:
             print(f"Error fetching provider agencies: {error}")
-            return []
-
     def get_cac_id_by_agency(self, agency_name):
         """Fetches the CAC ID for a given agency name."""
         try:
-            # Load the database configuration
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    # Execute the query to fetch the CAC ID
-                    cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
-                    result = cur.fetchone()
-                    print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
-                    return result[0] if result else None
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
+                result = cur.fetchone()
+                print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
+                return result[0] if result else None
+            
         except Exception as error:
             print(f"Error fetching CAC ID for agency '{agency_name}': {error}")
             return None
-
         
     def get_agency_id_by_name(self, agency_name):
         """Fetches the Agency ID for a given agency name."""
         try:
-            # Load the database configuration
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    # Execute the query to fetch the Agency ID
-                    cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
-                    result = cur.fetchone()
-                    print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
-                    return result[0] if result else None
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
+                result = cur.fetchone()
+                print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
+                return result[0] if result else None
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
             return None
-
 
     def save_assessment(self, assessment_id, cac_id, case_id, agency_id, mh_provider_agency_id, assessment_instrument_id,
                         provider_employee_id, timing_id, session_date, assessment_date, comments):
         """Insert a new record into case_mh_assessment."""
         try:
-            # Load the database configuration
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    query = """
-                        INSERT INTO case_mh_assessment (assessment_id, cac_id, case_id, agency_id, mh_provider_agency_id, 
-                            assessment_instrument_id, provider_employee_id, timing_id, session_date, assessment_date, comments)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """
-                    cur.execute(query, (
-                        assessment_id, cac_id, case_id, agency_id, mh_provider_agency_id, assessment_instrument_id,
-                        provider_employee_id, timing_id, session_date, assessment_date, comments
-                    ))
-                    conn.commit()
-                    messagebox.showinfo("Success", "Assessment added successfully.")
+            with self.conn.cursor() as cur:
+                query = """
+                    INSERT INTO case_mh_assessment (assessment_id, cac_id, case_id, agency_id, mh_provider_agency_id, 
+                        assessment_instrument_id, provider_employee_id, timing_id, session_date, assessment_date, comments)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """
+                cur.execute(query, (
+                    assessment_id, cac_id, case_id, agency_id, mh_provider_agency_id, assessment_instrument_id,
+                    provider_employee_id, timing_id, session_date, assessment_date, comments
+                ))
+                self.conn.commit()
+                messagebox.showinfo("Success", "Assessment added successfully.")
         except Exception as error:
             print(f"Error saving assessment: {error}")
-            messagebox.showerror("Error", "Failed to save the assessment.")
+            self.conn.rollback()
 
 
 
     def save_score(self, score_id, cac_id, case_id, assessment_id, instrument_id, scores):
         """Insert a new record into case_mh_assessment_measure_scores."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    query = """
-                        INSERT INTO case_mh_assessment_measure_scores (score_id, cac_id, case_id, assessment_id, instrument_id, mh_assessment_scores)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """
-                    cur.execute(query, (score_id, cac_id, case_id, assessment_id, instrument_id, scores))
-                    conn.commit()
-                    messagebox.showinfo("Success", "Scores added successfully.")
+            with self.conn.cursor() as cur:
+                query = """
+                    INSERT INTO case_mh_assessment_measure_scores (score_id, cac_id, case_id, assessment_id, instrument_id, mh_assessment_scores)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                """
+                cur.execute(query, (score_id, cac_id, case_id, assessment_id, instrument_id, scores))
+                self.conn.commit()
+                messagebox.showinfo("Success", "scores added successfully.")
         except Exception as error:
             print(f"Error saving scores: {error}")
-
+            self.conn.rollback()
 
     def add_diagnosis_popup(self):
         popup = tk.Toplevel(self)
@@ -468,36 +437,35 @@ class MHassessment(tk.Frame):
         icd10_group_entry.grid(row=5, column=1, padx=10, pady=5)
 
         def save_diagnosis():
-                """Save diagnosis to the case_mh_assessment_diagnosis table."""
-                provider_agency_name = provider_agency_var.get()
-                diagnosis_date = diagnosis_date_entry.get_date()
-                case_id = case_id_var.get().strip()
+            """Save diagnosis to the case_mh_assessment_diagnosis table."""
+            provider_agency_name = provider_agency_var.get()
+            diagnosis_date = diagnosis_date_entry.get_date()
+            case_id = case_id_var.get().strip()
 
-                if not provider_agency_name or not case_id:
-                    messagebox.showerror("Error", "All fields must be filled out.")
-                    return
+            if not provider_agency_name or not case_id:
+                messagebox.showerror("Error", "All fields must be filled out.")
+                return
 
-                try:
-                    # Get the mh_provider_agency_id for the selected provider
-                    mh_provider_agency_id = self.get_agency_id_by_name(provider_agency_name)
+            try:
+                # Get the mh_provider_agency_id for the selected provider
+                mh_provider_agency_id = self.get_agency_id_by_name(provider_agency_name)
 
-                    # Insert into the database
-                    config = self.load_config()
-                    with psycopg2.connect(**config) as conn:
-                        with conn.cursor() as cur:
-                            query = """
-                                INSERT INTO case_mh_assessment_diagnosis (case_id, diagnosis_date, mh_provider_agency_id)
-                                VALUES (%s, %s, %s)
-                            """
-                            cur.execute(query, (case_id, diagnosis_date, mh_provider_agency_id))
-                            conn.commit()
+                # Insert into the database
+                with self.conn.cursor() as cur:
+                    query = """
+                        INSERT INTO case_mh_assessment_diagnosis (case_id, diagnosis_date, mh_provider_agency_id)
+                        VALUES (%s, %s, %s)
+                    """
+                    cur.execute(query, (case_id, diagnosis_date, mh_provider_agency_id))
+                    self.conn.commit()
 
-                    messagebox.showinfo("Success", "Diagnosis added successfully.")
-                    popup.destroy()
-                except Exception as error:
-                    print(f"Error saving diagnosis: {error}")
-                    messagebox.showerror("Error", "An error occurred while saving the diagnosis.")
-        
+                messagebox.showinfo("Success", "Diagnosis added successfully.")
+                popup.destroy()
+            except Exception as error:
+                print(f"Error saving diagnosis: {error}")
+                self.conn.rollback()
+                messagebox.showerror("Error", "An error occurred while saving the diagnosis.")
+
         # Save and Cancel buttons
         ttk.Button(popup, text="Save", command=save_diagnosis).grid(row=6, column=0, padx=10, pady=10, sticky="w")
         ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=6, column=1, padx=10, pady=10, sticky="e")
