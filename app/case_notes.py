@@ -1,3 +1,5 @@
+# case_notes.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from tkcalendar import DateEntry, Calendar
@@ -8,18 +10,27 @@ from configparser import ConfigParser
 import os
 import traceback
 
+# Import other interfaces for navigation
+import Generaltab_interface
+import people_interface
+import MH_basic_interface
+import MH_assessment
+import MH_treatmentPlan_interface
+import va_tab_interface
+
 class AddSessionForm(tk.Toplevel):
-    def __init__(self, master):
+    def __init__(self, master, controller):
         super().__init__(master)
         self.title("Add New Session Log")
         self.geometry("1200x800")  # Adjust size to fit all fields
 
-        # Store reference to master
+        # Store reference to master and controller
         self.master = master
-        self.conn = master.conn
+        self.controller = controller
+        self.conn = self.controller.conn
         self.cur = self.conn.cursor()
-        self.case_id = master.current_case_id
-        self.cac_id = master.cac_id
+        self.case_id = self.controller.current_case_id
+        self.cac_id = self.controller.cac_id
 
         # Scrollable Frame Setup
         self.canvas = tk.Canvas(self)
@@ -91,7 +102,7 @@ class AddSessionForm(tk.Toplevel):
 
         # Attendees
         self.attendees_vars = {}
-        attendees_options = self.master.get_attendees()  # Get attendees from the main interface
+        attendees_options = self.controller.get_attendees()  # Get attendees from the controller
         for attendee in attendees_options:
             self.attendees_vars[attendee] = tk.BooleanVar()
 
@@ -100,23 +111,17 @@ class AddSessionForm(tk.Toplevel):
         treatment_progress_options = ["None", "Minimal", "Moderate", "Significant", "Met/Exceeded"]
 
         # Hardcoded options for dropdown menus
-        self.status_options = [
-            "Attended", "Canceled", "Canceled & Rescheduled", "Client Canceled",
-            "Clinician Canceled", "Declined", "No-show", "Scheduled", "To be scheduled"
-        ]
-        self.status_mapping = {name: idx for idx, name in enumerate(self.status_options, start=1)}
-        self.status_reverse_mapping = {idx: name for name, idx in self.status_mapping.items()}
+        self.status_options = self.controller.status_options
+        self.status_mapping = self.controller.status_mapping
+        self.status_reverse_mapping = self.controller.status_reverse_mapping
 
-        self.type_options = [
-            "Individual Session with Dog", "Individual Talk", "Group/Support",
-            "Session with Interpreter present", "Family", "Psycho/Social Group"
-        ]
-        self.type_mapping = {name: idx for idx, name in enumerate(self.type_options, start=1)}
-        self.type_reverse_mapping = {idx: name for name, idx in self.type_mapping.items()}
+        self.type_options = self.controller.type_options
+        self.type_mapping = self.controller.type_mapping
+        self.type_reverse_mapping = self.controller.type_reverse_mapping
 
         # Provider Agency and Personnel options
-        self.provider_agency_options = self.master.get_provider_agency_options()
-        self.provider_personnel_options = self.master.get_provider_personnel_options()
+        self.provider_agency_options = self.controller.get_provider_agency_options()
+        self.provider_personnel_options = self.controller.get_provider_personnel_options()
 
         # Location options
         self.location_options = ["Location 1", "Location 2", "Location 3"]
@@ -391,7 +396,7 @@ class AddSessionForm(tk.Toplevel):
             messagebox.showinfo("Save", "Session has been saved successfully!")
 
             # Refresh the session tree in the main interface
-            self.master.load_session_logs()
+            self.controller.load_session_logs()
             self.destroy()
         except Exception as e:
             self.conn.rollback()
@@ -403,8 +408,23 @@ class AddSessionForm(tk.Toplevel):
         self.destroy()
 
 class case_notes_interface(tk.Frame):
-    def __init__(self, parent, controller=None):
+    def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+
+        self.controller = controller
+
+        # Add navigation buttons at the top
+        nav_frame = ttk.Frame(self)
+        nav_frame.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+
+        # Add buttons to navigate to other interfaces
+        ttk.Button(nav_frame, text="General Tab", command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="People", command=lambda: controller.show_frame(people_interface.people_interface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="MH Basic", command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="MH Assessment", command=lambda: controller.show_frame(MH_assessment.MHassessment)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="MH Treatment Plan", command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="VA Tab", command=lambda: controller.show_frame(va_tab_interface.va_interface)).pack(side='left', padx=5)
+        # Add more buttons as needed
 
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -550,7 +570,7 @@ class case_notes_interface(tk.Frame):
 
     def open_add_session_form(self):
         try:
-            add_session_window = AddSessionForm(self)
+            add_session_window = AddSessionForm(self, self)
         except Exception as e:
             traceback_str = traceback.format_exc()
             print(f"Error in open_add_session_form:\n{traceback_str}")
@@ -792,29 +812,23 @@ class case_notes_interface(tk.Frame):
     def go_to_today(self):
         self.current_date = datetime.date.today()
         self.calendar_widget.selection_set(self.current_date)
-        self.calendar_widget.calevent_remove('all')  # Clear any existing events
-        self.calendar_widget.display_month(self.current_date.year, self.current_date.month)
+        self.calendar_widget.see(self.current_date)
         self.update_month_year_label()
-        # Reload events
-        self.populate_calendar()
+        # No need to reload events unless necessary
 
     def prev_month(self):
         first_day = self.current_date.replace(day=1)
         prev_month_last_day = first_day - datetime.timedelta(days=1)
         self.current_date = prev_month_last_day.replace(day=1)
-        self.calendar_widget.display_month(self.current_date.year, self.current_date.month)
+        self.calendar_widget.see(self.current_date)
         self.update_month_year_label()
-        # Reload events
-        self.populate_calendar()
 
     def next_month(self):
         days_in_month = calendar.monthrange(self.current_date.year, self.current_date.month)[1]
         next_month_first_day = self.current_date.replace(day=days_in_month) + datetime.timedelta(days=1)
         self.current_date = next_month_first_day
-        self.calendar_widget.display_month(self.current_date.year, self.current_date.month)
+        self.calendar_widget.see(self.current_date)
         self.update_month_year_label()
-        # Reload events
-        self.populate_calendar()
 
     def update_month_year_label(self):
         month_name = self.current_date.strftime("%B")
@@ -869,21 +883,3 @@ class case_notes_interface(tk.Frame):
             self.conn.close()
         self.destroy()
 
-# Minimal App class to simulate the controller
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Case Notes Interface")
-        self.geometry("1280x720")
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.frame = case_notes_interface(self, controller=None)
-        self.frame.pack(fill="both", expand=True)
-
-    def on_closing(self):
-        if hasattr(self.frame, 'on_closing'):
-            self.frame.on_closing()
-        self.destroy()
-
-if __name__ == '__main__':
-    app = App()
-    app.mainloop()
