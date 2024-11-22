@@ -730,10 +730,11 @@ class LookupPersonForm(tk.Toplevel):
             except Exception as e:
                 messagebox.showerror("Error", f"Failed to add person to case: {e}")
 
-# -------------------- PersonalProfileForm Class --------------------
+# -------------------- PersonalProfileForm Class ----------
 import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
+from datetime import datetime
 
 class PersonalProfileForm(tk.Toplevel):
     def __init__(self, master, person_id=None, mode='add'):
@@ -809,6 +810,9 @@ class PersonalProfileForm(tk.Toplevel):
             'Other': 4
         }
 
+        # Initialize in-memory storage for Runaway Incidents
+        self.runaway_incidents = []
+
         self.create_widgets()
 
         if self.mode in ['edit', 'bio']:
@@ -875,9 +879,9 @@ class PersonalProfileForm(tk.Toplevel):
                         text=option,
                         variable=var
                     )
-                    row_offset = opt_idx // num_columns
-                    col_offset = opt_idx % num_columns
-                    cb.grid(row=idx + row_offset, column=1 + col_offset, sticky='w', padx=5, pady=2)
+                    row_offset = idx + (opt_idx // num_columns)
+                    col_offset = 1 + (opt_idx % num_columns)
+                    cb.grid(row=row_offset, column=col_offset, sticky='w', padx=5, pady=2)
                     self.fields[field_key][option] = var
             elif field_key in ['Date of Birth', 'Date of Death']:
                 self.fields[field_key] = DateEntry(
@@ -1072,9 +1076,9 @@ class PersonalProfileForm(tk.Toplevel):
                 variable=var
             )
             # Arrange in two rows for better alignment (4 per row)
-            row = 2
-            col = 1 + (idx % 4) + (idx // 4) * 1
-            cb.grid(row=2, column=1 + (idx % 4), sticky='w', padx=5, pady=2)
+            row = 2 + (idx // 4)
+            col = 1 + (idx % 4)
+            cb.grid(row=row, column=col, sticky='w', padx=5, pady=2)
             self.fields['CSEC Involvement'][option] = var
 
         # Section 5: Additional Details
@@ -1122,78 +1126,32 @@ class PersonalProfileForm(tk.Toplevel):
                 self.fields[field_key] = ttk.Entry(additional_details_frame)
                 self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
 
-        # Section 6: Geographic and Custom Fields
-        geo_custom_frame = ttk.LabelFrame(self.scrollable_frame, text="Geographic and Custom Fields")
-        geo_custom_frame.grid(row=6, column=0, columnspan=4, padx=10, pady=10, sticky='ew')
+        # Section 6: Runaway Incidents
+        runaway_frame = ttk.LabelFrame(self.scrollable_frame, text="Runaway Incidents")
+        runaway_frame.grid(row=6, column=0, columnspan=4, padx=10, pady=10, sticky='ew')
 
-        geo_custom_fields = [
-            ('CSEC Involvement', 'CSEC Involvement:', False),
-            ('Custom Field', 'Custom Field:', False),
-            ('Ethnicity', 'Ethnicity:', False),
-            ('Bio Custom Field 7', 'Bio Custom Field 7:', False),
-            ('Bio Custom Field 8', 'Bio Custom Field 8:', False),
-            ('Bio Custom Field 9', 'Bio Custom Field 9:', False),
-            ('Runaway Incidents', 'Runaway Incidents:', False),
-            # Add other fields as necessary
-        ]
-
-        for idx, (field_key, field_label, required) in enumerate(geo_custom_fields):
-            label = ttk.Label(geo_custom_frame, text=field_label, foreground="red" if required else "black")
-            label.grid(row=idx, column=0, sticky='ne', padx=5, pady=5)
-
-            if field_key == 'CSEC Involvement':
-                options = ['USA', 'Canada', 'El Salvador', 'Mexico', 'Nicaragua', 'Uzbekistan', 'Foster Care', 'Awol History']
-                self.fields[field_key] = {}
-                for opt_idx, option in enumerate(options):
-                    var = tk.BooleanVar()
-                    cb = ttk.Checkbutton(
-                        geo_custom_frame,
-                        text=option,
-                        variable=var
-                    )
-                    # Arrange in two rows (4 in first row, 4 in second row)
-                    row = idx
-                    col = 1 + (opt_idx % 4)
-                    cb.grid(row=idx, column=1 + (opt_idx % 4), sticky='w', padx=5, pady=2)
-                    self.fields[field_key][option] = var
-            elif field_key == 'Ethnicity':
-                self.fields[field_key] = tk.StringVar()
-                options = ['Non-Hispanic', 'Hispanic']
-                for opt_idx, option in enumerate(options):
-                    rb = ttk.Radiobutton(
-                        geo_custom_frame,
-                        text=option,
-                        variable=self.fields[field_key],
-                        value=option
-                    )
-                    rb.grid(row=idx, column=1 + opt_idx, sticky='w', padx=2, pady=2)
-                    self.radio_buttons_ethnicity.append(rb)
-            elif field_key.startswith('Bio Custom Field'):
-                self.fields[field_key] = ttk.Entry(geo_custom_frame)
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
-            elif field_key == 'Runaway Incidents':
-                # Implement a table for Runaway Incidents
-                self.runaway_incidents_tree = ttk.Treeview(
-                    geo_custom_frame,
-                    columns=('Action', 'Start Date', 'Length of Time', 'Location'),
-                    show='headings',
-                    height=4
-                )
-                self.runaway_incidents_tree.heading('Action', text='Action')
-                self.runaway_incidents_tree.heading('Start Date', text='Start Date')
-                self.runaway_incidents_tree.heading('Length of Time', text='Length of Time')
-                self.runaway_incidents_tree.heading('Location', text='Location')
-                self.runaway_incidents_tree.column('Action', width=100)
-                self.runaway_incidents_tree.column('Start Date', width=100)
-                self.runaway_incidents_tree.column('Length of Time', width=120)
-                self.runaway_incidents_tree.column('Location', width=150)
-                self.runaway_incidents_tree.grid(row=idx, column=1, sticky='w', padx=5, pady=5)
-
-                add_record_button = ttk.Button(geo_custom_frame, text="+ Add new record", command=self.add_runaway_incident)
-                add_record_button.grid(row=idx, column=2, sticky='w', padx=5, pady=5)
+        # Treeview for Runaway Incidents
+        columns = ('Start Date', 'Length of Time', 'Location', 'Actions')
+        self.runaway_incidents_tree = ttk.Treeview(
+            runaway_frame,
+            columns=columns,
+            show='headings',
+            height=5
+        )
+        for col in columns:
+            self.runaway_incidents_tree.heading(col, text=col)
+            if col == 'Actions':
+                self.runaway_incidents_tree.column(col, width=200, anchor='center')
             else:
-                self.fields[field_key] = ttk.Entry(geo_custom_frame)
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                self.runaway_incidents_tree.column(col, width=150)
+        self.runaway_incidents_tree.pack(side='top', fill='x')
+
+        # Buttons
+        add_record_button = ttk.Button(runaway_frame, text="+ Add new record", command=self.add_runaway_incident)
+        add_record_button.pack(side='top', padx=5, pady=5, anchor='w')
+
+        # Load existing runaway incidents (from in-memory list)
+        self.load_runaway_incidents()
 
         # Section 7: Case Specific Information
         case_specific_frame = ttk.LabelFrame(self.scrollable_frame, text="Case Specific Information")
@@ -1291,11 +1249,135 @@ class PersonalProfileForm(tk.Toplevel):
         )
         cancel_button.pack(side='left', padx=10)
 
-    def add_runaway_incident(self):
-        # Placeholder for adding a new runaway incident record
-        # You can implement a separate form or popup to collect incident details
-        pass
+    # -------------------- Runaway Incidents Methods --------------------
+    def load_runaway_incidents(self):
+        # Clear existing items
+        for item in self.runaway_incidents_tree.get_children():
+            self.runaway_incidents_tree.delete(item)
+        # Load incidents from in-memory list
+        for idx, incident in enumerate(self.runaway_incidents):
+            self.runaway_incidents_tree.insert("", "end", iid=str(idx), values=(
+                incident['Start Date'],
+                incident['Length of Time'],
+                incident['Location'],
+                ''
+            ))
+        # Add action buttons to each row
+        self.runaway_incidents_tree.update_idletasks()
+        for idx in range(len(self.runaway_incidents)):
+            self.add_actions_to_row(str(idx))
 
+    def add_actions_to_row(self, iid):
+        # Create action frame
+        action_frame = ttk.Frame(self.runaway_incidents_tree)
+        edit_btn = ttk.Button(action_frame, text="Edit", command=lambda: self.edit_runaway_incident(iid))
+        delete_btn = ttk.Button(action_frame, text="Delete", command=lambda: self.delete_runaway_incident(iid))
+        edit_btn.pack(side='left', padx=2)
+        delete_btn.pack(side='left', padx=2)
+        self.runaway_incidents_tree.item(iid, tags=('has_actions',))
+        self.runaway_incidents_tree.tag_configure('has_actions', background='white')
+        self.place_widget_in_treeview_cell(action_frame, iid, 'Actions')
+
+    def add_runaway_incident(self):
+        # Insert an empty row with input fields
+        idx = len(self.runaway_incidents)
+        iid = f'new_{idx}'
+        self.runaway_incidents_tree.insert("", "end", iid=iid, values=('', '', '', ''))
+
+        # Replace cells with input widgets
+        self.edit_runaway_incident(iid, new=True)
+
+    def edit_runaway_incident(self, iid, new=False):
+        # Get current values
+        if new:
+            start_date = '11/21/2024'
+            length_of_time = '0.00'
+            location = ''
+        else:
+            values = self.runaway_incidents_tree.item(iid, 'values')
+            start_date = values[0]
+            length_of_time = values[1]
+            location = values[2]
+
+        # Create input widgets
+        date_entry = DateEntry(self.runaway_incidents_tree, date_pattern='MM/dd/yyyy')
+        try:
+            date_entry.set_date(datetime.strptime(start_date, '%m/%d/%Y'))
+        except ValueError:
+            date_entry.set_date(datetime.now())
+        length_entry = ttk.Spinbox(self.runaway_incidents_tree, from_=0, to=1000, increment=0.1, format="%.2f")
+        length_entry.set(length_of_time)
+        location_entry = ttk.Entry(self.runaway_incidents_tree)
+        location_entry.insert(0, location)
+
+        # Place input widgets
+        self.place_widget_in_treeview_cell(date_entry, iid, 'Start Date')
+        self.place_widget_in_treeview_cell(length_entry, iid, 'Length of Time')
+        self.place_widget_in_treeview_cell(location_entry, iid, 'Location')
+
+        # Replace Actions cell with Update and Cancel buttons
+        action_frame = ttk.Frame(self.runaway_incidents_tree)
+        update_btn = ttk.Button(action_frame, text="Update", command=lambda: self.save_runaway_incident(iid, date_entry, length_entry, location_entry, new))
+        cancel_btn = ttk.Button(action_frame, text="Cancel", command=lambda: self.cancel_runaway_edit(iid, new))
+        update_btn.pack(side='left', padx=2)
+        cancel_btn.pack(side='left', padx=2)
+        self.place_widget_in_treeview_cell(action_frame, iid, 'Actions')
+
+    def place_widget_in_treeview_cell(self, widget, item, column):
+        self.runaway_incidents_tree.update_idletasks()
+        bbox = self.runaway_incidents_tree.bbox(item, column=column)
+        if not bbox:
+            self.runaway_incidents_tree.see(item)
+            bbox = self.runaway_incidents_tree.bbox(item, column)
+        if not bbox:
+            return
+        x, y, width, height = bbox
+        widget.place(in_=self.runaway_incidents_tree, x=x, y=y, width=width, height=height)
+
+    def save_runaway_incident(self, iid, date_entry, length_entry, location_entry, new):
+        start_date = date_entry.get()
+        length_of_time = length_entry.get()
+        location = location_entry.get().strip()
+
+        if not location:
+            messagebox.showwarning("Validation Error", "Location is required.")
+            return
+
+        # Save to in-memory list
+        incident = {
+            'Start Date': start_date,
+            'Length of Time': length_of_time,
+            'Location': location
+        }
+        if new:
+            self.runaway_incidents.append(incident)
+        else:
+            if iid.startswith('new_'):
+                idx = int(iid.split('_')[1])
+            else:
+                idx = int(iid)
+            self.runaway_incidents[idx] = incident
+
+        # Reload the treeview
+        self.load_runaway_incidents()
+
+    def cancel_runaway_edit(self, iid, new):
+        if new:
+            self.runaway_incidents_tree.delete(iid)
+        else:
+            self.load_runaway_incidents()
+
+    def delete_runaway_incident(self, iid):
+        confirm = messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete the selected runaway incident?")
+        if confirm:
+            if iid.startswith('new_'):
+                idx = int(iid.split('_')[1])
+            else:
+                idx = int(iid)
+            del self.runaway_incidents[idx]
+            self.load_runaway_incidents()
+
+    # -------------------- Load Person Data --------------------
     def load_person_data(self):
         try:
             cur = self.conn.cursor()
@@ -1353,8 +1435,8 @@ class PersonalProfileForm(tk.Toplevel):
                        city, state_abbr, zip, cell_phone_number, home_phone_number,
                        work_phone_number, custody, education_level_id, income_level_id,
                        marital_status_id, same_household, school_or_employer, victim_status_id
-                FROM case_person
-                WHERE person_id = %s AND case_id = %s
+            FROM case_person
+            WHERE person_id = %s AND case_id = %s
             """
             cur.execute(case_person_query, (self.person_id, self.case_id))
             case_person = cur.fetchone()
@@ -1402,7 +1484,11 @@ class PersonalProfileForm(tk.Toplevel):
                             self.fields[key].delete(0, tk.END)
                             self.fields[key].insert(0, value if value else '')
 
-                # Other fields like phone numbers, custody, etc., can be handled similarly if present
+                # Handle 'In Same Household as Alleged Victim/Client'
+                same_household = case_person[16]
+                self.fields['In Same Household as Alleged Victim/Client'].set(bool(same_household))
+
+                # Other fields can be handled similarly if needed
 
             # Handle 'Self Identified Gender' - Since it's not stored in the database, leave it blank
             for gender, var in self.fields['Self Identified Gender'].items():
@@ -1414,6 +1500,7 @@ class PersonalProfileForm(tk.Toplevel):
             messagebox.showerror("Error", f"Failed to load person data: {e}")
             self.destroy()
 
+    # -------------------- Disable Fields in Bio Mode --------------------
     def disable_fields(self):
         for key, field in self.fields.items():
             try:
@@ -1421,18 +1508,10 @@ class PersonalProfileForm(tk.Toplevel):
                     # Disable all Radiobuttons
                     for rb in self.radio_buttons_bio_sex:
                         rb.configure(state='disabled')
-                elif key == 'Ethnicity':
-                    # Disable all Radiobuttons
-                    for rb in self.radio_buttons_ethnicity:
-                        rb.configure(state='disabled')
                 elif key == 'Self Identified Gender':
                     # Disable all Checkbuttons
-                    # Iterate through the children and disable checkbuttons
-                    for child in self.scrollable_frame.winfo_children():
-                        if isinstance(child, ttk.LabelFrame) and child.cget("text") == "Basic Information":
-                            for subchild in child.winfo_children():
-                                if isinstance(subchild, ttk.Checkbutton):
-                                    subchild.configure(state='disabled')
+                    for var in field.values():
+                        var.set(False)
                 elif isinstance(field, ttk.Entry):
                     field.configure(state='disabled')
                 elif isinstance(field, DateEntry):
@@ -1441,13 +1520,14 @@ class PersonalProfileForm(tk.Toplevel):
                     # Disable associated Checkbutton if possible
                     pass  # Requires storing references
                 elif isinstance(field, dict):
-                    # For CSEC Involvement, etc.
+                    # For checkboxes in dictionaries
                     for sub_key, var in field.items():
                         # Disable the Checkbutton associated with var
                         pass  # Requires storing references
             except Exception as e:
                 print(f"Error disabling field '{key}': {e}")
 
+    # -------------------- Save Person Data --------------------
     def save_person(self):
         try:
             # Collect data from fields
@@ -1457,7 +1537,7 @@ class PersonalProfileForm(tk.Toplevel):
                     # Collect selected genders
                     selected_genders = [gender for gender, var in field.items() if var.get()]
                     data[key] = ', '.join(selected_genders)
-                elif key in ['CSEC Involvement', 'Child Pornography Involvement']:
+                elif key in ['CSEC Involvement', 'Child Pornography Involvement', 'VOCA Classification', 'Special Populations', 'Risk Factors', 'CSEC']:
                     # Collect selected options
                     selected_options = [option for option, var in field.items() if var.get()]
                     data[key] = ', '.join(selected_options)
@@ -1472,30 +1552,22 @@ class PersonalProfileForm(tk.Toplevel):
                 elif isinstance(field, tk.Text):
                     data[key] = field.get("1.0", tk.END).strip()
                 else:
-                    # For other types, skip
-                    pass
+                    data[key] = None  # Handle other field types if necessary
 
-            # Validate required fields
-            required_fields = [
-                'First Name', 'Last Name', 'Biological Sex',
-                'Self Identified Gender', 'Race',
-                'Relationship to Alleged Victim/Client', 'Role'
-                # 'Age at Time of Referral' is excluded since the column doesn't exist
-            ]
-            missing_fields = [field for field in required_fields if not data.get(field)]
-            if missing_fields:
-                messagebox.showwarning("Validation Error", f"The following required fields are missing: {', '.join(missing_fields)}")
-                return
+            # Ensure required fields are filled
+            required_fields = ['First Name', 'Last Name', 'Biological Sex', 'Race', 'Relationship to Alleged Victim/Client', 'Role']
+            for field in required_fields:
+                if not data.get(field):
+                    messagebox.showwarning("Validation Error", f"{field} is required.")
+                    return
 
-            # Additional validation: Ensure Age Unit is selected if 'Age at Time of Referral' is filled
-            age_at_referral = self.fields.get('Age at Time of Referral').get().strip()
-            age_unit = self.fields.get('Age Unit')
+            # Ensure Age Unit is selected if 'Age at Time of Referral' is filled
+            age_at_referral = data.get('Age at Time of Referral')
+            age_unit = data.get('Age Unit')
             if age_at_referral:
-                if age_unit and not age_unit.get():
+                if not age_unit:
                     messagebox.showwarning("Validation Error", "Age Unit is required when Age at Time of Referral is provided.")
                     return
-                else:
-                    data['Age Unit'] = age_unit.get() if age_unit else ''
             else:
                 data['Age Unit'] = ''
 
@@ -1627,7 +1699,7 @@ class PersonalProfileForm(tk.Toplevel):
                     data.get('City'),
                     self.fields['State'].get(),
                     data.get('Zip'),
-                    data.get('Same Household as Alleged Victim/Client'),
+                    data.get('In Same Household as Alleged Victim/Client'),
                     data.get('School or Employer')
                 )
                 cur.execute(insert_case_person_query, case_person_data)
