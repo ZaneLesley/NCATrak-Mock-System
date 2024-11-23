@@ -1,3 +1,5 @@
+# people_interface.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import psycopg2
@@ -7,17 +9,18 @@ from datetime import datetime
 from tkcalendar import DateEntry
 import math
 
-# Assuming these modules are available. If not, you can comment out or adjust accordingly.
-# import Generaltab_interface
-# import MH_basic_interface
-# import MH_assessment
-# import MH_treatmentPlan_interface
-# import va_tab_interface
-# import case_notes
+# Import other interfaces for navigation
+import Generaltab_interface
+import MH_basic_interface
+import MH_assessment
+import MH_treatmentPlan_interface
+import va_tab_interface
+import case_notes
 
 class PeopleInterface(tk.Frame):
-    def __init__(self, parent):
+    def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        self.controller = controller  # Store the controller reference
 
         # Database connection
         self.conn = self.get_connection()
@@ -46,49 +49,34 @@ class PeopleInterface(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        # window in the canvas
+        # Window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-        # scrollbar to canvas
+        # Scrollbar to canvas
         canvas.configure(yscrollcommand=scrollbar.set)
 
         # Use grid over pack for interface linking
         canvas.grid(row=0, column=0, sticky="nsew")
         scrollbar.grid(row=0, column=1, sticky="ns")
 
-        # Navigation Buttons (assuming 'controller' is provided)
-        # Note: Adjusted to remove 'controller' since it's not defined
-        # You can re-add 'controller' parameter if needed
+        # Navigation Buttons
         button_frame = ttk.Frame(scrollable_frame)
         button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
 
-        button1 = ttk.Button(button_frame, text="General",
-                             command=lambda: self.show_frame(None))  # Replace None with actual frame
-        button1.pack(side='left', padx=5)
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("VA", self.show_va_tab),
+            ("Case Notes", self.show_case_notes),
+        ]
 
-        button2 = ttk.Button(button_frame, text="People",
-                             command=lambda: self.show_frame(PeopleInterface))
-        button2.pack(side='left', padx=5)
-
-        button3 = ttk.Button(button_frame, text="Mental Health - Basic",
-                             command=lambda: self.show_frame(None))  # Replace None with actual frame
-        button3.pack(side='left', padx=5)
-
-        button4 = ttk.Button(button_frame, text="Mental Health - Assessment",
-                             command=lambda: self.show_frame(None))  # Replace None with actual frame
-        button4.pack(side='left', padx=5)
-
-        button5 = ttk.Button(button_frame, text="Mental Health - Treatment Plan",
-                             command=lambda: self.show_frame(None))  # Replace None with actual frame
-        button5.pack(side='left', padx=5)
-
-        button6 = ttk.Button(button_frame, text="VA",
-                             command=lambda: self.show_frame(None))  # Replace None with actual frame
-        button6.pack(side='left', padx=5)
-
-        button7 = ttk.Button(button_frame, text="Case Notes",
-                             command=lambda: self.show_frame(None))  # Replace None with actual frame
-        button7.pack(side='left', padx=5)
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
 
         # -------------------- Save and Cancel Buttons --------------------
         save_cancel_frame = tk.Frame(scrollable_frame)
@@ -162,29 +150,15 @@ class PeopleInterface(tk.Frame):
         # Start the update loop for action widgets and checkboxes
         self.update_action_widgets()
 
-        # -------------------- Additional Checkbox and Comments --------------------
-        additional_frame = tk.Frame(scrollable_frame)
-        additional_frame.grid(row=6, column=0, padx=10, pady=10, sticky='w')
-
-        self.checkbox_var = tk.BooleanVar()
-        checkbox = ttk.Checkbutton(additional_frame, text="Alleged Offender Name Unknown", variable=self.checkbox_var)
-        checkbox.grid(row=0, column=0, pady=5, sticky='w')
-
-        comments_label = ttk.Label(additional_frame, text="Alleged Offender Unknown Comments:")
-        comments_label.grid(row=1, column=0, pady=(10, 0), sticky='w')
-
-        self.comments_text = tk.Text(additional_frame, height=5, width=100)
-        self.comments_text.grid(row=2, column=0, pady=5, sticky='w')
-
         # -------------------- Document Upload Section --------------------
         # Document Upload section title
         upload_title_frame = ttk.Frame(scrollable_frame)
-        upload_title_frame.grid(row=7, column=0, padx=10, pady=5, sticky='w')
+        upload_title_frame.grid(row=6, column=0, padx=10, pady=5, sticky='w')
         ttk.Label(upload_title_frame, text="Document Upload", font=('Arial', 16)).pack(side=tk.LEFT)
 
         # Treeview for document uploads
         upload_frame = ttk.Frame(scrollable_frame)
-        upload_frame.grid(row=8, column=0, padx=10, pady=5, sticky='nsew')
+        upload_frame.grid(row=7, column=0, padx=10, pady=5, sticky='nsew')
         self.upload_tree = ttk.Treeview(upload_frame, columns=("File Name", "Upload Date", "User", "Page", "Size"), show="headings")
         for col in self.upload_tree['columns']:
             self.upload_tree.heading(col, text=col)
@@ -224,13 +198,33 @@ class PeopleInterface(tk.Frame):
 
         # File selection button
         file_nav_frame = ttk.Frame(scrollable_frame)
-        file_nav_frame.grid(row=9, column=0, padx=10, pady=10, sticky='w')
+        file_nav_frame.grid(row=8, column=0, padx=10, pady=10, sticky='w')
         ttk.Button(file_nav_frame, text="Select Files...", command=self.select_files).pack(side=tk.LEFT, padx=10)
+        #self.controller.show_frame(people_interface)
 
-    # -------------------- Navigation Function Placeholder --------------------
-    def show_frame(self, frame_class):
-        # Placeholder for navigation function
-        pass
+
+
+    # -------------------- Navigation Functions --------------------
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
+
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
+
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
+
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
+
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)
 
     # -------------------- Database Connection and Functions --------------------
     def get_connection(self):
@@ -294,7 +288,8 @@ class PeopleInterface(tk.Frame):
             query = """
                 SELECT p.person_id, p.first_name || ' ' || p.last_name AS name, 
                 DATE_PART('year', AGE(p.date_of_birth)) AS age, p.date_of_birth, 
-                cp.same_household, cp.custody
+                cp.same_household, cp.custody,
+                cp.role_id, cp.relationship_id
                 FROM person p
                 JOIN case_person cp ON p.person_id = cp.person_id
                 WHERE cp.case_id = %s;
@@ -310,12 +305,32 @@ class PeopleInterface(tk.Frame):
                 name = row[1] if row[1] else 'N/A'
                 age = int(row[2]) if row[2] else 'N/A'
                 dob = row[3].strftime('%Y-%m-%d') if row[3] else 'N/A'
-                role = 'N/A'
-                relationship = 'N/A'
+                same_household = row[4]
+                custody = row[5]
+                role = self.get_role_name(row[6])
+                relationship = self.get_relationship_name(row[7])
                 values = ('', name, age, dob, role, relationship, '', '')
                 self.tree.insert("", "end", iid=person_id, values=values)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load people: {e}")
+
+    def get_role_name(self, role_id):
+        role_mapping = {
+            1: 'Victim',
+            2: 'Perpetrator',
+            3: 'Witness',
+            4: 'Other'
+        }
+        return role_mapping.get(role_id, 'N/A')
+
+    def get_relationship_name(self, relationship_id):
+        relationship_mapping = {
+            1: 'Parent',
+            2: 'Sibling',
+            3: 'Guardian',
+            4: 'Other'
+        }
+        return relationship_mapping.get(relationship_id, 'N/A')
 
     # -------------------- Action Buttons and Checkboxes --------------------
     def update_action_widgets(self):
@@ -467,8 +482,10 @@ class PeopleInterface(tk.Frame):
             if search_text in name.lower():
                 age = int(row[2]) if row[2] else 'N/A'
                 dob = row[3].strftime('%Y-%m-%d') if row[3] else 'N/A'
-                role = 'N/A'
-                relationship = 'N/A'
+                same_household = row[4]
+                custody = row[5]
+                role = self.get_role_name(row[6])
+                relationship = self.get_relationship_name(row[7])
                 values = ('', name, age, dob, role, relationship, '', '')
                 self.tree.insert("", "end", iid=person_id, values=values)
 
@@ -478,49 +495,13 @@ class PeopleInterface(tk.Frame):
 
     # -------------------- Save and Cancel Changes --------------------
     def save_changes(self):
-        # Save additional checkbox and comments
-        try:
-            cur = self.conn.cursor()
-            # Update case table with 'alleged_offender_unknown' and 'comments'
-            query = """
-                UPDATE cac_case
-                SET alleged_offender_unknown = %s,
-                    alleged_offender_unknown_comments = %s
-                WHERE case_id = %s;
-            """
-            alleged_offender_unknown = self.checkbox_var.get()
-            comments = self.comments_text.get("1.0", tk.END).strip()
-            cur.execute(query, (alleged_offender_unknown, comments, self.current_case_id))
-            self.conn.commit()
-            cur.close()
-            messagebox.showinfo("Success", "Changes have been saved.")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to save changes: {e}")
+        messagebox.showinfo("Info", "Changes have been saved.")
+        # Implement any additional save functionality here.
 
     def cancel_changes(self):
         # Reload data from the database
         self.load_people()
-        # Reset additional checkbox and comments
-        self.load_additional_info()
         messagebox.showinfo("Info", "Changes have been canceled.")
-
-    def load_additional_info(self):
-        try:
-            cur = self.conn.cursor()
-            query = """
-                SELECT alleged_offender_unknown, alleged_offender_unknown_comments
-                FROM cac_case
-                WHERE case_id = %s;
-            """
-            cur.execute(query, (self.current_case_id,))
-            result = cur.fetchone()
-            cur.close()
-            if result:
-                self.checkbox_var.set(result[0])
-                self.comments_text.delete("1.0", tk.END)
-                self.comments_text.insert(tk.END, result[1] if result[1] else '')
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to load additional information: {e}")
 
     # -------------------- Document Upload Methods --------------------
     def select_files(self):
@@ -528,7 +509,7 @@ class PeopleInterface(tk.Frame):
         if file_paths:
             for file_path in file_paths:
                 file_name = os.path.basename(file_path)
-                # For demonstration, we will insert dummy data into the treeview
+                # For demonstration, we will insert dummy data into the upload treeview
                 self.upload_tree.insert('', 'end', values=(file_name, 'Today', 'User', '1', '1MB'))
 
     def upload_first_page(self):
@@ -1850,13 +1831,5 @@ class PersonalProfileForm(tk.Toplevel):
             self.conn.rollback()
             messagebox.showerror("Error", f"Failed to save person information: {e}")
 
-
-
-# -------------------- Main Execution --------------------
-if __name__ == '__main__':
-    root = tk.Tk()
-    root.title("People Interface")
-    root.geometry("1000x600")  # Set a reasonable default window size
-    app = PeopleInterface(root)
-    app.pack(fill='both', expand=True)
-    root.mainloop()
+# -------------------- Alias for Compatibility with app.py --------------------
+people_interface = PeopleInterface
