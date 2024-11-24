@@ -17,10 +17,48 @@ class va_interface(tk.Frame):
 
     def __init__(self, parent, controller):
 
+        def get_case(id):
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_case where case_id = %s;", (id,))
+                        case = cur.fetchone()
+                        return case
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
         tk.Frame.__init__(self, parent)
         
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
+
+        case = get_case(906691059)
+
+        print(case)
+
+        caseId = case[1]
+        caseNumber = case[2]
+        caseReceivedDate = case[3]
+        caseClosedDate = case[4]
+        caseClosedReasonId = case[5]
+        caseCreatedDate = case[6]
+        leadEmployeeId = case[7]
+        vaAgencyId = case[19]
+        vaCaseNumber = case[20]
+        claimDeniedReason = case[21]
+        claimNumber = case[22]
+        claimStatusId = case[23]
+        hasBirthCert = case[24]
+        hasPoliceReport = case[25]
+        mdtReady = case[26]
+        vaNa = case[27]
+        referralAgencyId = case[28]
+        referralDate = case[29]
+        servicesAccepted = case[30]
+        servicesOfferedDate = case[31]
+        servicesEndDate = case[32]
         
         # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
         # label.grid(row = 0, column=0, padx = 5, pady = 5)
@@ -64,11 +102,11 @@ class va_interface(tk.Frame):
         widget_frame = ttk.Frame(self)
         widget_frame.grid(row=1, column=0, pady=20)
 
-        save_button = ttk.Button(widget_frame, text='SAVE')
-        cancel_button = ttk.Button(widget_frame, text='CANCEL')
+        # save_button = ttk.Button(widget_frame, text='SAVE', command=submit_all_fields())
+        # cancel_button = ttk.Button(widget_frame, text='CANCEL')
 
-        save_button.grid(row=1, column=0, sticky="w", padx=5)
-        cancel_button.grid(row=1, column=1, sticky="w", padx=5)
+        # save_button.grid(row=1, column=0, sticky="w", padx=5)
+        # cancel_button.grid(row=1, column=1, sticky="w", padx=5)
 
         scrollable_frame = ttk.Frame(canvas)
         # Configure the canvas and scrollbar
@@ -99,7 +137,7 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select * from state_table;")
                         states = cur.fetchall()
-                        stateMap = {state[0]: state[1] for state in states}
+                        stateMap = {state[1]: state[0] for state in states}
                         return stateMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
@@ -112,8 +150,9 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select * from cac_agency;")
                         agencies = cur.fetchall()
-                        agencyMap = {agency[2]: agency[0] for agency in agencies}
-                        return agencyMap
+                        agencyMap = {agency[0]: agency[2] for agency in agencies}
+                        agencyMapReversed = {agency[2]: agency[0] for agency in agencies}
+                        return agencyMap, agencyMapReversed
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -138,7 +177,7 @@ class va_interface(tk.Frame):
             popup.title("New Agency")
             popup.geometry("550x550")
 
-            agencies = get_all_agencies()
+            agencies, aReverse = get_all_agencies()
 
             states = get_all_states()
 
@@ -160,7 +199,7 @@ class va_interface(tk.Frame):
             # Listbox with adjusted width and integrated scrollbar
             agency_listbox = tk.Listbox(listbox_frame, height=10, width=50, yscrollcommand=scrollbar.set)
             scrollbar.config(command=agency_listbox.yview)
-            for agency_name in agencies.keys():
+            for agency_name in agencies.values():
                 agency_listbox.insert(tk.END, agency_name)
             agency_listbox.grid(row=0, column=0, sticky='ns')
             scrollbar.grid(row=0, column=1, sticky='ns')
@@ -182,7 +221,7 @@ class va_interface(tk.Frame):
             for idx, (label_text, widget_type) in enumerate(fields):
                 ttk.Label(field_frame, text=label_text, foreground='black').grid(row=idx, column=0, padx=5, pady=5, sticky='w')
                 if label_text == 'State *':
-                    widget = widget_type(field_frame, values=list(states.keys()))
+                    widget = widget_type(field_frame, values=list(states.values()))
                 else:
                     widget = widget_type(field_frame)
                 widget.grid(row=idx, column=1, padx=5, pady=5, sticky='w')
@@ -204,8 +243,9 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select employee_id, first_name, last_name from employee;")
                         personnel = cur.fetchall()
-                        personMap = {(person[1] + " " + person[2]): person[0] for person in personnel}
-                        return personMap
+                        personMap = {person[0]: (person[1] + " " + person[2]) for person in personnel}
+                        personMapReverse = { (person[1] + " " + person[2]): person[0] for person in personnel}
+                        return personMap, personMapReverse
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -233,7 +273,7 @@ class va_interface(tk.Frame):
             popup.grid_columnconfigure(1, weight=1) 
 
             # existing personnel 
-            personnelList = get_all_personnel()
+            persons, pReverse = get_all_personnel()
 
             ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
             ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=1, column=0, padx=5, pady=5, sticky='w')
@@ -248,7 +288,7 @@ class va_interface(tk.Frame):
             # Listbox with adjusted width and integrated scrollbar
             personnel_listbox = tk.Listbox(listbox_frame, height=10, width=50, yscrollcommand=scrollbar.set)
             scrollbar.config(command=personnel_listbox.yview)
-            for person in personnelList.keys():
+            for person in persons.values():
                 personnel_listbox.insert(tk.END, person)
             personnel_listbox.grid(row=0, column=0, sticky='ns')
             scrollbar.grid(row=0, column=1, sticky='ns')
@@ -290,19 +330,25 @@ class va_interface(tk.Frame):
         ttk.Label(referral_frame, text="Date").grid(row=0, column=0, padx=5, pady=5)
         date_entry = DateEntry(referral_frame)
         date_entry.grid(row=0, column=1, padx=5, pady=5)
+        if referralDate is not None:
+            date_entry.set_date(referralDate)
 
-        agencies = get_all_agencies()
+        agencies, aReverse = get_all_agencies()
 
         ttk.Label(referral_frame, text="Referral Source").grid(row=1, column=0, sticky="w")
-        referral_source = ttk.Combobox(referral_frame, values=list(agencies.keys()))
+        referral_source = ttk.Combobox(referral_frame, values=list(agencies.values()), state='readonly')
         referral_source.grid(row=1, column=1, padx=5, pady=5)
+        if agencies.get(referralAgencyId) is not None:
+            referral_source.set(agencies[referralAgencyId])
 
-        persons = get_all_personnel()
+        persons, pReverse = get_all_personnel()
 
         ttk.Label(referral_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-        person_entry = ttk.Combobox(referral_frame, values=list(persons.keys())) 
+        person_entry = ttk.Combobox(referral_frame, values=list(persons.values())) 
         person_entry.grid(row=2, column=1, padx=5, pady=5)
-
+        if persons.get(leadEmployeeId) is not None:
+            person_entry.set(persons[leadEmployeeId])
+        
         ttk.Button(referral_frame, text="Add Referral Source", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
         ttk.Button(referral_frame, text="Add Person", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
 
@@ -314,34 +360,45 @@ class va_interface(tk.Frame):
         ttk.Label(vas_frame, text="VA Case Number").grid(row=0, column=0, padx=5, pady=5)
         va_casenum_entry = ttk.Entry(vas_frame) 
         va_casenum_entry.grid(row=0, column=1, padx=5, pady=5)
+        if vaCaseNumber is not None:
+            va_casenum_entry.delete(0)
+            va_casenum_entry.insert(0, vaCaseNumber)
 
-        agencies = get_all_agencies()
+        agencies, aReverse = get_all_agencies()
 
         ttk.Label(vas_frame, text="Agency").grid(row=1, column=0, padx=5, pady=5)
-        agency_entry = ttk.Combobox(vas_frame, values=list(agencies.keys())) 
+        agency_entry = ttk.Combobox(vas_frame, values=list(agencies.values())) 
         agency_entry.grid(row=1, column=1, padx=5, pady=5)
+        if agencies.get(vaAgencyId) is not None:
+            agency_entry.set(agencies[vaAgencyId])
 
         ttk.Button(vas_frame, text="Add Agency", command=add_agency_popup).grid(row=1, column=2, padx=5, pady=5)
 
-        persons = get_all_personnel()
+        persons, pReverse = get_all_personnel()
 
         ttk.Label(vas_frame, text="Person").grid(row=2, column=0, padx=5, pady=5)
-        person_entry = ttk.Combobox(vas_frame, values=list(persons.keys())) 
+        person_entry = ttk.Combobox(vas_frame, values=list(persons.values())) 
         person_entry.grid(row=2, column=1, padx=5, pady=5) 
+        if persons.get(leadEmployeeId) is not None:
+            person_entry.set(persons[leadEmployeeId])
 
         ttk.Button(vas_frame, text="Add Person", command=add_personnel_popup).grid(row=2, column=2, padx=5, pady=5)
 
         ttk.Label(vas_frame, text="Date Services first offered to child/family").grid(row=3, column=0, padx=5, pady=5)
         date_services_offered = DateEntry(vas_frame)  
         date_services_offered.grid(row=3, column=1, padx=5, pady=5)
+        if servicesOfferedDate is not None:
+            date_services_offered.set_date(servicesOfferedDate)
 
         services_accept = tk.BooleanVar(value=False)
         ttk.Label(vas_frame, text="Did the child/family accept VA services?").grid(row=4, column=0, padx=5, pady=5)
         services_accepted = ttk.Checkbutton(vas_frame, text="Yes", variable=services_accept)  
         services_accepted.grid(row=4, column=1, padx=5, pady=5, sticky="w")
+        if servicesAccepted is not None:
+            services_accept.set(servicesAccepted)
 
         ttk.Label(vas_frame, text="Hope: (1)").grid(row=5, column=0, padx=5, pady=5)
-        hope_entry = ttk.Combobox(vas_frame)  
+        hope_entry = ttk.Combobox(vas_frame, values=["VA PL 1 - Service One", "VA PL 1 - Service Two", "VA PL 1 - Service Three"])  
         hope_entry.grid(row=5, column=1, padx=5, pady=5)
 
         tk.Label(vas_frame, text="VA Services Custom Field (2)").grid(row=6, column=0, padx=5, pady=5)
@@ -360,14 +417,26 @@ class va_interface(tk.Frame):
         custom_field5 = ttk.Combobox(vas_frame)  
         custom_field5.grid(row=9, column=1, padx=5, pady=5)
 
-        tk.Label(vas_frame, text="Date Services were concluded").grid(row=10, column=0, padx=5, pady=5)
+        tk.Label(vas_frame, text="VA Services Custom Field Chp (6)").grid(row=10, column=0, padx=5, pady=5)
+        custom_field6 = ttk.Combobox(vas_frame, values=["VOCA", "Yes", "No"])  
+        custom_field6.grid(row=10, column=1, padx=5, pady=5)
+
+        tk.Label(vas_frame, text="VA Services Custom Field Chp (7)").grid(row=11, column=0, padx=5, pady=5)
+        custom_field7 = ttk.Combobox(vas_frame, values=["Yes", "No", "FBI"])  
+        custom_field7.grid(row=11, column=1, padx=5, pady=5)
+
+        tk.Label(vas_frame, text="Date Services were concluded").grid(row=12, column=0, padx=5, pady=5)
         services_conclusion = DateEntry(vas_frame)  
-        services_conclusion.grid(row=10, column=1, padx=5, pady=5)
+        services_conclusion.grid(row=12, column=1, padx=5, pady=5)
+        if servicesEndDate is not None:
+            services_conclusion.set_date(servicesEndDate)
 
         mdt = tk.BooleanVar(value=False)
-        ttk.Label(vas_frame, text="Ready for MDT Review").grid(row=11, column=0, padx=5, pady=5)
+        ttk.Label(vas_frame, text="Ready for MDT Review").grid(row=13, column=0, padx=5, pady=5)
         mdt_ready = ttk.Checkbutton(vas_frame, text="Yes", variable=mdt)  
-        mdt_ready.grid(row=11, column=1, padx=5, pady=5, sticky="w")
+        mdt_ready.grid(row=13, column=1, padx=5, pady=5, sticky="w")
+        if mdtReady is not None:
+            mdt.set(mdtReady)
 
         #------------------------------
 
@@ -381,6 +450,21 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery, (3, 757172936, random.randint(1, 999999999), start, end, 51706749, date, status))
                         conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_session_attendees():
+            sqlQuery = """select p.first_name, p.last_name from person p
+                            join case_va_session_attendee sa ON p.person_id = sa.person_id;"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery)
+                        attendees = cur.fetchall()
+                        
+                        return attendees
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -467,6 +551,8 @@ class va_interface(tk.Frame):
 
             ttk.Label(field_frame, text="Attendees").grid(row=rowCounter, column=0, padx=5, pady=5)
             rowCounter += 1
+
+            attendees = get_session_attendees()
             attendee1Check = tk.BooleanVar(value=False)
             attendee2Check = tk.BooleanVar(value=False)
             attendee3Check = tk.BooleanVar(value=False)
@@ -619,18 +705,21 @@ class va_interface(tk.Frame):
         ttk.Button(vas_log_frame, text="Details").grid(row=0, column=1, padx=5, pady=5)
         ttk.Button(vas_log_frame, text="Newer Records").grid(row=0, column=2, padx=5, pady=5)
         ttk.Button(vas_log_frame, text="Older Records").grid(row=0, column=3, padx=5, pady=5)
-        
+    
         rowCounter = 2
-
+ 
         ttk.Label(vas_log_frame, text="Date").grid(row=1, column=1)
         ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=2)
         ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=3)
         ttk.Label(vas_log_frame, text="Status").grid(row=1, column=4)
 
         for session in sessions:
+            start_time = str(session[1]).split(' ')[1]
+            end_time = str(session[2]).split(' ')[1]
+
             ttk.Label(vas_log_frame, text=session[0]).grid(row=rowCounter, column=1)
-            ttk.Label(vas_log_frame, text=session[1]).grid(row=rowCounter, column=2)
-            ttk.Label(vas_log_frame, text=session[2]).grid(row=rowCounter, column=3)
+            ttk.Label(vas_log_frame, text=start_time).grid(row=rowCounter, column=2)
+            ttk.Label(vas_log_frame, text=end_time).grid(row=rowCounter, column=3)
             ttk.Label(vas_log_frame, text=session[3]).grid(row=rowCounter, column=4)
             rowCounter += 1
         #------------------------------
@@ -639,34 +728,57 @@ class va_interface(tk.Frame):
         crime_comp_app_frame = tk.LabelFrame(scrollable_frame, text="Crime Compensation Application", padx=10, pady=10)
         crime_comp_app_frame.pack(fill="x", padx=10, pady=5)
 
+        reps, repReverse = get_all_personnel()
+
         ttk.Label(crime_comp_app_frame, text="State Claim Representative").grid(row=0, column=0, padx=5, pady=5)
-        state_claim_rep = ttk.Entry(crime_comp_app_frame)  
+        state_claim_rep = ttk.Combobox(crime_comp_app_frame, values=list(reps.values()))  
         state_claim_rep.grid(row=0, column=1, padx=5, pady=5)
 
         birth_cert = tk.BooleanVar(value=False)
         ttk.Label(crime_comp_app_frame, text="Have Birth Certificate").grid(row=1, column=0, padx=5, pady=5)
         has_birth_cert = ttk.Checkbutton(crime_comp_app_frame, variable=birth_cert)  
         has_birth_cert.grid(row=1, column=1, padx=5, pady=5, sticky="w")
+        if hasBirthCert is not None:
+            birth_cert.set(hasBirthCert) 
 
         police_report = tk.BooleanVar(value=False)
         ttk.Label(crime_comp_app_frame, text="Have Police Report").grid(row=2, column=0, padx=5, pady=5)
         has_police_report = ttk.Checkbutton(crime_comp_app_frame, variable=police_report)  
         has_police_report.grid(row=2, column=1, padx=5, pady=5, sticky="w")
+        if hasPoliceReport is not None:
+            police_report.set(hasPoliceReport) 
 
         ttk.Label(crime_comp_app_frame, text="Claim Number").grid(row=3, column=0, padx=5, pady=5)
         claim_number = ttk.Entry(crime_comp_app_frame)  
         claim_number.grid(row=3, column=1, padx=5, pady=5)
+        if claimNumber is not None:
+            claim_number.delete(0)
+            claim_number.insert(0, claimNumber)
 
         ttk.Label(crime_comp_app_frame, text="Date Application Mailed").grid(row=4, column=0, padx=5, pady=5)
         date_app_mailed = DateEntry(crime_comp_app_frame)  
         date_app_mailed.grid(row=4, column=1, padx=5, pady=5)
 
+        statuses = {
+            1: "Approved",
+            2: "Denied",
+            3: "Recieved",
+            4: "Submitted"
+        }
+        sReverse = {
+            "Approved": 1,
+            "Denied": 2,
+            "Recieved": 3,
+            "Submitted": 4
+        }
         ttk.Label(crime_comp_app_frame, text="Status").grid(row=5, column=0, padx=5, pady=5)
-        status_entry = ttk.Combobox(crime_comp_app_frame)  
+        status_entry = ttk.Combobox(crime_comp_app_frame, values=list(statuses.values()))  
         status_entry.grid(row=5, column=1, padx=5, pady=5)
+        if claimStatusId is not None:
+            status_entry.set(statuses[claimStatusId])
 
         ttk.Label(crime_comp_app_frame, text="Application Assistance Provided (1)").grid(row=6, column=0, padx=5, pady=5)
-        app_assistance_provided = ttk.Combobox(crime_comp_app_frame)  
+        app_assistance_provided = ttk.Combobox(crime_comp_app_frame, values=["Yes", "No"])  
         app_assistance_provided.grid(row=6, column=1, padx=5, pady=5)
 
         ttk.Label(crime_comp_app_frame, text="Crime Compensation Application Custom Field (2)").grid(row=7, column=0, padx=5, pady=5)
@@ -676,6 +788,9 @@ class va_interface(tk.Frame):
         ttk.Label(crime_comp_app_frame, text="Reason Claim Denied").grid(row=8, column=0, padx=5, pady=5)
         claim_denied_reason = ttk.Entry(crime_comp_app_frame)  
         claim_denied_reason.grid(row=8, column=1, padx=5, pady=5)
+        if claimDeniedReason is not None:
+            claim_denied_reason.delete(0)
+            claim_denied_reason.insert(0, claimDeniedReason)
 
         #--------------------------------
         # -Screenings Given Section
@@ -761,8 +876,8 @@ class va_interface(tk.Frame):
             popup.grid_columnconfigure(1, weight=1)
 
             instruments = get_all_instruments()
-            agencies = get_all_agencies()
-            personnel = get_all_personnel()
+            agencies, aReverse = get_all_agencies()
+            personnel, pReverse = get_all_personnel()
             
             field_frame = ttk.Frame(popup)
             field_frame.grid(row=1, column=0, padx=5, pady=5, sticky='w')
@@ -784,11 +899,11 @@ class va_interface(tk.Frame):
             screening_date_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
 
             ttk.Label(field_frame, text="Provider Agency", foreground='black').grid(row=3, column=0, padx=5, pady=5, sticky='w')
-            provider_agency_entry = ttk.Combobox(field_frame, values=list(agencies.keys()))
+            provider_agency_entry = ttk.Combobox(field_frame, values=list(agencies.values()))
             provider_agency_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
             ttk.Label(field_frame, text="Provider Personnel *", foreground='black').grid(row=4, column=0, padx=5, pady=5, sticky='w')
-            provider_personnel_entry = ttk.Combobox(field_frame, values=list(personnel.keys())) 
+            provider_personnel_entry = ttk.Combobox(field_frame, values=list(personnel.values())) 
             provider_personnel_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
             ttk.Label(field_frame, text="Functional Impairment").grid(row=5, column=0, padx=5, pady=5, sticky='w')
@@ -867,8 +982,8 @@ class va_interface(tk.Frame):
             comment_entry.grid(row=3, column=1, padx=5, pady=5)
 
             # Update and Cancel buttons
-            ttk.Button(popup, text="Update", command=popup.destroy).grid(row=4, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=4, column=1, padx=5, pady=5)
+            ttk.Button(popup, text="Update", command=lambda: popup.destroy).grid(row=4, column=0, padx=5, pady=5)
+            ttk.Button(popup, text="Cancel", command=lambda: popup.destroy).grid(row=4, column=1, padx=5, pady=5)
 
         # Outside Referrals Section
         outside_referrals_frame = tk.LabelFrame(scrollable_frame, text="Outside Referrals", padx=10, pady=10)
@@ -954,3 +1069,69 @@ class va_interface(tk.Frame):
         # Add placeholder for upload status (could be enhanced later)
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
+
+
+        def submit_all_fields(date, rAgencyId, lEmployeeId, vaCN, vaAId, serviceODate, sAccept, serviceEnd, mdtV, birthCert, policeR, cNum, cStatus, cReason):
+            referralDate = date # str(date_entry.get_date())
+            referralAgencyId = rAgencyId # aReverse[referral_source.get()]
+            leadEmployeeId = lEmployeeId # pReverse[person_entry.get()]
+            vaCaseNumber = vaCN # va_casenum_entry.get()
+            vaAgencyId = vaAId # aReverse[agency_entry.get()]
+            servicesOfferedDate = serviceODate # str(date_services_offered.get_date())
+            servicesAccepted =sAccept # services_accepted.getboolean()
+            servicesEndDate = serviceEnd # str(services_conclusion.get_date())
+            mdtReady = mdtV # mdt_ready.getboolean()
+            hasBirthCert = birthCert # has_birth_cert.getboolean()
+            hasPoliceReport = policeR # has_police_report.getboolean()
+            claimNumber = cNum # claim_number.get()
+            claimStatusId = cStatus # status_entry.get()
+            claimDeniedReason =  cReason # claim_denied_reason.get()
+
+            sqlQuery = """
+            UPDATE cac_case
+            SET
+            case_number = %s,
+            cac_received_date = %s,
+            case_closed_date = %s,
+            closed_reason_id = %s,
+            created_date = %s,
+            mh_lead_employee_id = %s,
+            va_agency_id = %s,
+            va_case_number = %s,
+            va_claim_denied_reason = %s,
+            va_claim_number = %s,
+            va_claim_status_id = %s,
+            va_have_birth_cert = %s,
+            va_has_police_report = %s,
+            va_mdt_ready = %s,
+            va_na = %s,
+            va_referral_agency_id = %s,
+            va_referral_date = %s,
+            va_services_accepted = %s,
+            va_services_offered_date = %s,
+            va_services_end_date = %s
+            WHERE case_id = %s
+            """ 
+            data_tuple = (
+                caseNumber, caseReceivedDate, caseClosedDate, caseClosedReasonId, 
+                caseCreatedDate, leadEmployeeId, vaAgencyId, vaCaseNumber, claimDeniedReason, claimNumber, claimStatusId, hasBirthCert, 
+                hasPoliceReport, mdtReady, vaNa, referralAgencyId, referralDate, servicesAccepted, servicesOfferedDate, 
+                servicesEndDate, caseId
+            )
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (data_tuple))
+                        conn.commit
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        save_button = ttk.Button(widget_frame, text='SAVE', command= lambda: submit_all_fields(str(date_entry.get_date()), aReverse[referral_source.get()], pReverse[person_entry.get()], va_casenum_entry.get(), aReverse[agency_entry.get()], 
+                                                                                          str(date_services_offered.get_date()), services_accept.get(), str(services_conclusion.get_date()), mdt.get(), birth_cert.get(),
+                                                                                            police_report.get(), claim_number.get(), sReverse[status_entry.get()], claim_denied_reason.get()))
+        cancel_button = ttk.Button(widget_frame, text='CANCEL')
+
+        save_button.grid(row=1, column=0, sticky="w", padx=5)
+        cancel_button.grid(row=1, column=1, sticky="w", padx=5)
