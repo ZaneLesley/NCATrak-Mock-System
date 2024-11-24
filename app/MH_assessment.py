@@ -83,9 +83,6 @@ class MHassessment(tk.Frame):
         # Button to add new assessment
         ttk.Button(assessments_frame, text="+ Add New Assessment", command=self.add_assessment_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
-        # Button to add custom assessments
-        # ttk.Button(assessments_frame, text="+ Add New Custom Assessment", command=self.add_custom_assessment_popup).grid(row=0, column=1, padx=5, pady=5, sticky="w")
-
         # Column headers
         ttk.Label(assessments_frame, text="Assessment Instrument Name").grid(row=1, column=0, padx=5, pady=5)
         ttk.Label(assessments_frame, text="Timing").grid(row=1, column=1, padx=5, pady=5)
