@@ -7,6 +7,7 @@ import people_interface
 import MH_assessment
 import MH_treatmentPlan_interface
 import va_tab_interface
+import case_notes
 import sv_ttk
 
 class MHBasicInterface(tk.Frame):
@@ -62,6 +63,10 @@ class MHBasicInterface(tk.Frame):
         button6 = ttk.Button(self, text="VA", 
                             command=lambda: controller.show_frame(va_tab_interface.va_interface))
         button6.grid(row=0, column=5, padx=5, pady=5)
+
+        button7 = ttk.Button(self, text="Case Notes", 
+                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
+        button7.grid(row=0, column=6, padx=5, pady=5)
 
         # function for line numbering
         def create_line_numbered_label(frame, text, line_number):
