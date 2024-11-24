@@ -93,4 +93,3 @@ if __name__ == '__main__':
             file.close()
         execute_command(insert_query, data, name=table_name)
 print(f"[bold][blue]All Data Successfully Added")
-        
