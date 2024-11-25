@@ -25,4 +25,3 @@ def write_to_csv(data: list, name: str):
     
     df.to_csv(filename, index=False)    
     print(f"[green]Successfully wrote data to {filename}.")
-    
