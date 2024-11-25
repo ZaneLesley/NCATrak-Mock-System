@@ -76,7 +76,7 @@ class MHassessment(tk.Frame):
         scrollbar.grid(row=2, column=1, sticky="ns")
         
         
-        # Assessments Given Section
+        # # Assessments Given Section 
         assessments_frame = tk.LabelFrame(scrollable_frame, text="Assessments Given", padx=10, pady=10)
         assessments_frame.pack(fill="x", padx=10, pady=5)
 
@@ -86,9 +86,26 @@ class MHassessment(tk.Frame):
         # Column headers
         ttk.Label(assessments_frame, text="Assessment Instrument Name").grid(row=1, column=0, padx=5, pady=5)
         ttk.Label(assessments_frame, text="Timing").grid(row=1, column=1, padx=5, pady=5)
-        ttk.Label(assessments_frame, text="Date").grid(row=1, column=2, padx=5, pady=5)
-        ttk.Label(assessments_frame, text="Provider Person").grid(row=1, column=3, padx=5, pady=5)
+        ttk.Label(assessments_frame, text="Session Date").grid(row=1, column=2, padx=5, pady=5)
 
+        # Fetch and display existing assessments
+        try:
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    query = "SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment"
+                    cur.execute(query)
+                    assessments = cur.fetchall()
+
+                    for index, assessment in enumerate(assessments, start=2):  # Start from row 2
+                        instrument_name = self.get_assessment_instrument_name(assessment[0])
+                        timing_name = self.get_timing_name(assessment[1])
+
+                        ttk.Label(assessments_frame, text=instrument_name or "Unknown").grid(row=index, column=0, padx=5, pady=5)
+                        ttk.Label(assessments_frame, text=timing_name).grid(row=index, column=1, padx=5, pady=5)
+                        ttk.Label(assessments_frame, text=str(assessment[2])).grid(row=index, column=2, padx=5, pady=5)
+        except Exception as error:
+            print(f"Error fetching assessments: {error}")
 
         # Diagnosis Log Section
         diagnosis_frame = tk.LabelFrame(scrollable_frame, text="Diagnosis Log", padx=10, pady=10)
@@ -98,10 +115,29 @@ class MHassessment(tk.Frame):
         ttk.Button(diagnosis_frame, text="+ Add Diagnosis", command=self.add_diagnosis_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
 
         # Column headers for the diagnosis log table
-        ttk.Label(diagnosis_frame, text="Agency").grid(row=1, column=0, padx=5, pady=5)
-        ttk.Label(diagnosis_frame, text="Therapist").grid(row=1, column=1, padx=5, pady=5)
-        ttk.Label(diagnosis_frame, text="Diagnosis Date").grid(row=1, column=2, padx=5, pady=5)
-        ttk.Label(diagnosis_frame, text="Diagnosis").grid(row=1, column=3, padx=5, pady=5)
+        ttk.Label(diagnosis_frame, text="MH Provider Agency").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(diagnosis_frame, text="Diagnosis Date").grid(row=1, column=1, padx=5, pady=5)
+
+        # Fetch and display existing diagnosis records
+        try:
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    # Fetch diagnosis log details
+                    query = "SELECT mh_provider_agency_id, diagnosis_date FROM case_mh_assessment_diagnosis"
+                    cur.execute(query)
+                    diagnoses = cur.fetchall()
+
+                    for index, diagnosis in enumerate(diagnoses, start=2):  # Start from row 2
+                        agency_name = self.get_agency_name_by_id(diagnosis[0])
+
+                        ttk.Label(diagnosis_frame, text=agency_name).grid(row=index, column=0, padx=5, pady=5)
+                        ttk.Label(diagnosis_frame, text=str(diagnosis[1])).grid(row=index, column=1, padx=5, pady=5)
+                        
+        except Exception as error:
+            print(f"Error fetching diagnosis log: {error}")
+
+
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
@@ -322,6 +358,31 @@ class MHassessment(tk.Frame):
         except Exception as error:
             print(f"Error fetching assessment instrument ID: {error}")
             return None
+        
+    def get_assessment_instrument_name(self, instrument_id):
+        """Fetches the assessment instrument name for a given instrument ID."""
+        try:
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "SELECT assessment_name FROM case_mh_assessment_instrument WHERE instrument_id = %s", 
+                        (instrument_id,)
+                    )
+                    result = cur.fetchone()
+                    return result[0] if result else None
+        except Exception as error:
+            print(f"Error fetching assessment instrument name for ID {instrument_id}: {error}")
+            return None
+
+    def get_timing_name(self, timing_id):
+        """Maps timing ID to its corresponding string value."""
+        timing_map = {
+            1: "pre-treatment",
+            2: "mid-treatment",
+            3: "post-treatment"
+        }
+        return timing_map.get(timing_id, "Unknown")
 
     def generate_unique_id(self, table_name, column_name):
         """Generate a unique ID for a given table and column."""
@@ -383,6 +444,81 @@ class MHassessment(tk.Frame):
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
             return None
+        
+    def get_agency_name_by_id(self, agency_id):
+        """Fetches the Agency Name for a given agency ID."""
+        try:
+            # Load the database configuration
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    # Execute the query to fetch the Agency Name
+                    cur.execute("SELECT agency_name FROM cac_agency WHERE agency_id = %s", (agency_id,))
+                    result = cur.fetchone()
+                    print(f"Fetching Agency Name for agency ID '{agency_id}': {result[0] if result else 'None'}")
+                    return result[0] if result else "Unknown"
+        except Exception as error:
+            print(f"Error fetching Agency Name for agency ID '{agency_id}': {error}")
+            return "Unknown"
+        
+    def refresh_logs(self):
+        """Refreshes the logs for assessments and diagnosis."""
+        for widget in self.assessments_frame.winfo_children():
+            widget.destroy()
+        for widget in self.diagnosis_frame.winfo_children():
+            widget.destroy()
+
+        # Re-add column headers
+        ttk.Label(self.assessments_frame, text="Assessment Instrument Name").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(self.assessments_frame, text="Timing").grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(self.assessments_frame, text="Session Date").grid(row=1, column=2, padx=5, pady=5)
+
+        ttk.Label(self.diagnosis_frame, text="MH Provider Agency").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(self.diagnosis_frame, text="Diagnosis Date").grid(row=1, column=1, padx=5, pady=5)
+
+        # Re-fetch data
+        self.load_assessments()
+        self.load_diagnoses()
+    
+    def load_assessments(self):
+        """Fetch and display assessments in the log."""
+        try:
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    query = "SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment"
+                    cur.execute(query)
+                    assessments = cur.fetchall()
+
+                    for index, assessment in enumerate(assessments, start=2):
+                        instrument_name = self.get_assessment_instrument_name(assessment[0])
+                        timing_name = self.get_timing_name(assessment[1])
+
+                        ttk.Label(self.assessments_frame, text=instrument_name or "Unknown").grid(row=index*2-1, column=0, padx=5, pady=5)
+                        ttk.Label(self.assessments_frame, text=timing_name).grid(row=index*2-1, column=1, padx=5, pady=5)
+                        ttk.Label(self.assessments_frame, text=str(assessment[2])).grid(row=index*2-1, column=2, padx=5, pady=5)
+        except Exception as error:
+            print(f"Error fetching assessments: {error}")
+
+    def load_diagnoses(self):
+        """Fetch and display diagnoses in the log."""
+        try:
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    query = "SELECT mh_provider_agency_id, diagnosis_date FROM case_mh_assessment_diagnosis"
+                    cur.execute(query)
+                    diagnoses = cur.fetchall()
+
+                    for index, diagnosis in enumerate(diagnoses, start=2):
+                        agency_name = self.get_agency_name_by_id(diagnosis[0])
+
+                        ttk.Label(self.diagnosis_frame, text=agency_name).grid(row=index*2-1, column=0, padx=5, pady=5)
+                        ttk.Label(self.diagnosis_frame, text=str(diagnosis[1])).grid(row=index*2-1, column=1, padx=5, pady=5)
+
+                        ttk.Separator(self.diagnosis_frame, orient="horizontal").grid(row=index*2, column=0, columnspan=2, sticky="ew", pady=5)
+        except Exception as error:
+            print(f"Error fetching diagnosis log: {error}")
 
 
     def save_assessment(self, assessment_id, cac_id, case_id, agency_id, mh_provider_agency_id, assessment_instrument_id,
