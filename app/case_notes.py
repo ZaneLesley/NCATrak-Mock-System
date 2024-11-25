@@ -1,3 +1,5 @@
+# case_notes.py
+
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from tkcalendar import DateEntry, Calendar
@@ -7,21 +9,28 @@ import psycopg2
 from configparser import ConfigParser
 import os
 import traceback
+
+# Import other interfaces for navigation
 import Generaltab_interface
 import people_interface
-import MH_assessment
 import MH_basic_interface
+import MH_assessment
 import MH_treatmentPlan_interface
 import va_tab_interface
 
 class AddSessionForm(tk.Toplevel):
-    def __init__(self, master):
+    def __init__(self, master, controller):
         super().__init__(master)
         self.title("Add New Session Log")
         self.geometry("1200x800")  # Adjust size to fit all fields
 
-        # Store reference to master
+        # Store reference to master and controller
         self.master = master
+        self.controller = controller
+        self.conn = self.controller.conn
+        self.cur = self.conn.cursor()
+        self.case_id = self.controller.current_case_id
+        self.cac_id = self.controller.cac_id
 
         # Scrollable Frame Setup
         self.canvas = tk.Canvas(self)
@@ -48,7 +57,6 @@ class AddSessionForm(tk.Toplevel):
         self.date_var = tk.StringVar()
         self.start_time_var = tk.StringVar()
         self.end_time_var = tk.StringVar()
-        self.prep_var = tk.IntVar(value=0)
         self.status_var = tk.StringVar()
         self.provider_agency_var = tk.StringVar()
         self.provider_personnel_var = tk.StringVar()
@@ -94,7 +102,7 @@ class AddSessionForm(tk.Toplevel):
 
         # Attendees
         self.attendees_vars = {}
-        attendees_options = self.master.get_attendees()  # Get attendees from the main interface
+        attendees_options = self.controller.get_attendees()  # Get attendees from the controller
         for attendee in attendees_options:
             self.attendees_vars[attendee] = tk.BooleanVar()
 
@@ -102,20 +110,27 @@ class AddSessionForm(tk.Toplevel):
         self.treatment_plan_progress_var = tk.StringVar()
         treatment_progress_options = ["None", "Minimal", "Moderate", "Significant", "Met/Exceeded"]
 
-        # Internal mappings for status and type
-        self.status_options = [
-            "Attended", "Canceled", "Canceled & Rescheduled", "Client Canceled",
-            "Clinician Canceled", "Declined", "No-show", "Scheduled", "To be scheduled"
-        ]
-        self.status_mapping = {name: idx for idx, name in enumerate(self.status_options, start=1)}
-        self.status_reverse_mapping = {idx: name for name, idx in self.status_mapping.items()}
+        # Hardcoded options for dropdown menus
+        self.status_options = self.controller.status_options
+        self.status_mapping = self.controller.status_mapping
+        self.status_reverse_mapping = self.controller.status_reverse_mapping
 
-        self.type_options = [
-            "Individual Session with Dog", "Individual Talk", "Group/Support",
-            "Session with Interpreter present", "Family", "Psycho/Social Group"
-        ]
-        self.type_mapping = {name: idx for idx, name in enumerate(self.type_options, start=1)}
-        self.type_reverse_mapping = {idx: name for name, idx in self.type_mapping.items()}
+        self.type_options = self.controller.type_options
+        self.type_mapping = self.controller.type_mapping
+        self.type_reverse_mapping = self.controller.type_reverse_mapping
+
+        # Provider Agency and Personnel options
+        self.provider_agency_options = self.controller.get_provider_agency_options()
+        self.provider_personnel_options = self.controller.get_provider_personnel_options()
+
+        # Location options
+        self.location_options = ["Location 1", "Location 2", "Location 3"]
+
+        # Funding Source options
+        self.funding_source_options = ["Source 1", "Source 2", "Source 3"]
+
+        # Intervention options
+        self.intervention_options = ["Intervention 1", "Intervention 2", "Intervention 3"]
 
         # Layout Configuration
         self.scrollable_frame.columnconfigure(0, weight=1)
@@ -141,11 +156,6 @@ class AddSessionForm(tk.Toplevel):
         end_entry = ttk.Combobox(self.scrollable_frame, textvariable=self.end_time_var,
                                  values=self.generate_time_options())
         end_entry.grid(row=row, column=1, sticky='w', padx=5, pady=5)
-
-        row += 1
-        ttk.Label(self.scrollable_frame, text="Prep").grid(row=row, column=0, sticky='e', padx=5, pady=5)
-        prep_spinbox = ttk.Spinbox(self.scrollable_frame, from_=-100, to=100, textvariable=self.prep_var, width=5)
-        prep_spinbox.grid(row=row, column=1, sticky='w', padx=5, pady=5)
 
         row += 1
         ttk.Label(self.scrollable_frame, text="Status").grid(row=row, column=0, sticky='e', padx=5, pady=5)
@@ -179,19 +189,19 @@ class AddSessionForm(tk.Toplevel):
         row = 0
         ttk.Label(self.scrollable_frame, text="Provider Agency").grid(row=row, column=2, sticky='e', padx=5, pady=5)
         provider_agency_entry = ttk.Combobox(self.scrollable_frame, textvariable=self.provider_agency_var,
-                                             values=["Agency 1", "Agency 2", "Agency 3"])
+                                             values=self.provider_agency_options)
         provider_agency_entry.grid(row=row, column=3, sticky='w', padx=5, pady=5)
 
         row += 1
         ttk.Label(self.scrollable_frame, text="Provider Personnel").grid(row=row, column=2, sticky='e', padx=5, pady=5)
         provider_personnel_entry = ttk.Combobox(self.scrollable_frame, textvariable=self.provider_personnel_var,
-                                                values=["Sarah Jones", "Personnel 2", "Personnel 3"])
+                                                values=self.provider_personnel_options)
         provider_personnel_entry.grid(row=row, column=3, sticky='w', padx=5, pady=5)
 
         row += 1
         ttk.Label(self.scrollable_frame, text="Location").grid(row=row, column=2, sticky='e', padx=5, pady=5)
         location_entry = ttk.Combobox(self.scrollable_frame, textvariable=self.location_var,
-                                      values=["Location 1", "Location 2", "Location 3"])
+                                      values=self.location_options)
         location_entry.grid(row=row, column=3, sticky='w', padx=5, pady=5)
 
         row += 1
@@ -208,13 +218,13 @@ class AddSessionForm(tk.Toplevel):
         row += 1
         ttk.Label(self.scrollable_frame, text="Funding Source").grid(row=row, column=2, sticky='e', padx=5, pady=5)
         funding_source_entry = ttk.Combobox(self.scrollable_frame, textvariable=self.funding_source_var,
-                                            values=["Source 1", "Source 2", "Source 3"])
+                                            values=self.funding_source_options)
         funding_source_entry.grid(row=row, column=3, sticky='w', padx=5, pady=5)
 
         row += 1
         ttk.Label(self.scrollable_frame, text="Intervention").grid(row=row, column=2, sticky='e', padx=5, pady=5)
         intervention_entry = ttk.Combobox(self.scrollable_frame, textvariable=self.intervention_var,
-                                          values=["Intervention 1", "Intervention 2", "Intervention 3"])
+                                          values=self.intervention_options)
         intervention_entry.grid(row=row, column=3, sticky='w', padx=5, pady=5)
 
         row += 1
@@ -334,7 +344,6 @@ class AddSessionForm(tk.Toplevel):
         session_date = self.date_var.get()
         start_time = self.start_time_var.get()
         end_time = self.end_time_var.get()
-        prep_time = self.prep_var.get()
         status_name = self.status_var.get()
         session_type_name = self.type_var.get()
         notes = self.notes_text.get("1.0", tk.END).strip()
@@ -349,38 +358,48 @@ class AddSessionForm(tk.Toplevel):
             return
 
         try:
+            # Generate a unique 'case_mh_session_id'
+            self.cur.execute("SELECT MAX(case_mh_session_id) FROM case_mh_session_log_enc")
+            max_id = self.cur.fetchone()[0]
+            if max_id is None:
+                case_mh_session_id = 1
+            else:
+                case_mh_session_id = max_id + 1
+
             # Insert new session
             query = """
                 INSERT INTO case_mh_session_log_enc (
+                    cac_id,
+                    case_id,
+                    case_mh_session_id,
                     session_date,
                     start_time,
                     end_time,
-                    prep_time,
                     session_status_id,
                     session_type_id,
                     comments
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING case_mh_session_id;
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """
             data = (
+                self.cac_id,
+                self.case_id,
+                case_mh_session_id,
                 session_date,
                 start_time,
                 end_time,
-                prep_time,
                 status_id,
                 session_type_id,
                 notes
             )
-            self.master.cur.execute(query, data)
-            self.master.conn.commit()
-            new_session_id = self.master.cur.fetchone()[0]
+            self.cur.execute(query, data)
+            self.conn.commit()
             messagebox.showinfo("Save", "Session has been saved successfully!")
 
             # Refresh the session tree in the main interface
-            self.master.load_session_logs()
+            self.controller.load_session_logs()
             self.destroy()
         except Exception as e:
-            self.master.conn.rollback()
+            self.conn.rollback()
             traceback_str = traceback.format_exc()
             print(f"Error in save_session:\n{traceback_str}")
             messagebox.showerror("Error", f"Failed to save session: {e}")
@@ -392,10 +411,23 @@ class case_notes_interface(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
+        self.controller = controller
+
+        # Add navigation buttons at the top
+        nav_frame = ttk.Frame(self)
+        nav_frame.grid(row=0, column=0, padx=10, pady=10, sticky='w')
+
+        # Add buttons to navigate to other interfaces
+        ttk.Button(nav_frame, text="General Tab", command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="People", command=lambda: controller.show_frame(people_interface.people_interface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="MH Basic", command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="MH Assessment", command=lambda: controller.show_frame(MH_assessment.MHassessment)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="MH Treatment Plan", command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)).pack(side='left', padx=5)
+        ttk.Button(nav_frame, text="VA Tab", command=lambda: controller.show_frame(va_tab_interface.va_interface)).pack(side='left', padx=5)
+        # Add more buttons as needed
+
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
-        # Since we're running standalone, we don't have the other interfaces or the controller
 
         # Establish database connection
         self.conn = self.get_connection()
@@ -404,7 +436,11 @@ class case_notes_interface(tk.Frame):
         self.conn.autocommit = False  # Manage transactions manually
         self.cur = self.conn.cursor()
 
-        # Internal mappings for status and type
+        # Get current case_id and cac_id
+        self.current_case_id = self.get_current_case_id()
+        self.cac_id = self.get_cac_id()
+
+        # Hardcoded options for mappings
         self.status_options = [
             "Attended", "Canceled", "Canceled & Rescheduled", "Client Canceled",
             "Clinician Canceled", "Declined", "No-show", "Scheduled", "To be scheduled"
@@ -418,54 +454,6 @@ class case_notes_interface(tk.Frame):
         ]
         self.type_mapping = {name: idx for idx, name in enumerate(self.type_options, start=1)}
         self.type_reverse_mapping = {idx: name for name, idx in self.type_mapping.items()}
-        
-        tk.Frame.__init__(self, parent)
-        
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        
-        # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
-        # label.grid(row = 0, column=0, padx = 5, pady = 5)
-
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
-
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
-        
-        
-        # Create a canvas and a scrollbar
-        canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-
-        # Configure the canvas and scrollbar
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
 
         # Setup notebook for tabs
         self.notebook = ttk.Notebook(self)
@@ -498,13 +486,50 @@ class case_notes_interface(tk.Frame):
             messagebox.showerror("Error", f"Failed to connect to the database: {e}")
             return None
 
+    def get_current_case_id(self):
+        try:
+            cur = self.conn.cursor()
+            query = "SELECT case_id FROM cac_case LIMIT 1;"
+            cur.execute(query)
+            result = cur.fetchone()
+            cur.close()
+            if result:
+                return result[0]
+            else:
+                messagebox.showerror("Error", "No cases found in the database.")
+                return None
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to retrieve case ID: {e}")
+            return None
+
+    def get_cac_id(self):
+        try:
+            cur = self.conn.cursor()
+            query = "SELECT cac_id FROM cac_case WHERE case_id = %s;"
+            cur.execute(query, (self.current_case_id,))
+            result = cur.fetchone()
+            cur.close()
+            if result:
+                return result[0]
+            else:
+                messagebox.showerror("Error", "CAC ID not found for the current case.")
+                return None
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to retrieve CAC ID: {e}")
+            return None
+
     def get_attendees(self):
         # Fetch attendees from the database
         attendees = []
         try:
-            self.cur.execute("SELECT first_name, last_name FROM person LIMIT 10;")
+            self.cur.execute("""
+                SELECT first_name || ' ' || last_name
+                FROM person p
+                JOIN case_person cp ON p.person_id = cp.person_id
+                WHERE cp.case_id = %s;
+            """, (self.current_case_id,))
             rows = self.cur.fetchall()
-            attendees = [f"{row[0]} {row[1]}" for row in rows]
+            attendees = [row[0] for row in rows]
             print(f"Attendees loaded: {attendees}")
         except Exception as e:
             self.conn.rollback()
@@ -513,9 +538,39 @@ class case_notes_interface(tk.Frame):
             messagebox.showerror("Error", f"Failed to load attendees: {e}")
         return attendees
 
+    def get_provider_agency_options(self):
+        # Fetch provider agency options from the database
+        agencies = []
+        try:
+            self.cur.execute("SELECT agency_name FROM cac_agency WHERE cac_id = %s;", (self.cac_id,))
+            rows = self.cur.fetchall()
+            agencies = [row[0] for row in rows]
+            if not agencies:
+                agencies = ["Agency 1", "Agency 2", "Agency 3"]
+            return agencies
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error fetching provider agencies: {e}")
+            return ["Agency 1", "Agency 2", "Agency 3"]
+
+    def get_provider_personnel_options(self):
+        # Fetch provider personnel options from the database
+        personnel = []
+        try:
+            self.cur.execute("SELECT first_name || ' ' || last_name FROM employee WHERE cac_id = %s;", (self.cac_id,))
+            rows = self.cur.fetchall()
+            personnel = [row[0] for row in rows]
+            if not personnel:
+                personnel = ["Sarah Jones", "Personnel 2", "Personnel 3"]
+            return personnel
+        except Exception as e:
+            self.conn.rollback()
+            print(f"Error fetching provider personnel: {e}")
+            return ["Sarah Jones", "Personnel 2", "Personnel 3"]
+
     def open_add_session_form(self):
         try:
-            add_session_window = AddSessionForm(self)
+            add_session_window = AddSessionForm(self, self)
         except Exception as e:
             traceback_str = traceback.format_exc()
             print(f"Error in open_add_session_form:\n{traceback_str}")
@@ -602,9 +657,10 @@ class case_notes_interface(tk.Frame):
             query = """
                 SELECT session_date, start_time, end_time, session_type_id, session_status_id, case_mh_session_id
                 FROM case_mh_session_log_enc
+                WHERE case_id = %s
                 ORDER BY session_date DESC;
             """
-            self.cur.execute(query)
+            self.cur.execute(query, (self.current_case_id,))
             rows = self.cur.fetchall()
 
             if rows:
@@ -711,8 +767,8 @@ class case_notes_interface(tk.Frame):
     def populate_calendar(self):
         try:
             # Fetch session dates from the database
-            query = "SELECT session_date, case_mh_session_id FROM case_mh_session_log_enc;"
-            self.cur.execute(query)
+            query = "SELECT session_date, case_mh_session_id FROM case_mh_session_log_enc WHERE case_id = %s;"
+            self.cur.execute(query, (self.current_case_id,))
             sessions = self.cur.fetchall()
             for session_date, session_id in sessions:
                 self.calendar_widget.calevent_create(session_date, 'Session', 'session')
@@ -731,9 +787,9 @@ class case_notes_interface(tk.Frame):
             query = """
                 SELECT session_date, start_time, end_time, session_type_id, session_status_id
                 FROM case_mh_session_log_enc
-                WHERE session_date = %s;
+                WHERE session_date = %s AND case_id = %s;
             """
-            self.cur.execute(query, (selected_date,))
+            self.cur.execute(query, (selected_date, self.current_case_id))
             sessions = self.cur.fetchall()
 
             if sessions:
@@ -756,29 +812,23 @@ class case_notes_interface(tk.Frame):
     def go_to_today(self):
         self.current_date = datetime.date.today()
         self.calendar_widget.selection_set(self.current_date)
-        self.calendar_widget.calevent_remove('all')  # Clear any existing events
-        self.calendar_widget.display_month(self.current_date.year, self.current_date.month)
+        self.calendar_widget.see(self.current_date)
         self.update_month_year_label()
-        # Reload events
-        self.populate_calendar()
+        # No need to reload events unless necessary
 
     def prev_month(self):
         first_day = self.current_date.replace(day=1)
         prev_month_last_day = first_day - datetime.timedelta(days=1)
         self.current_date = prev_month_last_day.replace(day=1)
-        self.calendar_widget.display_month(self.current_date.year, self.current_date.month)
+        self.calendar_widget.see(self.current_date)
         self.update_month_year_label()
-        # Reload events
-        self.populate_calendar()
 
     def next_month(self):
         days_in_month = calendar.monthrange(self.current_date.year, self.current_date.month)[1]
         next_month_first_day = self.current_date.replace(day=days_in_month) + datetime.timedelta(days=1)
         self.current_date = next_month_first_day
-        self.calendar_widget.display_month(self.current_date.year, self.current_date.month)
+        self.calendar_widget.see(self.current_date)
         self.update_month_year_label()
-        # Reload events
-        self.populate_calendar()
 
     def update_month_year_label(self):
         month_name = self.current_date.strftime("%B")
@@ -832,22 +882,3 @@ class case_notes_interface(tk.Frame):
         if hasattr(self, 'conn') and self.conn:
             self.conn.close()
         self.destroy()
-
-# Minimal App class to simulate the controller
-class App(tk.Tk):
-    def __init__(self):
-        super().__init__()
-        self.title("Case Notes Interface")
-        self.geometry("1280x720")
-        self.protocol("WM_DELETE_WINDOW", self.on_closing)
-        self.frame = case_notes_interface(self, controller=None)
-        self.frame.pack(fill="both", expand=True)
-
-    def on_closing(self):
-        if hasattr(self.frame, 'on_closing'):
-            self.frame.on_closing()
-        self.destroy()
-
-if __name__ == '__main__':
-    app = App()
-    app.mainloop()
