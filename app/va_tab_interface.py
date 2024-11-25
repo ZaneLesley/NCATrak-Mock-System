@@ -40,6 +40,7 @@ class va_interface(tk.Frame):
 
         print(case)
 
+        cacId = case[0]
         caseId = case[1]
         caseNumber = case[2]
         caseReceivedDate = case[3]
@@ -446,30 +447,49 @@ class va_interface(tk.Frame):
         #------------------------------
 
         # VAS Log Information
-        def insert_new_session(date, start, end, status):
-            sqlQuery = """insert into case_va_session_log(cac_id, case_id, case_va_session_id, start_time, end_time, va_provider_agency_id, session_date, session_status)
+        def insert_new_session(date, start, end, status, attendees, atReverse, vaProvider):
+            sqlQuery1 = """insert into case_va_session_log(cac_id, case_id, case_va_session_id, start_time, end_time, va_provider_agency_id, session_date, session_status)
              VALUES(%s, %s, %s, %s, %s, %s, %s, %s);"""
+            newSessionId = random.randint(1, 999999999)
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute(sqlQuery, (3, 757172936, random.randint(1, 999999999), start, end, 51706749, date, status))
+                        cur.execute(sqlQuery1, (cacId, caseId, newSessionId, start, end, 51706749, date, status))
                         conn.commit
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
 
-        def get_session_attendees():
-            sqlQuery = """select p.first_name, p.last_name from person p
-                            join case_va_session_attendee sa ON p.person_id = sa.person_id;"""
+            for name, check in attendees.items():
+                if check.get():
+
+                    newAttendeeId = random.randint(1, 999999999)
+                    personId = atReverse[name]
+
+                    sqlQuery2 = """insert into case_va_session_attendee(case_id, case_va_session_attendee_id, case_va_session_id, person_id)
+                    VALUES(%s, %s, %s, %s);"""
+                    try:
+                        config = load_config()
+                        with psycopg2.connect(**config) as conn:
+                            with conn.cursor() as cur:
+                                cur.execute(sqlQuery2, (caseId, newAttendeeId, newSessionId, personId))
+                                conn.commit
+                    except (psycopg2.DatabaseError, Exception) as error:
+                        print(f"{error}")
+                        exit()
+
+        def get_persons():
+            sqlQuery = """select person_id, first_name, last_name from person;"""
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery)
-                        attendees = cur.fetchall()
-                        
-                        return attendees
+                        persons = cur.fetchall()
+                        pMap = {person[0]: person[1] + " " + person[2] for person in persons}
+                        pMapReverse =  {person[1] + " " + person[2]: person[0] for person in persons}
+                        return pMap, pMapReverse
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -529,45 +549,80 @@ class va_interface(tk.Frame):
             prep_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
+            sessionStatuses = {
+                1: "Cancelled",
+                2: "To Be Scheduled",
+                3: "Scheduled",
+                4: "Attended",
+                5: "No Show",
+                6: "Cancelled & Rescheduled",
+                7: "Client Cancelled",
+                8: "Clinician Rescheduled",
+                9: "Declined"
+            }
+            sessionReverse = {
+                "Cancelled": 1,
+                "To Be Scheduled": 2,
+                "Scheduled": 3,
+                "Attended": 4,
+                "No Show": 5,
+                "Cancelled & Rescheduled": 6,
+                "Client Cancelled": 7,
+                "Clinician Rescheduled": 8,
+                "Declined": 9
+            }
+
             ttk.Label(field_frame, text="Session Status *").grid(row=rowCounter, column=0, padx=5, pady=5)
-            session_status_entry = ttk.Combobox(field_frame, values=['1', '2', '3', '4'])
+            session_status_entry = ttk.Combobox(field_frame, values=list(sessionStatuses.values()))
             session_status_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
             ttk.Label(field_frame, text="Funding Source").grid(row=rowCounter, column=0, padx=5, pady=5)
-            funding_source_entry = ttk.Combobox(field_frame)
+            funding_source_entry = ttk.Combobox(field_frame, values=["Source 1", "Source 2", ])
             funding_source_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
             ttk.Label(field_frame, text="Location").grid(row=rowCounter, column=0, padx=5, pady=5)
-            location_entry = ttk.Combobox(field_frame)
+            location_entry = ttk.Combobox(field_frame, values=["Location 1", "Location 2", "Location 3"])
             location_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(field_frame, text="Provider Agency").grid(row=rowCounter, column=0, padx=5, pady=5)
-            provider_agency_entry = ttk.Combobox(field_frame)
+            providers, providerReverse = get_all_agencies()
+
+            ttk.Label(field_frame, text="Provider Agency *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            provider_agency_entry = ttk.Combobox(field_frame, values=list(providers.values()))
             provider_agency_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
+            employees, eReverse = get_all_personnel()
+
             ttk.Label(field_frame, text="Provider Employee").grid(row=rowCounter, column=0, padx=5, pady=5)
-            provider_employee_entry = ttk.Combobox(field_frame)
+            provider_employee_entry = ttk.Combobox(field_frame, values=list(employees.values()))
             provider_employee_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
             rowCounter += 1
 
-            ttk.Label(field_frame, text="Attendees").grid(row=rowCounter, column=0, padx=5, pady=5)
+            ttk.Label(field_frame, text="Attendees *").grid(row=rowCounter, column=0, padx=5, pady=5)
             rowCounter += 1
 
-            attendees = get_session_attendees()
+            attendees, atReverse = get_persons()
+
             attendee1Check = tk.BooleanVar(value=False)
             attendee2Check = tk.BooleanVar(value=False)
             attendee3Check = tk.BooleanVar(value=False)
             attendee4Check = tk.BooleanVar(value=False)
-            attendee1 = ttk.Checkbutton(field_frame, text="Billie Badguys", variable=attendee1Check).grid(row=rowCounter, column=1, sticky="w")
-            attendee2 = ttk.Checkbutton(field_frame, text="Bobbie RRose", variable=attendee2Check).grid(row=rowCounter, column=2, sticky="w")
+            attendee1 = ttk.Checkbutton(field_frame, text=list(attendees.values())[0], variable=attendee1Check).grid(row=rowCounter, column=1, sticky="w")
+            attendee2 = ttk.Checkbutton(field_frame, text=list(attendees.values())[1], variable=attendee2Check).grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
-            attendee3 = ttk.Checkbutton(field_frame, text="Candi Rose", variable=attendee3Check).grid(row=rowCounter, column=1, sticky="w")
-            attendee4 = ttk.Checkbutton(field_frame, text="Cindi Rose", variable=attendee4Check).grid(row=rowCounter, column=2, sticky="w")
+            attendee3 = ttk.Checkbutton(field_frame, text=list(attendees.values())[2], variable=attendee3Check).grid(row=rowCounter, column=1, sticky="w")
+            attendee4 = ttk.Checkbutton(field_frame, text=list(attendees.values())[3], variable=attendee4Check).grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
+
+            attendees = {
+                list(attendees.values())[0]: attendee1Check, 
+                list(attendees.values())[1]: attendee2Check, 
+                list(attendees.values())[2]: attendee3Check, 
+                list(attendees.values())[3]: attendee4Check
+            }
 
             ttk.Label(field_frame, text="Services Provided").grid(row=rowCounter, column=0, padx=5, pady=5)
             service1Check = tk.BooleanVar(value=False)
@@ -686,7 +741,7 @@ class va_interface(tk.Frame):
 
             # Update and Cancel buttons
             ttk.Button(button_frame, text="Save", command=lambda: [insert_new_session(session_date_entry.get_date(), (str(session_date_entry.get_date()) + " " + start_time_entry.get()), 
-                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), session_status_entry.get()), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
+                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), sessionReverse[session_status_entry.get()], attendees, atReverse, providerReverse[provider_agency_entry.get()]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
             ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5)
 
         def get_all_sessions():
