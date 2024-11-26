@@ -16,6 +16,7 @@ import MH_assessment
 import MH_treatmentPlan_interface
 import va_tab_interface
 import case_notes
+import database_lookup_search
 
 class PeopleInterface(tk.Frame):
     def __init__(self, parent, controller):
@@ -65,6 +66,7 @@ class PeopleInterface(tk.Frame):
 
         # Create a list of tuples with button text and corresponding function placeholders
         nav_buttons = [
+            ("Lookup", self.show_lookup_tab),
             ("General", self.show_general_tab),
             ("People", self.show_people_tab),
             ("Mental Health - Basic", self.show_mh_basic),
@@ -205,6 +207,9 @@ class PeopleInterface(tk.Frame):
 
 
     # -------------------- Navigation Functions --------------------
+    def show_lookup_tab(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
+
     def show_general_tab(self):
         self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
 
