@@ -454,6 +454,55 @@ class case_notes_interface(tk.Frame):
         ]
         self.type_mapping = {name: idx for idx, name in enumerate(self.type_options, start=1)}
         self.type_reverse_mapping = {idx: name for name, idx in self.type_mapping.items()}
+        
+        tk.Frame.__init__(self, parent)
+        
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        
+        # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
+        # label.grid(row = 0, column=0, padx = 5, pady = 5)
+
+        button1 = ttk.Button(self, text="General", 
+                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
+        button1.grid(row=0, column=0, padx=5, pady=5)
+
+        button2 = ttk.Button(self, text="People", 
+                            command=lambda: controller.show_frame(people_interface.people_interface))
+        button2.grid(row=0, column=1, padx=5, pady=5)
+
+        button3 = ttk.Button(self, text="Mental Health - Basic", 
+                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
+        button3.grid(row=0, column=2, padx=5, pady=5)
+
+        button4 = ttk.Button(self, text="Mental Health - Assessment", 
+                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
+        button4.grid(row=0, column=3, padx=5, pady=5)
+
+        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
+                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
+        button5.grid(row=0, column=4, padx=5, pady=5)
+
+        button6 = ttk.Button(self, text="VA", 
+                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
+        button6.grid(row=0, column=5, padx=5, pady=5)
+
+        button7 = ttk.Button(self, text="Case Notes", 
+                            command=lambda: controller.show_frame(case_notes_interface))
+        button7.grid(row=0, column=6, padx=5, pady=5)
+        
+        
+        # Create a canvas and a scrollbar
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
 
         # Setup notebook for tabs
         self.notebook = ttk.Notebook(self)
@@ -882,3 +931,23 @@ class case_notes_interface(tk.Frame):
         if hasattr(self, 'conn') and self.conn:
             self.conn.close()
         self.destroy()
+
+# Minimal App class to simulate the controller
+class App(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Case Notes Interface")
+        self.geometry("1280x720")
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.frame = case_notes_interface(self, controller=None)
+        self.frame.pack(fill="both", expand=True)
+
+    def on_closing(self):
+        if hasattr(self.frame, 'on_closing'):
+            self.frame.on_closing()
+        self.destroy()
+
+if __name__ == '__main__':
+    app = App()
+    app.mainloop()
+
