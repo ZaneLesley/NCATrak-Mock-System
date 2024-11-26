@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from tkcalendar import DateEntry
 import Generaltab_interface
 import people_interface
@@ -174,6 +174,7 @@ class va_interface(tk.Frame):
                         cur.execute(sqlQuery, (random.randint(1, 99999999), 1, name, address1, address2, city, state, 
                                                phone, zipcode))
                         conn.commit
+                        messagebox.showinfo("Save", "Agency has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -266,6 +267,7 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery, (random.randint(1, 99999999), 64669736, 1, email, first, last, title, number))
                         conn.commit
+                        messagebox.showinfo("Save", "Person has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -450,34 +452,25 @@ class va_interface(tk.Frame):
         def insert_new_session(date, start, end, status, attendees, atReverse, vaProvider):
             sqlQuery1 = """insert into case_va_session_log(cac_id, case_id, case_va_session_id, start_time, end_time, va_provider_agency_id, session_date, session_status)
              VALUES(%s, %s, %s, %s, %s, %s, %s, %s);"""
+            
+            sqlQuery2 = """insert into case_va_session_attendee(case_id, case_va_session_attendee_id, case_va_session_id, person_id)
+                    VALUES(%s, %s, %s, %s);"""
             newSessionId = random.randint(1, 999999999)
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute(sqlQuery1, (cacId, caseId, newSessionId, start, end, 51706749, date, status))
+                        cur.execute(sqlQuery1, (cacId, caseId, newSessionId, start, end, vaProvider, date, status))
+                        for name, check in attendees.items():
+                            if check.get():
+                                newAttendeeId = random.randint(1, 999999999)
+                                personId = atReverse[name]
+                                cur.execute(sqlQuery2, (caseId, newAttendeeId, newSessionId, personId))
                         conn.commit
+                        messagebox.showinfo("Save", "Session has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
-
-            for name, check in attendees.items():
-                if check.get():
-
-                    newAttendeeId = random.randint(1, 999999999)
-                    personId = atReverse[name]
-
-                    sqlQuery2 = """insert into case_va_session_attendee(case_id, case_va_session_attendee_id, case_va_session_id, person_id)
-                    VALUES(%s, %s, %s, %s);"""
-                    try:
-                        config = load_config()
-                        with psycopg2.connect(**config) as conn:
-                            with conn.cursor() as cur:
-                                cur.execute(sqlQuery2, (caseId, newAttendeeId, newSessionId, personId))
-                                conn.commit
-                    except (psycopg2.DatabaseError, Exception) as error:
-                        print(f"{error}")
-                        exit()
 
         def get_persons():
             sqlQuery = """select person_id, first_name, last_name from person;"""
@@ -864,6 +857,7 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery, (random.randint(1, 999999), name))
                         conn.commit
+                        messagebox.showinfo("Save", "Instrument has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -898,17 +892,19 @@ class va_interface(tk.Frame):
             ttk.Button(button_frame, text="Save", command=lambda: [insert_new_instrument(instrument_name_entry.get()), popup.destroy()]).grid(row=4, column=0, padx=5, pady=5)
             ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=4, column=1, padx=5, pady=5)
 
-        def insert_new_screening(date, personnel, instrument):
+        def insert_new_screening(date, personnel, instrument, agency):
             sqlQuery = """insert into case_mh_assessment (cac_id, case_id, assessment_id, 
                                     mh_provider_agency_id, session_date, agency_id, provider_employee_id, 
                                     assessment_instrument_id)
                                     values(%s, %s, %s, %s, %s, %s, %s, %s);"""
+            newAssessmentId = random.randint(1, 99999999)
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute(sqlQuery, (1, 302621084, random.randint(1, 99999999), 64669736, date, 64669736, personnel, instrument))
+                        cur.execute(sqlQuery, (cacId, caseId, newAssessmentId, agency, date, agency, personnel, instrument))
                         conn.commit
+                        messagebox.showinfo("Save", "Screening has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -921,21 +917,22 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery)
                         instruments = cur.fetchall()
-                        instrumentMap = {instrument[1]: instrument[0] for instrument in instruments}
-                        return instrumentMap
+                        reverseInstrumentMap = {instrument[1]: instrument[0] for instrument in instruments}
+                        instrumentMap = {instrument[0]: instrument[1] for instrument in instruments}
+                        return instrumentMap, reverseInstrumentMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()        
+                exit()   
 
-        def add_new_screening_popup():
+        def edit_screening(assessmentId):
             popup = tk.Toplevel(self)
-            popup.title("Add New Screening")
+            popup.title("Edit Screening")
             popup.geometry("550x350")
 
             popup.grid_columnconfigure(0, weight=0)  
             popup.grid_columnconfigure(1, weight=1)
 
-            instruments = get_all_instruments()
+            instruments, iReverse = get_all_instruments()
             agencies, aReverse = get_all_agencies()
             personnel, pReverse = get_all_personnel()
             
@@ -946,7 +943,7 @@ class va_interface(tk.Frame):
 
             ttk.Label(field_frame, text="Screening Instrument *", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
 
-            screening_instrument_entry = ttk.Combobox(field_frame, values=list(instruments.keys()))
+            screening_instrument_entry = ttk.Combobox(field_frame, values=list(instruments.values()))
             screening_instrument_entry.grid(row=0, column=1, padx=5, pady=5, sticky='w')
 
             ttk.Label(field_frame, text="Scores of this Screening's Measures").grid(row=1, column=0, padx=5, pady=5, sticky='w')
@@ -978,7 +975,62 @@ class va_interface(tk.Frame):
             button_frame.grid(row=2, column=0, columnspan=3, pady=15)
 
             # Update and Cancel buttons
-            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_screening(screening_date_entry.get_date(), provider_personnel_entry.get()[0], screening_instrument_entry.get()[0]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_screening(screening_date_entry.get_date(), pReverse[provider_personnel_entry.get()], iReverse[screening_instrument_entry.get()], aReverse[provider_agency_entry.get()]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5, sticky='w')
+
+
+        def add_new_screening_popup():
+            popup = tk.Toplevel(self)
+            popup.title("Add New Screening")
+            popup.geometry("550x350")
+
+            popup.grid_columnconfigure(0, weight=0)  
+            popup.grid_columnconfigure(1, weight=1)
+
+            instruments, iReverse = get_all_instruments()
+            agencies, aReverse = get_all_agencies()
+            personnel, pReverse = get_all_personnel()
+            
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+
+            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Screening Instrument *", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+            screening_instrument_entry = ttk.Combobox(field_frame, values=list(instruments.values()))
+            screening_instrument_entry.grid(row=0, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Scores of this Screening's Measures").grid(row=1, column=0, padx=5, pady=5, sticky='w')
+            ttk.Label(field_frame).grid(row=1, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Button(field_frame, text="Add Screening Instrument", command=add_screening_instrument_popup).grid(row=0, column=2, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Screening Date *", foreground='black').grid(row=2, column=0, padx=5, pady=5, sticky='w')
+            screening_date_entry = DateEntry(field_frame, background='darkblue', foreground='white', borderwidth=2)
+            screening_date_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Provider Agency *", foreground='black').grid(row=3, column=0, padx=5, pady=5, sticky='w')
+            provider_agency_entry = ttk.Combobox(field_frame, values=list(agencies.values()))
+            provider_agency_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Provider Personnel *", foreground='black').grid(row=4, column=0, padx=5, pady=5, sticky='w')
+            provider_personnel_entry = ttk.Combobox(field_frame, values=list(personnel.values())) 
+            provider_personnel_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Functional Impairment").grid(row=5, column=0, padx=5, pady=5, sticky='w')
+            functional_impairment_entry = ttk.Entry(field_frame)
+            functional_impairment_entry.grid(row=5, column=1, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Comments").grid(row=6, column=0, padx=5, pady=5, sticky='w')
+            _screening_commets_entry = ttk.Entry(field_frame)
+            _screening_commets_entry.grid(row=6, column=1, padx=5, pady=5, sticky='w')
+
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=2, column=0, columnspan=3, pady=15)
+
+            # Update and Cancel buttons
+            ttk.Button(button_frame, text="Save", command=lambda: [insert_new_screening(screening_date_entry.get_date(), pReverse[provider_personnel_entry.get()], iReverse[screening_instrument_entry.get()], aReverse[provider_agency_entry.get()]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5, sticky='w')
             ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5, sticky='w')
 
         def get_all_screenings():
@@ -989,7 +1041,8 @@ class va_interface(tk.Frame):
                         cur.execute("""select case_mh_assessment_instrument.assessment_name, 
                                     case_mh_assessment.session_date, 
                                     employee.first_name,
-                                    employee.last_name 
+                                    employee.last_name,
+                                    case_mh_assessment.assessment_id
                                     from case_mh_assessment
                                     join case_mh_assessment_instrument on case_mh_assessment.assessment_instrument_id = case_mh_assessment_instrument.instrument_id
                                     join employee on case_mh_assessment.provider_employee_id = employee.employee_id;""")
@@ -1016,6 +1069,7 @@ class va_interface(tk.Frame):
         #ttk.Label(screenings_frame, text=screening[0]).grid(row=2, column=1, padx=5, pady=5) Actions
 
         for screening in screenings:
+         ttk.Button(screenings_frame, text="Edit", command=lambda:[edit_screening(screening[3])]).grid(row=rowCounter, column=1, padx=5, pady=5)
          ttk.Label(screenings_frame, text=screening[0]).grid(row=rowCounter, column=2, padx=5, pady=5)
          ttk.Label(screenings_frame, text=screening[1]).grid(row=rowCounter, column=3, padx=5, pady=5)
          ttk.Label(screenings_frame, text=screening[2] + " " + screening[3]).grid(row=rowCounter, column=4, padx=5, pady=5)
@@ -1184,6 +1238,7 @@ class va_interface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery, (data_tuple))
                         conn.commit
+                        messagebox.showinfo("Save", "VA information has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
