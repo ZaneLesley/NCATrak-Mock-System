@@ -106,12 +106,6 @@ class va_interface(tk.Frame):
         widget_frame = ttk.Frame(self)
         widget_frame.grid(row=1, column=0, pady=20)
 
-        # save_button = ttk.Button(widget_frame, text='SAVE', command=submit_all_fields())
-        # cancel_button = ttk.Button(widget_frame, text='CANCEL')
-
-        # save_button.grid(row=1, column=0, sticky="w", padx=5)
-        # cancel_button.grid(row=1, column=1, sticky="w", padx=5)
-
         scrollable_frame = ttk.Frame(canvas)
         # Configure the canvas and scrollbar
         scrollable_frame.bind(
@@ -152,7 +146,7 @@ class va_interface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select * from cac_agency;")
+                        cur.execute("select * from cac_agency order by agency_name;")
                         agencies = cur.fetchall()
                         agencyMap = {agency[0]: agency[2] for agency in agencies}
                         agencyMapReversed = {agency[2]: agency[0] for agency in agencies}
@@ -246,7 +240,7 @@ class va_interface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select employee_id, first_name, last_name from employee;")
+                        cur.execute("select employee_id, first_name, last_name from employee order by last_name;")
                         personnel = cur.fetchall()
                         personMap = {person[0]: (person[1] + " " + person[2]) for person in personnel}
                         personMapReverse = { (person[1] + " " + person[2]): person[0] for person in personnel}
@@ -447,11 +441,12 @@ class va_interface(tk.Frame):
         #------------------------------
 
         # VAS Log Information
-        def insert_new_session(date, start, end, status, attendees, atReverse, vaProvider):
+        def insert_new_session(date, start, end, status, attendees, atReverse, vaProvider, services, servicesId):
             sqlQuery1 = """insert into case_va_session_log(cac_id, case_id, case_va_session_id, start_time, end_time, va_provider_agency_id, session_date, session_status)
-             VALUES(%s, %s, %s, %s, %s, %s, %s, %s);"""
-            
+                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s);"""
             sqlQuery2 = """insert into case_va_session_attendee(case_id, case_va_session_attendee_id, case_va_session_id, person_id)
+                    VALUES(%s, %s, %s, %s);"""
+            sqlQuery3 = """insert into case_va_session_service(cac_id, case_va_session_id, case_va_session_service_id, service_type_id)
                     VALUES(%s, %s, %s, %s);"""
             newSessionId = random.randint(1, 999999999)
             try:
@@ -464,14 +459,71 @@ class va_interface(tk.Frame):
                                 newAttendeeId = random.randint(1, 999999999)
                                 personId = atReverse[name]
                                 cur.execute(sqlQuery2, (caseId, newAttendeeId, newSessionId, personId))
+                        for name, check in services.items():
+                            if check.get():
+                                newServiceId = random.randint(1, 999999999)
+                                cur.execute(sqlQuery3, (cacId, newSessionId, newServiceId, servicesId[name]))
                         conn.commit
                         messagebox.showinfo("Save", "Session has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
 
+        def update_session(date, start, end, status, attendees, atReverse, vaProvider, services, servicesId, sessionId):
+            sqlQuery1 = """update case_va_session_log set start_time = %s, end_time = %s, va_provider_agency_id = %s, session_date = %s, session_status = %s
+                    where case_va_session_id = %s;"""
+            sqlQuery2 = """delete from case_va_session_attendee where case_va_session_id = %s;
+                    insert into case_va_session_attendee(case_id, case_va_session_attendee_id, case_va_session_id, person_id)
+                    VALUES(%s, %s, %s, %s);"""
+            sqlQuery3 = """delete from case_va_session_service where case_va_session_id = %s;
+                    insert into case_va_session_service(cac_id, case_va_session_id, case_va_session_service_id, service_type_id)
+                    VALUES(%s, %s, %s, %s);"""
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery1, (start, end, vaProvider, date, status, sessionId))
+                        for name, check in attendees.items():
+                            if check.get():
+                                newAttendeeId = random.randint(1, 999999999)
+                                personId = atReverse[name]
+                                cur.execute(sqlQuery2, (sessionId, caseId, newAttendeeId, sessionId, personId))
+                        for name, check in services.items():
+                            if check.get():
+                                newServiceId = random.randint(1, 999999999)
+                                serviceType = servicesId[name]
+                                cur.execute(sqlQuery3, (sessionId, cacId, sessionId, newServiceId, serviceType))
+                        conn.commit
+                        messagebox.showinfo("Save", "Session has been updated successfully!")
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def delete_session(sessionId):
+            response = messagebox.askyesno(
+                title="Confirm Deletion",
+                message=f"Are you sure you want to delete the session with ID {sessionId}?"
+            )
+
+            if response:
+                sqlQuery1 = """delete from case_va_session_log where case_va_session_id = %s;"""
+                sqlQuery2 = """delete from case_va_session_attendee where case_va_session_id = %s;"""
+                sqlQuery3 = """delete from case_va_session_service where case_va_session_id = %s;"""
+                try:
+                    config = load_config()
+                    with psycopg2.connect(**config) as conn:
+                        with conn.cursor() as cur:
+                            cur.execute(sqlQuery3, (sessionId,))
+                            cur.execute(sqlQuery2, (sessionId,))
+                            cur.execute(sqlQuery1, (sessionId,))
+                            conn.commit
+                            messagebox.showinfo("Save", "Session has been deleted successfully!")
+                except (psycopg2.DatabaseError, Exception) as error:
+                    print(f"{error}")
+                    exit()
+
         def get_persons():
-            sqlQuery = """select person_id, first_name, last_name from person;"""
+            sqlQuery = """select person_id, first_name, last_name from person order by last_name desc;"""
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
@@ -500,7 +552,7 @@ class va_interface(tk.Frame):
         def add_new_session_popup():
             popup = tk.Toplevel(self)
             popup.title("New Session")
-            popup.geometry("800x900")
+            popup.geometry("800x950")
 
             popup.grid_columnconfigure(0, weight=1)  
             popup.grid_columnconfigure(1, weight=1) 
@@ -647,65 +699,162 @@ class va_interface(tk.Frame):
             service29Check = tk.BooleanVar(value=False)
             service30Check = tk.BooleanVar(value=False)
             rowCounter += 1
-            service1 = ttk.Checkbutton(field_frame, text="Legal Services", variable=service1Check).grid(row=rowCounter, column=1, sticky="w")
-            service2 = ttk.Checkbutton(field_frame, text="Transportation", variable=service2Check).grid(row=rowCounter, column=2, sticky="w")
+
+            service1 = ttk.Checkbutton(field_frame, text="Legal Services", variable=service1Check)
+            service1.grid(row=rowCounter, column=1, sticky="w")
+            service2 = ttk.Checkbutton(field_frame, text="Transportation", variable=service2Check)
+            service2.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service3 = ttk.Checkbutton(field_frame, text="Victim Support", variable=service3Check).grid(row=12, column=1, sticky="w")
-            service4 = ttk.Checkbutton(field_frame, text="1-2 Week Follow-up Call", variable=service4Check).grid(row=12, column=2, sticky="w")
+            service3 = ttk.Checkbutton(field_frame, text="Victim Support", variable=service3Check)
+            service3.grid(row=rowCounter, column=1, sticky="w")
+            service4 = ttk.Checkbutton(field_frame, text="1-2 Week Follow-up Call", variable=service4Check)
+            service4.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service5 = ttk.Checkbutton(field_frame, text="2. Personal Court Education", variable=service5Check).grid(row=13, column=1, sticky="w")
-            service6 = ttk.Checkbutton(field_frame, text="24 -- hour crisis line cal", variable=service6Check).grid(row=13, column=2, sticky="w")
+            service5 = ttk.Checkbutton(field_frame, text="2. Personal Court Education", variable=service5Check)
+            service5.grid(row=rowCounter, column=1, sticky="w")
+            service6 = ttk.Checkbutton(field_frame, text="24 -- hour crisis line cal", variable=service6Check)
+            service6.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service7 = ttk.Checkbutton(field_frame, text="3a. Info & Support - MDT response", variable=service7Check).grid(row=14, column=1, sticky="w")
-            service8 = ttk.Checkbutton(field_frame, text="3b. Information & Support - Court", variable=service8Check).grid(row=14, column=2, sticky="w")
+            service7 = ttk.Checkbutton(field_frame, text="3a. Info & Support - MDT response", variable=service7Check)
+            service7.grid(row=rowCounter, column=1, sticky="w")
+            service8 = ttk.Checkbutton(field_frame, text="3b. Information & Support - Court", variable=service8Check)
+            service8.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service9 = ttk.Checkbutton(field_frame, text="3bi Personal advocacy", variable=service9Check).grid(row=15, column=1, sticky="w")
-            service10 = ttk.Checkbutton(field_frame, text="6--8 Week Follow-up Call", variable=service10Check).grid(row=15, column=2, sticky="w")
+            service9 = ttk.Checkbutton(field_frame, text="3bi Personal advocacy", variable=service9Check)
+            service9.grid(row=rowCounter, column=1, sticky="w")
+            service10 = ttk.Checkbutton(field_frame, text="6--8 Week Follow-up Call", variable=service10Check)
+            service10.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service11 = ttk.Checkbutton(field_frame, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam", variable=service11Check).grid(row=16, column=1, sticky="w")
-            service12 = ttk.Checkbutton(field_frame, text="Collected Survey", variable=service12Check).grid(row=16, column=2, sticky="w")
+            service11 = ttk.Checkbutton(field_frame, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam", variable=service11Check)
+            service11.grid(row=rowCounter, column=1, sticky="w")
+            service12 = ttk.Checkbutton(field_frame, text="Collected Survey", variable=service12Check)
+            service12.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service13 = ttk.Checkbutton(field_frame, text="Criminal Justice support/advocacy", variable=service13Check).grid(row=17, column=1, sticky="w")
-            service14 = ttk.Checkbutton(field_frame, text="Compensation Claim Filing", variable=service14Check).grid(row=17, column=2, sticky="w")
+            service13 = ttk.Checkbutton(field_frame, text="Criminal Justice support/advocacy", variable=service13Check)
+            service13.grid(row=rowCounter, column=1, sticky="w")
+            service14 = ttk.Checkbutton(field_frame, text="Compensation Claim Filing", variable=service14Check)
+            service14.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service15 = ttk.Checkbutton(field_frame, text="Emergency Crisis Intervention", variable=service15Check).grid(row=18, column=1, sticky="w")
-            service16 = ttk.Checkbutton(field_frame, text="Crisis Counseling", variable=service16Check).grid(row=18, column=2, sticky="w")
+            service15 = ttk.Checkbutton(field_frame, text="Emergency Crisis Intervention", variable=service15Check)
+            service15.grid(row=rowCounter, column=1, sticky="w")
+            service16 = ttk.Checkbutton(field_frame, text="Crisis Counseling", variable=service16Check)
+            service16.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service17 = ttk.Checkbutton(field_frame, text="Gave Educational Information", variable=service17Check).grid(row=19, column=1, sticky="w")
-            service18 = ttk.Checkbutton(field_frame, text="Follow-up", variable=service18Check).grid(row=19, column=2, sticky="w")
+            service17 = ttk.Checkbutton(field_frame, text="Gave Educational Information", variable=service17Check)
+            service17.grid(row=rowCounter, column=1, sticky="w")
+            service18 = ttk.Checkbutton(field_frame, text="Follow-up", variable=service18Check)
+            service18.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service19 = ttk.Checkbutton(field_frame, text="Homeless support group", variable=service19Check).grid(row=20, column=1, sticky="w")
-            service20 = ttk.Checkbutton(field_frame, text="Initial Meeting with Caregiver", variable=service20Check).grid(row=20, column=2, sticky="w")
+            service19 = ttk.Checkbutton(field_frame, text="Homeless support group", variable=service19Check)
+            service19.grid(row=rowCounter, column=1, sticky="w")
+            service20 = ttk.Checkbutton(field_frame, text="Initial Meeting with Caregiver", variable=service20Check)
+            service20.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service21 = ttk.Checkbutton(field_frame, text="Initial Telephone Call", variable=service21Check).grid(row=21, column=1, sticky="w")
-            service22 = ttk.Checkbutton(field_frame, text="Mailed Brochure", variable=service22Check).grid(row=21, column=2, sticky="w")
+            service21 = ttk.Checkbutton(field_frame, text="Initial Telephone Call", variable=service21Check)
+            service21.grid(row=rowCounter, column=1, sticky="w")
+            service22 = ttk.Checkbutton(field_frame, text="Mailed Brochure", variable=service22Check)
+            service22.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service23 = ttk.Checkbutton(field_frame, text="Orientation to Center for FI", variable=service23Check).grid(row=22, column=1, sticky="w")
-            service24 = ttk.Checkbutton(field_frame, text="Post Interview Crisis Counseling", variable=service24Check).grid(row=22, column=2, sticky="w")
+            service23 = ttk.Checkbutton(field_frame, text="Orientation to Center for FI", variable=service23Check)
+            service23.grid(row=rowCounter, column=1, sticky="w")
+            service24 = ttk.Checkbutton(field_frame, text="Post Interview Crisis Counseling", variable=service24Check)
+            service24.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service25 = ttk.Checkbutton(field_frame, text="Pre-Interview Family Call", variable=service25Check).grid(row=23, column=1, sticky="w")
-            service26 = ttk.Checkbutton(field_frame, text="Shelter/safehouse Referral", variable=service26Check).grid(row=23, column=2, sticky="w")
+            service25 = ttk.Checkbutton(field_frame, text="Pre-Interview Family Call", variable=service25Check)
+            service25.grid(row=rowCounter, column=1, sticky="w")
+            service26 = ttk.Checkbutton(field_frame, text="Shelter/safehouse Referral", variable=service26Check)
+            service26.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service27 = ttk.Checkbutton(field_frame, text="Survey Distributed", variable=service27Check).grid(row=24, column=1, sticky="w")
-            service28 = ttk.Checkbutton(field_frame, text="Survey Recieved", variable=service28Check).grid(row=24, column=2, sticky="w")
+            service27 = ttk.Checkbutton(field_frame, text="Survey Distributed", variable=service27Check)
+            service27.grid(row=rowCounter, column=1, sticky="w")
+            service28 = ttk.Checkbutton(field_frame, text="Survey Recieved", variable=service28Check)
+            service28.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
 
-            service29 = ttk.Checkbutton(field_frame, text="Telephone Follow-up", variable=service29Check).grid(row=25, column=1, sticky="w")
-            service30 = ttk.Checkbutton(field_frame, text="Unscheduled Call", variable=service30Check).grid(row=25, column=2, sticky="w")
+            service29 = ttk.Checkbutton(field_frame, text="Telephone Follow-up", variable=service29Check)
+            service29.grid(row=rowCounter, column=1, sticky="w")
+            service30 = ttk.Checkbutton(field_frame, text="Unscheduled Call", variable=service30Check)
+            service30.grid(row=rowCounter, column=2, sticky="w")
             rowCounter += 1
+
+            services = {
+                service1.cget("text"): service1Check,
+                service2.cget("text"): service2Check,
+                service3.cget("text"): service3Check,
+                service4.cget("text"): service4Check,
+                service5.cget("text"): service5Check,
+                service6.cget("text"): service6Check,
+                service7.cget("text"): service7Check,
+                service8.cget("text"): service8Check,
+                service9.cget("text"): service9Check,
+                service10.cget("text"): service10Check,
+                service11.cget("text"): service11Check,
+                service12.cget("text"): service12Check,
+                service13.cget("text"): service13Check,
+                service14.cget("text"): service14Check,
+                service15.cget("text"): service15Check,
+                service16.cget("text"): service16Check,
+                service17.cget("text"): service17Check,
+                service18.cget("text"): service18Check,
+                service19.cget("text"): service19Check,
+                service20.cget("text"): service20Check,
+                service21.cget("text"): service21Check,
+                service22.cget("text"): service22Check,
+                service23.cget("text"): service23Check,
+                service24.cget("text"): service24Check,
+                service25.cget("text"): service25Check,
+                service26.cget("text"): service26Check,
+                service27.cget("text"): service27Check,
+                service28.cget("text"): service28Check,
+                service29.cget("text"): service29Check,
+                service30.cget("text"): service30Check
+            }
+
+            servicesId = {
+                service1.cget("text"): 1,
+                service2.cget("text"): 2,
+                service3.cget("text"): 3,
+                service4.cget("text"): 4,
+                service5.cget("text"): 5,
+                service6.cget("text"): 6,
+                service7.cget("text"): 7,
+                service8.cget("text"): 8,
+                service9.cget("text"): 9,
+                service10.cget("text"): 10,
+                service11.cget("text"): 11,
+                service12.cget("text"): 12,
+                service13.cget("text"): 13,
+                service14.cget("text"): 14,
+                service15.cget("text"): 15,
+                service16.cget("text"): 16,
+                service17.cget("text"): 17,
+                service18.cget("text"): 18,
+                service19.cget("text"): 19,
+                service20.cget("text"): 20,
+                service21.cget("text"): 21,
+                service22.cget("text"): 22,
+                service23.cget("text"): 23,
+                service24.cget("text"): 24,
+                service25.cget("text"): 25,
+                service26.cget("text"): 26,
+                service27.cget("text"): 27,
+                service28.cget("text"): 28,
+                service29.cget("text"): 29,
+                service30.cget("text"): 30
+            }
 
             ttk.Label(field_frame, text="Comments").grid(row=rowCounter, column=0, padx=5, pady=5)
             session_comments_entry = ttk.Entry(field_frame)
@@ -732,7 +881,7 @@ class va_interface(tk.Frame):
 
             # Update and Cancel buttons
             ttk.Button(button_frame, text="Save", command=lambda: [insert_new_session(session_date_entry.get_date(), (str(session_date_entry.get_date()) + " " + start_time_entry.get()), 
-                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), sessionReverse[session_status_entry.get()], attendees, atReverse, providerReverse[provider_agency_entry.get()]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
+                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), sessionReverse[session_status_entry.get()], attendees, atReverse, providerReverse[provider_agency_entry.get()], services, servicesId), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
             ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5)
 
         def get_all_sessions():
@@ -740,9 +889,48 @@ class va_interface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select session_date, start_time, end_time, session_status from case_va_session_log;")
+                        cur.execute("select case_va_session_id, session_date, start_time, end_time, session_status from case_va_session_log order by session_date desc;")
                         sessions = cur.fetchall()
                         return sessions
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_session(id):
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""select * from case_va_session_log
+                                    where case_va_session_id = %s;""", (id,))
+                        session = cur.fetchone()
+                        return session
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_attendees(id):
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""select * from case_va_session_attendee
+                                    where case_va_session_id = %s;""", (id,))
+                        attendees = cur.fetchall()
+                        return attendees
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_services(id):
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""select * from case_va_session_service
+                                    where case_va_session_id = %s order by service_type_id desc;""", (id,))
+                        services = cur.fetchall()
+                        return services
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -753,26 +941,436 @@ class va_interface(tk.Frame):
         sessions = get_all_sessions()
 
         ttk.Button(vas_log_frame, text="Add New Session Log", command=add_new_session_popup).grid(row=0, column=0, padx=5, pady=5)
-        ttk.Button(vas_log_frame, text="Details").grid(row=0, column=1, padx=5, pady=5)
-        ttk.Button(vas_log_frame, text="Newer Records").grid(row=0, column=2, padx=5, pady=5)
-        ttk.Button(vas_log_frame, text="Older Records").grid(row=0, column=3, padx=5, pady=5)
     
         rowCounter = 2
  
-        ttk.Label(vas_log_frame, text="Date").grid(row=1, column=1)
-        ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=2)
-        ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=3)
-        ttk.Label(vas_log_frame, text="Status").grid(row=1, column=4)
+        ttk.Label(vas_log_frame, text="Date").grid(row=1, column=2)
+        ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=3)
+        ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=4)
+        ttk.Label(vas_log_frame, text="Status").grid(row=1, column=5)
+
+        sessionStatuses = {
+                1: "Cancelled",
+                2: "To Be Scheduled",
+                3: "Scheduled",
+                4: "Attended",
+                5: "No Show",
+                6: "Cancelled & Rescheduled",
+                7: "Client Cancelled",
+                8: "Clinician Rescheduled",
+                9: "Declined"
+            }
 
         for session in sessions:
-            start_time = str(session[1]).split(' ')[1]
-            end_time = str(session[2]).split(' ')[1]
+            start_time = str(session[2]).split(' ')[1]
+            end_time = str(session[3]).split(' ')[1]
 
-            ttk.Label(vas_log_frame, text=session[0]).grid(row=rowCounter, column=1)
-            ttk.Label(vas_log_frame, text=start_time).grid(row=rowCounter, column=2)
-            ttk.Label(vas_log_frame, text=end_time).grid(row=rowCounter, column=3)
-            ttk.Label(vas_log_frame, text=session[3]).grid(row=rowCounter, column=4)
+            ttk.Button(vas_log_frame, text="Edit", command=lambda: edit_session(session[0])).grid(row=rowCounter, column=0)
+            ttk.Button(vas_log_frame, text="Delete", command=lambda: delete_session(session[0])).grid(row=rowCounter, column=1)
+            ttk.Label(vas_log_frame, text=session[1]).grid(row=rowCounter, column=2)
+            ttk.Label(vas_log_frame, text=start_time).grid(row=rowCounter, column=3)
+            ttk.Label(vas_log_frame, text=end_time).grid(row=rowCounter, column=4)
+            ttk.Label(vas_log_frame, text=sessionStatuses[session[4]]).grid(row=rowCounter, column=5)
             rowCounter += 1
+
+        def edit_session(sessionId):
+            popup = tk.Toplevel(self)
+            popup.title("Edit Session")
+            popup.geometry("800x950")
+
+            popup.grid_columnconfigure(0, weight=1)  
+            popup.grid_columnconfigure(1, weight=1) 
+
+            session = get_session(sessionId)
+            newAttendees = get_attendees(sessionId)
+            services = get_services(sessionId)
+
+            rowCounter = 0
+
+            ttk.Label(popup, text="Fields marked with a (*) are required", foreground='red').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+            
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+
+            # Entry fields for case details
+            ttk.Label(field_frame, text="Session Date *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_date_entry = DateEntry(field_frame, background='darkblue', foreground='white', borderwidth=2)
+            session_date_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            if session[6] is not None:
+                session_date_entry.set_date(session[6])
+            rowCounter += 1
+
+            times = generate_timestamps(str(session_date_entry.get_date()), 30)
+
+            formattedTimes = []
+
+            for time in times:
+                formattedTimes.append(time.split(" ")[1])
+
+            ttk.Label(field_frame, text="Start Time *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            start_time_entry = ttk.Combobox(field_frame, values=formattedTimes)
+            start_time_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            if session[3] is not None:
+                start_time_entry.set(str(session[3]).split(" ")[1])
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="End Time *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            end_start_entry = ttk.Combobox(field_frame, values=formattedTimes) 
+            end_start_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            if session[4] is not None:
+                end_start_entry.set(str(session[4]).split(" ")[1])
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="Prep").grid(row=rowCounter, column=0, padx=5, pady=5)
+            prep_entry = ttk.Combobox(field_frame)
+            prep_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            sessionStatuses = {
+                1: "Cancelled",
+                2: "To Be Scheduled",
+                3: "Scheduled",
+                4: "Attended",
+                5: "No Show",
+                6: "Cancelled & Rescheduled",
+                7: "Client Cancelled",
+                8: "Clinician Rescheduled",
+                9: "Declined"
+            }
+            sessionReverse = {
+                "Cancelled": 1,
+                "To Be Scheduled": 2,
+                "Scheduled": 3,
+                "Attended": 4,
+                "No Show": 5,
+                "Cancelled & Rescheduled": 6,
+                "Client Cancelled": 7,
+                "Clinician Rescheduled": 8,
+                "Declined": 9
+            }
+
+            ttk.Label(field_frame, text="Session Status *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_status_entry = ttk.Combobox(field_frame, values=list(sessionStatuses.values()))
+            session_status_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            if session[7] is not None:
+                session_status_entry.set(sessionStatuses[session[7]])
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="Funding Source").grid(row=rowCounter, column=0, padx=5, pady=5)
+            funding_source_entry = ttk.Combobox(field_frame, values=["Source 1", "Source 2", ])
+            funding_source_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="Location").grid(row=rowCounter, column=0, padx=5, pady=5)
+            location_entry = ttk.Combobox(field_frame, values=["Location 1", "Location 2", "Location 3"])
+            location_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            providers, providerReverse = get_all_agencies()
+
+            ttk.Label(field_frame, text="Provider Agency *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            provider_agency_entry = ttk.Combobox(field_frame, values=list(providers.values()))
+            provider_agency_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            if session[5] is not None:
+                provider_agency_entry.set(providers[session[5]])
+            rowCounter += 1
+
+            employees, eReverse = get_all_personnel()
+
+            ttk.Label(field_frame, text="Provider Employee").grid(row=rowCounter, column=0, padx=5, pady=5)
+            provider_employee_entry = ttk.Combobox(field_frame, values=list(employees.values()))
+            provider_employee_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="Attendees *").grid(row=rowCounter, column=0, padx=5, pady=5)
+            rowCounter += 1
+
+            attendees, atReverse = get_persons()
+
+            attendee1Check = tk.BooleanVar(value=False)
+            attendee2Check = tk.BooleanVar(value=False)
+            attendee3Check = tk.BooleanVar(value=False)
+            attendee4Check = tk.BooleanVar(value=False)
+
+            checks = {
+                list(attendees.keys())[0]: attendee1Check,
+                list(attendees.keys())[1]: attendee2Check,
+                list(attendees.keys())[2]: attendee3Check,
+                list(attendees.keys())[3]: attendee4Check
+            }
+
+            for a in newAttendees:
+                if a[3] in checks:
+                    checks[a[3]].set(True)
+
+
+            attendee1 = ttk.Checkbutton(field_frame, text=list(attendees.values())[0], variable=attendee1Check).grid(row=rowCounter, column=1, sticky="w")
+            attendee2 = ttk.Checkbutton(field_frame, text=list(attendees.values())[1], variable=attendee2Check).grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+            attendee3 = ttk.Checkbutton(field_frame, text=list(attendees.values())[2], variable=attendee3Check).grid(row=rowCounter, column=1, sticky="w")
+            attendee4 = ttk.Checkbutton(field_frame, text=list(attendees.values())[3], variable=attendee4Check).grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            attendeesValues = {
+                list(attendees.values())[0]: attendee1Check,
+                list(attendees.values())[1]: attendee2Check,
+                list(attendees.values())[2]: attendee3Check,
+                list(attendees.values())[3]: attendee4Check
+            }
+
+            ttk.Label(field_frame, text="Services Provided").grid(row=rowCounter, column=0, padx=5, pady=5)
+            service1Check = tk.BooleanVar(value=False)
+            service2Check = tk.BooleanVar(value=False)
+            service3Check = tk.BooleanVar(value=False)
+            service4Check = tk.BooleanVar(value=False)
+            service5Check = tk.BooleanVar(value=False)
+            service6Check = tk.BooleanVar(value=False)
+            service7Check = tk.BooleanVar(value=False)
+            service8Check = tk.BooleanVar(value=False)
+            service9Check = tk.BooleanVar(value=False)
+            service10Check = tk.BooleanVar(value=False)
+            service11Check = tk.BooleanVar(value=False)
+            service12Check = tk.BooleanVar(value=False)
+            service13Check = tk.BooleanVar(value=False)
+            service14Check = tk.BooleanVar(value=False)
+            service15Check = tk.BooleanVar(value=False)
+            service16Check = tk.BooleanVar(value=False)
+            service17Check = tk.BooleanVar(value=False)
+            service18Check = tk.BooleanVar(value=False)
+            service19Check = tk.BooleanVar(value=False)
+            service20Check = tk.BooleanVar(value=False)
+            service21Check = tk.BooleanVar(value=False)
+            service22Check = tk.BooleanVar(value=False)
+            service23Check = tk.BooleanVar(value=False)
+            service24Check = tk.BooleanVar(value=False)
+            service25Check = tk.BooleanVar(value=False)
+            service26Check = tk.BooleanVar(value=False)
+            service27Check = tk.BooleanVar(value=False)
+            service28Check = tk.BooleanVar(value=False)
+            service29Check = tk.BooleanVar(value=False)
+            service30Check = tk.BooleanVar(value=False)
+            rowCounter += 1
+
+            servicesCheck = {
+                1: service1Check,
+                2: service2Check,
+                3: service3Check,
+                4: service4Check,
+                5: service5Check,
+                6: service6Check,
+                7: service7Check,
+                8: service8Check,
+                9: service9Check,
+                10: service10Check,
+                11: service11Check,
+                12: service12Check,
+                13: service13Check,
+                14: service14Check,
+                15: service15Check,
+                16: service16Check,
+                17: service17Check,
+                18: service18Check,
+                19: service19Check,
+                20: service20Check,
+                21: service21Check,
+                22: service22Check,
+                23: service23Check,
+                24: service24Check,
+                25: service25Check,
+                26: service26Check,
+                27: service27Check,
+                28: service28Check,
+                29: service29Check,
+                30: service30Check
+            }
+
+            for s in services:
+                if s[3] in servicesCheck:
+                    servicesCheck[s[3]].set(True)
+
+            service1 = ttk.Checkbutton(field_frame, text="Legal Services", variable=service1Check)
+            service1.grid(row=rowCounter, column=1, sticky="w")
+            service2 = ttk.Checkbutton(field_frame, text="Transportation", variable=service2Check)
+            service2.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service3 = ttk.Checkbutton(field_frame, text="Victim Support", variable=service3Check)
+            service3.grid(row=rowCounter, column=1, sticky="w")
+            service4 = ttk.Checkbutton(field_frame, text="1-2 Week Follow-up Call", variable=service4Check)
+            service4.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service5 = ttk.Checkbutton(field_frame, text="2. Personal Court Education", variable=service5Check)
+            service5.grid(row=rowCounter, column=1, sticky="w")
+            service6 = ttk.Checkbutton(field_frame, text="24 -- hour crisis line cal", variable=service6Check)
+            service6.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service7 = ttk.Checkbutton(field_frame, text="3a. Info & Support - MDT response", variable=service7Check)
+            service7.grid(row=rowCounter, column=1, sticky="w")
+            service8 = ttk.Checkbutton(field_frame, text="3b. Information & Support - Court", variable=service8Check)
+            service8.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service9 = ttk.Checkbutton(field_frame, text="3bi Personal advocacy", variable=service9Check)
+            service9.grid(row=rowCounter, column=1, sticky="w")
+            service10 = ttk.Checkbutton(field_frame, text="6--8 Week Follow-up Call", variable=service10Check)
+            service10.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service11 = ttk.Checkbutton(field_frame, text="B2. Victim Advocacy/Accompaniment to Medical Forensic Exam", variable=service11Check)
+            service11.grid(row=rowCounter, column=1, sticky="w")
+            service12 = ttk.Checkbutton(field_frame, text="Collected Survey", variable=service12Check)
+            service12.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service13 = ttk.Checkbutton(field_frame, text="Criminal Justice support/advocacy", variable=service13Check)
+            service13.grid(row=rowCounter, column=1, sticky="w")
+            service14 = ttk.Checkbutton(field_frame, text="Compensation Claim Filing", variable=service14Check)
+            service14.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service15 = ttk.Checkbutton(field_frame, text="Emergency Crisis Intervention", variable=service15Check)
+            service15.grid(row=rowCounter, column=1, sticky="w")
+            service16 = ttk.Checkbutton(field_frame, text="Crisis Counseling", variable=service16Check)
+            service16.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service17 = ttk.Checkbutton(field_frame, text="Gave Educational Information", variable=service17Check)
+            service17.grid(row=rowCounter, column=1, sticky="w")
+            service18 = ttk.Checkbutton(field_frame, text="Follow-up", variable=service18Check)
+            service18.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service19 = ttk.Checkbutton(field_frame, text="Homeless support group", variable=service19Check)
+            service19.grid(row=rowCounter, column=1, sticky="w")
+            service20 = ttk.Checkbutton(field_frame, text="Initial Meeting with Caregiver", variable=service20Check)
+            service20.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service21 = ttk.Checkbutton(field_frame, text="Initial Telephone Call", variable=service21Check)
+            service21.grid(row=rowCounter, column=1, sticky="w")
+            service22 = ttk.Checkbutton(field_frame, text="Mailed Brochure", variable=service22Check)
+            service22.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service23 = ttk.Checkbutton(field_frame, text="Orientation to Center for FI", variable=service23Check)
+            service23.grid(row=rowCounter, column=1, sticky="w")
+            service24 = ttk.Checkbutton(field_frame, text="Post Interview Crisis Counseling", variable=service24Check)
+            service24.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service25 = ttk.Checkbutton(field_frame, text="Pre-Interview Family Call", variable=service25Check)
+            service25.grid(row=rowCounter, column=1, sticky="w")
+            service26 = ttk.Checkbutton(field_frame, text="Shelter/safehouse Referral", variable=service26Check)
+            service26.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service27 = ttk.Checkbutton(field_frame, text="Survey Distributed", variable=service27Check)
+            service27.grid(row=rowCounter, column=1, sticky="w")
+            service28 = ttk.Checkbutton(field_frame, text="Survey Recieved", variable=service28Check)
+            service28.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            service29 = ttk.Checkbutton(field_frame, text="Telephone Follow-up", variable=service29Check)
+            service29.grid(row=rowCounter, column=1, sticky="w")
+            service30 = ttk.Checkbutton(field_frame, text="Unscheduled Call", variable=service30Check)
+            service30.grid(row=rowCounter, column=2, sticky="w")
+            rowCounter += 1
+
+            services = {
+                service1.cget("text"): service1Check,
+                service2.cget("text"): service2Check,
+                service3.cget("text"): service3Check,
+                service4.cget("text"): service4Check,
+                service5.cget("text"): service5Check,
+                service6.cget("text"): service6Check,
+                service7.cget("text"): service7Check,
+                service8.cget("text"): service8Check,
+                service9.cget("text"): service9Check,
+                service10.cget("text"): service10Check,
+                service11.cget("text"): service11Check,
+                service12.cget("text"): service12Check,
+                service13.cget("text"): service13Check,
+                service14.cget("text"): service14Check,
+                service15.cget("text"): service15Check,
+                service16.cget("text"): service16Check,
+                service17.cget("text"): service17Check,
+                service18.cget("text"): service18Check,
+                service19.cget("text"): service19Check,
+                service20.cget("text"): service20Check,
+                service21.cget("text"): service21Check,
+                service22.cget("text"): service22Check,
+                service23.cget("text"): service23Check,
+                service24.cget("text"): service24Check,
+                service25.cget("text"): service25Check,
+                service26.cget("text"): service26Check,
+                service27.cget("text"): service27Check,
+                service28.cget("text"): service28Check,
+                service29.cget("text"): service29Check,
+                service30.cget("text"): service30Check
+            }
+
+            servicesId = {
+                service1.cget("text"): 1,
+                service2.cget("text"): 2,
+                service3.cget("text"): 3,
+                service4.cget("text"): 4,
+                service5.cget("text"): 5,
+                service6.cget("text"): 6,
+                service7.cget("text"): 7,
+                service8.cget("text"): 8,
+                service9.cget("text"): 9,
+                service10.cget("text"): 10,
+                service11.cget("text"): 11,
+                service12.cget("text"): 12,
+                service13.cget("text"): 13,
+                service14.cget("text"): 14,
+                service15.cget("text"): 15,
+                service16.cget("text"): 16,
+                service17.cget("text"): 17,
+                service18.cget("text"): 18,
+                service19.cget("text"): 19,
+                service20.cget("text"): 20,
+                service21.cget("text"): 21,
+                service22.cget("text"): 22,
+                service23.cget("text"): 23,
+                service24.cget("text"): 24,
+                service25.cget("text"): 25,
+                service26.cget("text"): 26,
+                service27.cget("text"): 27,
+                service28.cget("text"): 28,
+                service29.cget("text"): 29,
+                service30.cget("text"): 30
+            }
+
+            ttk.Label(field_frame, text="Comments").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_comments_entry = ttk.Entry(field_frame)
+            session_comments_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="VA Session Custom Field 1").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_custom_one_entry = ttk.Entry(field_frame)
+            session_custom_one_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="VA Session Custom Field 2").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_custom_two_entry = ttk.Entry(field_frame)
+            session_custom_two_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            ttk.Label(field_frame, text="VA Session Custom Field 3").grid(row=rowCounter, column=0, padx=5, pady=5)
+            session_custom_three_entry = ttk.Entry(field_frame)
+            session_custom_three_entry.grid(row=rowCounter, column=1, padx=5, pady=5)
+            rowCounter += 1
+
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=rowCounter, column=0, columnspan=3, pady=15)
+
+            # Update and Cancel buttons
+            ttk.Button(button_frame, text="Save", command=lambda: [update_session(session_date_entry.get_date(), (str(session_date_entry.get_date()) + " " + start_time_entry.get()), 
+                                                                               (str(session_date_entry.get_date()) + " " + end_start_entry.get()), sessionReverse[session_status_entry.get()], attendeesValues, atReverse, providerReverse[provider_agency_entry.get()], services, servicesId, sessionId), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5)
         #------------------------------
 
         # Crime Compensation Application Section
@@ -940,9 +1538,6 @@ class va_interface(tk.Frame):
                 except (psycopg2.DatabaseError, Exception) as error:
                     print(f"{error}")
                     exit()
-            else:
-                messagebox.showinfo("Cancelled", "Deletion cancelled!")
-        
 
         def get_screening(id):
             try:
@@ -965,7 +1560,7 @@ class va_interface(tk.Frame):
                 exit()
 
         def get_all_instruments():
-            sqlQuery = """select * from case_mh_assessment_instrument;"""
+            sqlQuery = """select * from case_mh_assessment_instrument order by assessment_name;"""
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
@@ -1110,7 +1705,8 @@ class va_interface(tk.Frame):
                                     case_mh_assessment.mh_provider_agency_id
                                     from case_mh_assessment
                                     join case_mh_assessment_instrument on case_mh_assessment.assessment_instrument_id = case_mh_assessment_instrument.instrument_id
-                                    join employee on case_mh_assessment.provider_employee_id = employee.employee_id;""")
+                                    join employee on case_mh_assessment.provider_employee_id = employee.employee_id 
+                                    order by case_mh_assessment.session_date desc;""")
                         screenings = cur.fetchall()
                         return screenings
             except (psycopg2.DatabaseError, Exception) as error:
@@ -1252,20 +1848,20 @@ class va_interface(tk.Frame):
 
 
         def submit_all_fields(date, rAgencyId, lEmployeeId, vaCN, vaAId, serviceODate, sAccept, serviceEnd, mdtV, birthCert, policeR, cNum, cStatus, cReason):
-            referralDate = date # str(date_entry.get_date())
-            referralAgencyId = rAgencyId # aReverse[referral_source.get()]
-            leadEmployeeId = lEmployeeId # pReverse[person_entry.get()]
-            vaCaseNumber = vaCN # va_casenum_entry.get()
-            vaAgencyId = vaAId # aReverse[agency_entry.get()]
-            servicesOfferedDate = serviceODate # str(date_services_offered.get_date())
-            servicesAccepted =sAccept # services_accepted.getboolean()
-            servicesEndDate = serviceEnd # str(services_conclusion.get_date())
-            mdtReady = mdtV # mdt_ready.getboolean()
-            hasBirthCert = birthCert # has_birth_cert.getboolean()
-            hasPoliceReport = policeR # has_police_report.getboolean()
-            claimNumber = cNum # claim_number.get()
-            claimStatusId = cStatus # status_entry.get()
-            claimDeniedReason =  cReason # claim_denied_reason.get()
+            referralDate = date 
+            referralAgencyId = rAgencyId 
+            leadEmployeeId = lEmployeeId
+            vaCaseNumber = vaCN 
+            vaAgencyId = vaAId 
+            servicesOfferedDate = serviceODate 
+            servicesAccepted =sAccept
+            servicesEndDate = serviceEnd 
+            mdtReady = mdtV 
+            hasBirthCert = birthCert
+            hasPoliceReport = policeR 
+            claimNumber = cNum 
+            claimStatusId = cStatus
+            claimDeniedReason =  cReason 
 
             sqlQuery = """
             UPDATE cac_case
