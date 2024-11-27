@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from tkcalendar import DateEntry
 import MH_basic_interface
 import people_interface
@@ -18,6 +18,60 @@ class GeneraltabInterface(tk.Frame):
     def __init__(self, parent, controller):
         
         tk.Frame.__init__(self, parent)
+
+        def get_default_case():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_case limit 1;")
+                        case = cur.fetchone()
+                        return case
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+
+        def get_case(id):
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_case where case_id = %s;", (id,))
+                        case = cur.fetchone()
+                        return case
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+        
+        with open("app\case_id.txt", "r") as file:
+            case = get_case(file.read())
+
+        if case is None:
+            case = get_default_case()
+
+        cacId = case[0]
+        caseId = case[1]
+        caseNumber = case[2]
+        caseReceivedDate = case[3]
+        caseClosedDate = case[4]
+        caseClosedReasonId = case[5]
+        caseCreatedDate = case[6]
+        leadEmployeeId = case[7]
+        vaAgencyId = case[19]
+        vaCaseNumber = case[20]
+        claimDeniedReason = case[21]
+        claimNumber = case[22]
+        claimStatusId = case[23]
+        hasBirthCert = case[24]
+        hasPoliceReport = case[25]
+        mdtReady = case[26]
+        vaNa = case[27]
+        referralAgencyId = case[28]
+        referralDate = case[29]
+        servicesAccepted = case[30]
+        servicesOfferedDate = case[31]
+        servicesEndDate = case[32]
         
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -67,14 +121,6 @@ class GeneraltabInterface(tk.Frame):
 
         widget_frame = ttk.Frame(self)
         widget_frame.grid(row=1, column=0, pady=20)
-
-        save_button = ttk.Button(widget_frame, text='SAVE')
-        cancel_button = ttk.Button(widget_frame, text='CANCEL')
-        delete_button = ttk.Button(widget_frame, text='DELETE CASE')
-
-        save_button.grid(row=1, column=0, sticky="w", padx=5)
-        cancel_button.grid(row=1, column=1, sticky="w", padx=5)
-        delete_button.grid(row=1, column=2, sticky="w", padx=5)
 
         scrollable_frame = ttk.Frame(canvas)
         # Configure the canvas and scrollbar
@@ -270,7 +316,7 @@ class GeneraltabInterface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute("select * from state_table;")
                         states = cur.fetchall()
-                        stateMap = {state[0]: state[1] for state in states}
+                        stateMap = {state[1]: state[0] for state in states}
                         return stateMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
@@ -281,10 +327,11 @@ class GeneraltabInterface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select * from cac_agency;")
+                        cur.execute("select * from cac_agency order by agency_name;")
                         agencies = cur.fetchall()
-                        agencyMap = {agency[2]: agency[0] for agency in agencies}
-                        return agencyMap
+                        agencyMap = {agency[0]: agency[2] for agency in agencies}
+                        agencyMapReversed = {agency[2]: agency[0] for agency in agencies}
+                        return agencyMap, agencyMapReversed
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -300,6 +347,7 @@ class GeneraltabInterface(tk.Frame):
                         cur.execute(sqlQuery, (random.randint(1, 99999999), 1, name, address1, address2, city, state, 
                                                phone, zipcode))
                         conn.commit
+                        messagebox.showinfo("Save", "Agency has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -309,7 +357,7 @@ class GeneraltabInterface(tk.Frame):
             popup.title("New Agency")
             popup.geometry("550x550")
 
-            agencies = get_all_agencies()
+            agencies, aReverse = get_all_agencies()
 
             states = get_all_states()
 
@@ -331,7 +379,7 @@ class GeneraltabInterface(tk.Frame):
             # Listbox with adjusted width and integrated scrollbar
             agency_listbox = tk.Listbox(listbox_frame, height=10, width=50, yscrollcommand=scrollbar.set)
             scrollbar.config(command=agency_listbox.yview)
-            for agency_name in agencies.keys():
+            for agency_name in agencies.values():
                 agency_listbox.insert(tk.END, agency_name)
             agency_listbox.grid(row=0, column=0, sticky='ns')
             scrollbar.grid(row=0, column=1, sticky='ns')
@@ -353,7 +401,7 @@ class GeneraltabInterface(tk.Frame):
             for idx, (label_text, widget_type) in enumerate(fields):
                 ttk.Label(field_frame, text=label_text, foreground='black').grid(row=idx, column=0, padx=5, pady=5, sticky='w')
                 if label_text == 'State *':
-                    widget = widget_type(field_frame, values=list(states.keys()))
+                    widget = widget_type(field_frame, values=list(states.values()))
                 else:
                     widget = widget_type(field_frame)
                 widget.grid(row=idx, column=1, padx=5, pady=5, sticky='w')
@@ -368,15 +416,17 @@ class GeneraltabInterface(tk.Frame):
                                                                               ), popup.destroy()]).grid(row=14, column=0, padx=5, pady=5, sticky='w')
             ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5, sticky='w')
 
+
         def get_all_personnel():
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select employee_id, first_name, last_name from employee;")
+                        cur.execute("select employee_id, first_name, last_name from employee order by last_name;")
                         personnel = cur.fetchall()
-                        personMap = {(person[1] + " " + person[2]): person[0] for person in personnel}
-                        return personMap
+                        personMap = {person[0]: (person[1] + " " + person[2]) for person in personnel}
+                        personMapReverse = { (person[1] + " " + person[2]): person[0] for person in personnel}
+                        return personMap, personMapReverse
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -391,6 +441,7 @@ class GeneraltabInterface(tk.Frame):
                     with conn.cursor() as cur:
                         cur.execute(sqlQuery, (random.randint(1, 99999999), 64669736, 1, email, first, last, title, number))
                         conn.commit
+                        messagebox.showinfo("Save", "Person has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
@@ -404,7 +455,7 @@ class GeneraltabInterface(tk.Frame):
             popup.grid_columnconfigure(1, weight=1) 
 
             # existing personnel 
-            personnelList = get_all_personnel()
+            persons, pReverse = get_all_personnel()
 
             ttk.Label(popup, text="Below is a list of existing personnel.", foreground='black').grid(row=0, column=0, padx=5, pady=5, sticky='w')
             ttk.Label(popup, text="If the desired person is on this list, do not add again.", foreground='black').grid(row=1, column=0, padx=5, pady=5, sticky='w')
@@ -419,7 +470,7 @@ class GeneraltabInterface(tk.Frame):
             # Listbox with adjusted width and integrated scrollbar
             personnel_listbox = tk.Listbox(listbox_frame, height=10, width=50, yscrollcommand=scrollbar.set)
             scrollbar.config(command=personnel_listbox.yview)
-            for person in personnelList.keys():
+            for person in persons.values():
                 personnel_listbox.insert(tk.END, person)
             personnel_listbox.grid(row=0, column=0, sticky='ns')
             scrollbar.grid(row=0, column=1, sticky='ns')
@@ -460,18 +511,18 @@ class GeneraltabInterface(tk.Frame):
         date_entry = DateEntry(case_information_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         date_entry.grid(row=0, column=1, padx=5, pady=5)
 
-        agencies = get_all_agencies() 
+        agencies, aReverse = get_all_agencies() 
 
         ttk.Label(case_information_frame, text="Main Agency Involved").grid(row=1, column=0, padx=5, pady=5)
-        main_agency = ttk.Combobox(case_information_frame, values=list(agencies.keys()))
+        main_agency = ttk.Combobox(case_information_frame, values=list(agencies.values()))
         main_agency.grid(row=1, column=1, padx=5, pady=5)
         add_agency = ttk.Button(case_information_frame, text="+ Add", command=add_agency_popup)
         add_agency.grid(row=1, column=2, padx=5, pady=5)
 
-        personnel = get_all_personnel()
+        personnel, pReverse = get_all_personnel()
 
         ttk.Label(case_information_frame, text="Main Personnel Involved").grid(row=2, column=0, padx=5, pady=5)
-        main_personnel = ttk.Combobox(case_information_frame, values=list(personnel.keys()))  
+        main_personnel = ttk.Combobox(case_information_frame, values=list(personnel.values()))  
         main_personnel.grid(row=2, column=1, padx=5, pady=5)
         add_personnel = ttk.Button(case_information_frame, text="+ Add", command=add_personnel_popup)  
         add_personnel.grid(row=2, column=2, padx=5, pady=5)
@@ -787,3 +838,69 @@ class GeneraltabInterface(tk.Frame):
         # Add placeholder for upload status (could be enhanced later)
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
+
+        def save_case(date, rAgencyId, lEmployeeId, vaCN, vaAId, serviceODate, sAccept, serviceEnd, mdtV, birthCert, policeR, cNum, cStatus, cReason):
+            referralDate = date 
+            referralAgencyId = rAgencyId 
+            leadEmployeeId = lEmployeeId
+            vaCaseNumber = vaCN 
+            vaAgencyId = vaAId 
+            servicesOfferedDate = serviceODate 
+            servicesAccepted =sAccept
+            servicesEndDate = serviceEnd 
+            mdtReady = mdtV 
+            hasBirthCert = birthCert
+            hasPoliceReport = policeR 
+            claimNumber = cNum 
+            claimStatusId = cStatus
+            claimDeniedReason =  cReason 
+
+            sqlQuery = """
+            UPDATE cac_case
+            SET
+            case_number = %s,
+            cac_received_date = %s,
+            case_closed_date = %s,
+            closed_reason_id = %s,
+            created_date = %s,
+            mh_lead_employee_id = %s,
+            va_agency_id = %s,
+            va_case_number = %s,
+            va_claim_denied_reason = %s,
+            va_claim_number = %s,
+            va_claim_status_id = %s,
+            va_have_birth_cert = %s,
+            va_has_police_report = %s,
+            va_mdt_ready = %s,
+            va_na = %s,
+            va_referral_agency_id = %s,
+            va_referral_date = %s,
+            va_services_accepted = %s,
+            va_services_offered_date = %s,
+            va_services_end_date = %s
+            WHERE case_id = %s
+            """ 
+            data_tuple = (
+                caseNumber, caseReceivedDate, caseClosedDate, caseClosedReasonId, 
+                caseCreatedDate, leadEmployeeId, vaAgencyId, vaCaseNumber, claimDeniedReason, claimNumber, claimStatusId, hasBirthCert, 
+                hasPoliceReport, mdtReady, vaNa, referralAgencyId, referralDate, servicesAccepted, servicesOfferedDate, 
+                servicesEndDate, caseId
+            )
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute(sqlQuery, (data_tuple))
+                        conn.commit
+                        messagebox.showinfo("Save", "Case information has been saved successfully!")
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        save_button = ttk.Button(widget_frame, text='SAVE', command=lambda:save_case())
+        cancel_button = ttk.Button(widget_frame, text='CANCEL')
+        delete_button = ttk.Button(widget_frame, text='DELETE CASE')
+
+        save_button.grid(row=1, column=0, sticky="w", padx=5)
+        cancel_button.grid(row=1, column=1, sticky="w", padx=5)
+        delete_button.grid(row=1, column=2, sticky="w", padx=5)
