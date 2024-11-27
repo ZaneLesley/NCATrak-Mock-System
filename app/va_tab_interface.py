@@ -36,7 +36,10 @@ class va_interface(tk.Frame):
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        case = get_case(906691059)
+        with open("app\case_id.txt", "r") as file:
+           case = get_case(file.read())
+
+       # case = get_case(906691059)
 
         cacId = case[0]
         caseId = case[1]

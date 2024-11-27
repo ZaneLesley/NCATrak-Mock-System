@@ -209,8 +209,6 @@ class GeneraltabInterface(tk.Frame):
             ttk.Button(popup, text="Save", command=lambda: [popup.destroy()]).grid(row=14, column=0, padx=5, pady=5)
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
-
-
         # Create the cases section
         cases_frame = tk.LabelFrame(scrollable_frame, text="Cases", padx=10, pady=10)
         cases_frame.pack(fill="x", padx=10, pady=5)

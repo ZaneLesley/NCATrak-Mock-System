@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+import database_lookup_search
 import Generaltab_interface
 import people_interface
 import MH_basic_interface
@@ -21,6 +22,7 @@ class tkinterApp(tk.Tk):
         self.frames = {}
 
         frames_list = [
+            database_lookup_search.lookup_interface,
             Generaltab_interface.GeneraltabInterface, 
             people_interface.people_interface,
             MH_basic_interface.MHBasicInterface,
@@ -38,7 +40,7 @@ class tkinterApp(tk.Tk):
         # For Testing
         #print(self.frame)
         
-        self.show_frame(case_notes.case_notes_interface)
+        self.show_frame(people_interface.people_interface)
             
     
     def show_frame(self, frame_class):

@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
 from tkinter import filedialog
 import psycopg2
+import configparser
 from faker import Faker
 import Generaltab_interface
 import people_interface
@@ -11,10 +12,6 @@ import MH_assessment
 import va_tab_interface
 import case_notes
 import sv_ttk
-import os
-from configparser import ConfigParser
-import os
-
 
 class MH_treatment_plan_interface(tk.Frame):
 
@@ -63,6 +60,8 @@ class MH_treatment_plan_interface(tk.Frame):
         canvas.grid(row=2, column=0, sticky="nsew")
         scrollbar.grid(row=2, column=1, sticky="ns")
 
+        # Database connection
+        self.conn = self.connect_to_db()
 
         # Function to open file dialog and set the filename
         def select_file():
@@ -85,140 +84,77 @@ class MH_treatment_plan_interface(tk.Frame):
         ttk.Button(upload_frame, text="Select Files...", command=select_file).grid(row=0, column=2, padx=5, pady=5)
         ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.").grid(row=1, column=0, columnspan=3, padx=5, pady=5)
 
-
-    @staticmethod
-    def load_config(filename=None, section='postgresql'):
-        """Load database configuration from the .ini file."""
-        
-        cwd = os.path.dirname(os.path.abspath(__file__))
-        database_dir= os.path.join(cwd, "database")
-        if filename is None:
-                    filename = os.path.join(database_dir, "database.ini")
-        else:
-            filename = os.path.join(database_dir, filename)
-        
-        # current_directory = os.path.dirname(os.path.abspath(__file__))
-        # if filename is None:
-        #     filename = os.path.join(current_directory, "database.ini")
-
-        parser = ConfigParser()  # Use ConfigParser from the correct import
-        parser.read(filename)
-
-        config = {}
-        if parser.has_section(section):
-            params = parser.items(section)
-            for param in params:
-                config[param[0]] = param[1]
-        else:
-            raise Exception(f"Section {section} not found in the {filename} file")
-        return config
-
-    @staticmethod
-    def execute_command(command, data, name):
-        """Execute a database command with the provided data."""
+    def connect_to_db(self):
+        """Establishes a connection to the database."""
         try:
-            config = MH_treatment_plan_interface.load_config()  # Use the static method
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    if data:
-                        cur.executemany(command, data)
-                        conn.commit()
-                        print(f"{name} successfully added.")
-                    else:
-                        print(f"No data input for {name}.")
-        except (psycopg2.DatabaseError, Exception) as error:
-            print(f"Error: {error} on {name}")
-    # def load_config(filename=None, section='postgresql'):
-    #     current_directory = os.path.dirname(os.path.abspath(__file__))
-    #     if filename is None:
-    #         filename = os.path.join(current_directory, "database.ini")
-    #     parser = configparser.ConfigParser()
-    #     parser.read(filename)
-    #     config = {}
-    #     if parser.has_section(section):
-    #         params = parser.items(section)
-    #         for param in params:
-    #             config[param[0]] = param[1]
-    #     else:
-    #         raise Exception(f"Section {section} not found in the {filename} file")
-    #     return config
-    
-    # def execute_command(command, data, name):
-    #     try:
-    #         config = load_config()
-    #         with psycopg2.connect(**config) as conn:
-    #             with conn.cursor() as cur:
-    #                 if data:
-    #                     cur.executemany(command, data)
-    #                     conn.commit()
-    #                     print(f"{name} successfully added.")
-    #                 else:
-    #                     print(f"No data input for {name}.")
-    #     except (psycopg2.DatabaseError, Exception) as error:
-    #         print(f"Error: {error} on {name}")
-
+            config = configparser.ConfigParser()
+            config.read('/Users/danieljacob/Desktop/Capstone_temp/NCATrak-Mock-System/app/database/database.ini')
+            db_params = {
+                'database': config['postgresql']['database'],
+                'user': config['postgresql']['user'],
+                'password': config['postgresql']['password'],
+                'host': config['postgresql']['host'],
+                # 'port': config['postgresql']['port']
+            }
+            return psycopg2.connect(**db_params)
+        except Exception as error:
+            print(f"Database connection error: {error}")
+            messagebox.showerror("Database Error", "Could not connect to the database.")
+            return None
 
     def get_treatment_models(self):
         """Fetches available treatment models for the dropdown."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT id, model_name FROM case_mh_treatment_models")
-                    return [f"{row[0]} - {row[1]}" for row in cur.fetchall()]
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT id, model_name FROM case_mh_treatment_models")
+                return [f"{row[0]} - {row[1]}" for row in cur.fetchall()]
         except Exception as error:
             print(f"Error fetching treatment models: {error}")
             return []
 
-
     def get_provider_agencies(self):
         """Fetches available provider agencies for the dropdown."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT agency_name FROM cac_agency")
-                    return [str(row[0]) for row in cur.fetchall()]
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT agency_name FROM cac_agency")
+                return [str(row[0]) for row in cur.fetchall()]
         except Exception as error:
             print(f"Error fetching provider agencies: {error}")
             return []
-        
     def save_treatment_plan(self, model_id, agency_id, cac_id, start_date, end_date, case_id, 
-                            authorized_status_id, duration, duration_unit, planned_review_date):
+                        authorized_status_id, duration, duration_unit, planned_review_date):
         """Saves a new treatment plan into the database with a randomly generated unique ID."""
         fake = Faker()
         fake.seed_instance(0)  # Ensure consistent results if needed
 
         try:
-            config = self.load_config()  # Load database configuration
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    while True:
-                        # Generate a random unique ID
-                        random_id = fake.unique.random_number(digits=9)
+            with self.conn.cursor() as cur:
+                while True:
+                    # Generate a random unique ID
+                    random_id = fake.unique.random_number(digits=9)
 
-                        # Check if the ID already exists in the database
-                        cur.execute("SELECT 1 FROM case_mh_treatment_plans WHERE id = %s", (random_id,))
-                        if cur.fetchone() is None:
-                            # If the ID is unique, prepare to insert the new record
-                            query = """
-                                INSERT INTO case_mh_treatment_plans 
-                                (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date, 
-                                case_id, authorized_status_id, duration, duration_unit, planned_review_date)
-                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                            """
-                            data = (random_id, model_id, agency_id, cac_id, start_date, end_date, case_id, 
-                                    authorized_status_id, duration, duration_unit, planned_review_date)
-                            
-                            # Execute the insertion query
-                            cur.execute(query, data)
-                            conn.commit()
-                            messagebox.showinfo("Success", "Treatment plan added successfully.")
-                            break  # Exit the loop after successful insertion
+                    # Check if the ID already exists in the database
+                    cur.execute("SELECT 1 FROM case_mh_treatment_plans WHERE id = %s", (random_id,))
+                    if cur.fetchone() is None:
+                        # If the ID is unique, proceed to insert the new record
+                        insert_query = """
+                            INSERT INTO case_mh_treatment_plans 
+                            (id, treatment_model_id, provider_agency_id, cac_id, planned_start_date, planned_end_date, 
+                            case_id, authorized_status_id, duration, duration_unit, planned_review_date)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        """
+                        cur.execute(insert_query, (
+                            random_id, model_id, agency_id, cac_id, start_date, end_date, case_id, 
+                            authorized_status_id, duration, duration_unit, planned_review_date
+                        ))
+                        self.conn.commit()
+                        messagebox.showinfo("Success", "Treatment plan added successfully.")
+                        break  # Exit the loop after successful insertion
 
         except Exception as error:
             print(f"Error saving treatment plan: {error}")
             messagebox.showerror("Error", "Failed to save the treatment plan.")
+            self.conn.rollback()
 
     def add_treatment_model_popup(self):
         """Popup for adding a new treatment model."""
@@ -240,24 +176,23 @@ class MH_treatment_plan_interface(tk.Frame):
                 return
 
             try:
-                config = self.load_config()
-                with psycopg2.connect(**config) as conn:
-                    with conn.cursor() as cur:
-                        # Get the latest ID and increment it
-                        cur.execute("SELECT MAX(id) FROM case_mh_treatment_models")
-                        max_id = cur.fetchone()[0]
-                        new_id = (max_id + 1) if max_id else 1
+                with self.conn.cursor() as cur:
+                    # Get the latest ID and increment it
+                    cur.execute("SELECT MAX(id) FROM case_mh_treatment_models")
+                    max_id = cur.fetchone()[0]
+                    new_id = (max_id + 1) if max_id else 1
 
-                        # Insert the new treatment model
-                        query = "INSERT INTO case_mh_treatment_models (id, model_name) VALUES (%s, %s)"
-                        cur.execute(query, (new_id, model_name))
-                        conn.commit()
+                    # Insert the new treatment model
+                    query = "INSERT INTO case_mh_treatment_models (id, model_name) VALUES (%s, %s)"
+                    cur.execute(query, (new_id, model_name))
+                    self.conn.commit()
 
                 messagebox.showinfo("Success", "Treatment model added successfully.")
                 popup.destroy()
 
             except Exception as error:
                 print(f"Error saving treatment model: {error}")
+                self.conn.rollback()
                 messagebox.showerror("Error", "Failed to add treatment model.")
 
         # Save and Cancel Buttons
@@ -366,35 +301,30 @@ class MH_treatment_plan_interface(tk.Frame):
         ttk.Button(popup, text="Update", command=save_action).grid(row=12, column=0, padx=5, pady=5)
         ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=12, column=1, padx=5, pady=5)
     
-
     def get_cac_id_by_agency(self, agency_name):
         """Fetches the CAC ID for a given agency name."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
-                    result = cur.fetchone()
-                    print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
-                    return result[0] if result else None
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
+                result = cur.fetchone()
+                print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
+                return result[0] if result else None
+            
         except Exception as error:
             print(f"Error fetching CAC ID for agency '{agency_name}': {error}")
             return None
-
+        
     def get_agency_id_by_name(self, agency_name):
         """Fetches the Agency ID for a given agency name."""
         try:
-            config = self.load_config()
-            with psycopg2.connect(**config) as conn:
-                with conn.cursor() as cur:
-                    cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
-                    result = cur.fetchone()
-                    print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
-                    return result[0] if result else None
+            with self.conn.cursor() as cur:
+                cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
+                result = cur.fetchone()
+                print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
+                return result[0] if result else None
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
             return None
-
 
 
 
