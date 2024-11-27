@@ -19,6 +19,19 @@ class va_interface(tk.Frame):
 
     def __init__(self, parent, controller):
 
+        def get_default_case():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_case limit 1;")
+                        case = cur.fetchone()
+                        return case
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+
         def get_case(id):
             try:
                 config = load_config()
@@ -35,11 +48,12 @@ class va_interface(tk.Frame):
         
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
+    
         with open("app\case_id.txt", "r") as file:
-           case = get_case(file.read())
+            case = get_case(file.read())
 
-       # case = get_case(906691059)
+        if case is None:
+            case = get_default_case()
 
         cacId = case[0]
         caseId = case[1]
@@ -946,11 +960,12 @@ class va_interface(tk.Frame):
         ttk.Button(vas_log_frame, text="Add New Session Log", command=add_new_session_popup).grid(row=0, column=0, padx=5, pady=5)
     
         rowCounter = 2
- 
-        ttk.Label(vas_log_frame, text="Date").grid(row=1, column=2)
-        ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=3)
-        ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=4)
-        ttk.Label(vas_log_frame, text="Status").grid(row=1, column=5)
+
+        ttk.Label(vas_log_frame, text="Actions").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(vas_log_frame, text="Date").grid(row=1, column=2, padx=5, pady=5)
+        ttk.Label(vas_log_frame, text="Start Time").grid(row=1, column=3, padx=5, pady=5)
+        ttk.Label(vas_log_frame, text="End Time").grid(row=1, column=4, padx=5, pady=5)
+        ttk.Label(vas_log_frame, text="Status").grid(row=1, column=5, padx=5, pady=5)
 
         sessionStatuses = {
                 1: "Cancelled",
@@ -968,12 +983,12 @@ class va_interface(tk.Frame):
             start_time = str(session[2]).split(' ')[1]
             end_time = str(session[3]).split(' ')[1]
 
-            ttk.Button(vas_log_frame, text="Edit", command=lambda: edit_session(session[0])).grid(row=rowCounter, column=0)
-            ttk.Button(vas_log_frame, text="Delete", command=lambda: delete_session(session[0])).grid(row=rowCounter, column=1)
-            ttk.Label(vas_log_frame, text=session[1]).grid(row=rowCounter, column=2)
-            ttk.Label(vas_log_frame, text=start_time).grid(row=rowCounter, column=3)
-            ttk.Label(vas_log_frame, text=end_time).grid(row=rowCounter, column=4)
-            ttk.Label(vas_log_frame, text=sessionStatuses[session[4]]).grid(row=rowCounter, column=5)
+            ttk.Button(vas_log_frame, text="Edit", command=lambda: edit_session(session[0])).grid(row=rowCounter, column=0, padx=5, pady=5)
+            ttk.Button(vas_log_frame, text="Delete", command=lambda: delete_session(session[0])).grid(row=rowCounter, column=1, padx=5, pady=5)
+            ttk.Label(vas_log_frame, text=session[1]).grid(row=rowCounter, column=2, padx=5, pady=5)
+            ttk.Label(vas_log_frame, text=start_time).grid(row=rowCounter, column=3, padx=5, pady=5)
+            ttk.Label(vas_log_frame, text=end_time).grid(row=rowCounter, column=4, padx=5, pady=5)
+            ttk.Label(vas_log_frame, text=sessionStatuses[session[4]]).grid(row=rowCounter, column=5, padx=5, pady=5)
             rowCounter += 1
 
         def edit_session(sessionId):
@@ -1725,7 +1740,7 @@ class va_interface(tk.Frame):
         screenings = get_all_screenings()
         rowCounter = 2
 
-        ttk.Label(screenings_frame, text="Action").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(screenings_frame, text="Actions").grid(row=1, column=0, padx=5, pady=5)
         ttk.Label(screenings_frame, text="Screening Instrument Name").grid(row=1, column=2, padx=5, pady=5)
         ttk.Label(screenings_frame, text="Date").grid(row=1, column=3, padx=5, pady=5)
         ttk.Label(screenings_frame, text="Provider Personnel").grid(row=1, column=4, padx=5, pady=5)
