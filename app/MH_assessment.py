@@ -226,11 +226,11 @@ class MHassessment(tk.Frame):
         provider_employee_id_entry = ttk.Entry(popup, textvariable=provider_employee_id_var, width=40)
         provider_employee_id_entry.grid(row=5, column=1, padx=10, pady=5)
 
-        # Case ID
-        ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
-        case_id_var = tk.StringVar()
-        case_id_entry = ttk.Entry(popup, textvariable=case_id_var, width=40)
-        case_id_entry.grid(row=6, column=1, padx=10, pady=5)
+        # # Case ID
+        # ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
+        # case_id_var = tk.StringVar()
+        # case_id_entry = ttk.Entry(popup, textvariable=case_id_var, width=40)
+        # case_id_entry.grid(row=6, column=1, padx=10, pady=5)
 
         # Timing Dropdown
         ttk.Label(popup, text="Timing").grid(row=7, column=0, padx=10, pady=5, sticky="w")
@@ -264,7 +264,11 @@ class MHassessment(tk.Frame):
             else:
                 provider_employee_id = None
 
-            case_id = int(case_id_var.get().strip())
+            # case_id = int(case_id_var.get().strip())
+            case_id = self.get_case_id_from_file()
+            if case_id is None:
+                return  # Abort if the case ID couldn't be retrieved
+
             timing_id = timing_mapping.get(timing_var.get(), None)
             comments = comments_var.get().strip()
 
@@ -583,11 +587,11 @@ class MHassessment(tk.Frame):
         diagnosis_date_entry = DateEntry(popup, width=18)
         diagnosis_date_entry.grid(row=2, column=1, padx=10, pady=5)
 
-        # Case ID
-        ttk.Label(popup, text="Case ID").grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        case_id_var = tk.StringVar()
-        case_id_entry = ttk.Entry(popup, textvariable=case_id_var, width=40)
-        case_id_entry.grid(row=3, column=1, padx=10, pady=5)
+        # # Case ID
+        # ttk.Label(popup, text="Case ID").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        # case_id_var = tk.StringVar()
+        # case_id_entry = ttk.Entry(popup, textvariable=case_id_var, width=40)
+        # case_id_entry.grid(row=3, column=1, padx=10, pady=5)
 
         # Personnel ID
         ttk.Label(popup, text="Provider Employee ID").grid(row=4, column=0, padx=10, pady=5, sticky="w")
@@ -604,7 +608,11 @@ class MHassessment(tk.Frame):
                 """Save diagnosis to the case_mh_assessment_diagnosis table."""
                 provider_agency_name = provider_agency_var.get()
                 diagnosis_date = diagnosis_date_entry.get_date()
-                case_id = case_id_var.get().strip()
+                # case_id = case_id_var.get().strip()
+                case_id = self.get_case_id_from_file()
+                if case_id is None:
+                    return  # Abort if the case ID couldn't be retrieved
+
 
                 if not provider_agency_name or not case_id:
                     messagebox.showerror("Error", "All fields must be filled out.")
@@ -634,3 +642,19 @@ class MHassessment(tk.Frame):
         # Save and Cancel buttons
         ttk.Button(popup, text="Save", command=save_diagnosis).grid(row=6, column=0, padx=10, pady=10, sticky="w")
         ttk.Button(popup, text="Cancel", command=popup.destroy).grid(row=6, column=1, padx=10, pady=10, sticky="e")
+    
+    @staticmethod
+    def get_case_id_from_file():
+        """Reads the case ID from a file."""
+        try:
+            with open("case_id.txt", "r") as file:
+                case_id = file.read().strip()
+                if case_id.isdigit():
+                    return int(case_id)
+                else:
+                    raise ValueError("Invalid case ID in file.")
+        except Exception as error:
+            print(f"Error reading case ID from file: {error}")
+            messagebox.showerror("Error", "Failed to retrieve case ID.")
+            return None
+
