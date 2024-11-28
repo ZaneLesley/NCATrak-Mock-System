@@ -209,7 +209,7 @@ def generator_cac_case(amount: int):
         case["cac_recieved_date"] = case_date
         case["case_closed_date"] = random.choice([fake.date_time_between(
             start_date=datetime.combine(case_date, datetime.min.time())).date(), None])
-        case["closed_reason_id"] = fake.unique.random_number(digits = 8) if case["case_closed_date"] != None else None
+        case["closed_reason_id"] = fake.random_int(min=1, max=6) if case["case_closed_date"] != None else None
         case["created_date"] = case_date
         #FIXME: Think of how to do this part
         case["mh_lead_employee_id"] = None

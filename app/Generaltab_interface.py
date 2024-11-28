@@ -327,10 +327,10 @@ class GeneraltabInterface(tk.Frame):
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select * from cac_agency order by agency_name;")
+                        cur.execute("select * from child_advocacy_center order by cac_name;")
                         agencies = cur.fetchall()
-                        agencyMap = {agency[0]: agency[2] for agency in agencies}
-                        agencyMapReversed = {agency[2]: agency[0] for agency in agencies}
+                        agencyMap = {agency[0]: agency[1] for agency in agencies}
+                        agencyMapReversed = {agency[1]: agency[0] for agency in agencies}
                         return agencyMap, agencyMapReversed
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
@@ -510,12 +510,17 @@ class GeneraltabInterface(tk.Frame):
         ttk.Label(case_information_frame, text="Date Received by CAC").grid(row=0, column=0, padx=5, pady=5)
         date_entry = DateEntry(case_information_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
         date_entry.grid(row=0, column=1, padx=5, pady=5)
+        if caseReceivedDate is not None:
+            date_entry.set_date(caseReceivedDate)
 
         agencies, aReverse = get_all_agencies() 
 
         ttk.Label(case_information_frame, text="Main Agency Involved").grid(row=1, column=0, padx=5, pady=5)
         main_agency = ttk.Combobox(case_information_frame, values=list(agencies.values()))
         main_agency.grid(row=1, column=1, padx=5, pady=5)
+        if cacId is not None:
+            main_agency.set(agencies[cacId])
+
         add_agency = ttk.Button(case_information_frame, text="+ Add", command=add_agency_popup)
         add_agency.grid(row=1, column=2, padx=5, pady=5)
 
@@ -524,19 +529,44 @@ class GeneraltabInterface(tk.Frame):
         ttk.Label(case_information_frame, text="Main Personnel Involved").grid(row=2, column=0, padx=5, pady=5)
         main_personnel = ttk.Combobox(case_information_frame, values=list(personnel.values()))  
         main_personnel.grid(row=2, column=1, padx=5, pady=5)
+        if leadEmployeeId is not None:
+            main_personnel.set(personnel[leadEmployeeId])
+
         add_personnel = ttk.Button(case_information_frame, text="+ Add", command=add_personnel_popup)  
         add_personnel.grid(row=2, column=2, padx=5, pady=5)
 
+        closeReasons = {
+            1: "Administrative CLosure",
+            2: "Client Moved",
+            3: "All Investigations/Services Concluded",
+            4: "False Report",
+            5: "Client Refused Services",
+            6: "Unfounded Report"
+        }
+
+        closeReasonsReverse = {
+            "Administrative CLosure": 1,
+            "Client Moved": 2,
+            "All Investigations/Services Concluded": 3,
+            "False Report": 4,
+            "Client Refused Services": 5,
+            "Unfounded Report": 6
+        }
+
         ttk.Label(case_information_frame, text="Case Closed Reason").grid(row=3, column=0, padx=5, pady=5)
-        close_reason = ttk.Combobox(case_information_frame, values=["Reason 1", "Reason 2", "Reason 3", "Reason 4"]) 
+        close_reason = ttk.Combobox(case_information_frame, values=list(closeReasons.values())) 
         close_reason.grid(row=3, column=1, padx=5, pady=5)
+        if caseClosedReasonId is not None:
+            close_reason.set(closeReasons[caseClosedReasonId])
 
         ttk.Label(case_information_frame, text="Case Close Date").grid(row=4, column=0, padx=5, pady=5)
         close_date = DateEntry(case_information_frame, width=12, background='darkblue', foreground='white', borderwidth=2) 
         close_date.grid(row=4, column=1, padx=5, pady=5)
+        if caseClosedDate is not None:
+            close_date.set_date(caseClosedDate)
 
         ttk.Label(case_information_frame, text="Survey Complete (1)").grid(row=5, column=0, padx=5, pady=5)
-        survey_complete = ttk.Combobox(case_information_frame, values=["Yes", "No"])  
+        survey_complete = ttk.Combobox(case_information_frame, values=["Yes", "No", "Family Assessment"])  
         survey_complete.grid(row=5, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Follow Up Survey Complete (2)").grid(row=6, column=0, padx=5, pady=5)
@@ -576,7 +606,7 @@ class GeneraltabInterface(tk.Frame):
         Denied.grid(row=10, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="Test 5").grid(row=11, column=0, padx=5, pady=5)
-        test5 = ttk.Combobox(case_information_frame, values=["Yes", "No"])  
+        test5 = ttk.Combobox(case_information_frame, values=["Yes", "No", "Pending", "N/A"])  
         test5.grid(row=11, column=1, padx=5, pady=5)
 
         ttk.Label(case_information_frame, text="General - Custom Field 6").grid(row=12, column=0, padx=5, pady=5)
@@ -607,12 +637,12 @@ class GeneraltabInterface(tk.Frame):
 
         # CAC Case Number
         ttk.Label(linked_cases_frame, text="CAC Case Number").grid(row=1, column=6, padx=5, pady=5)
-        case_number = ttk.Combobox(linked_cases_frame, values=["CAC Case Number 1", "CAC Case Number 2"])   
+        case_number = ttk.Label(linked_cases_frame, text="Sample Case Number")   
         case_number.grid(row=2, column=6, padx=5, pady=5)
 
         # Alleged Victim
         ttk.Label(linked_cases_frame, text="Alleged Victim").grid(row=1, column=7, padx=5, pady=5)
-        alleged_victim = ttk.Combobox(linked_cases_frame, values=["Person 1", "Person 2"])   
+        alleged_victim = ttk.Label(linked_cases_frame, text="Sample Victim")   
         alleged_victim.grid(row=2, column=7, padx=5, pady=5)
 
         # Add the "Edit" button 
@@ -839,53 +869,20 @@ class GeneraltabInterface(tk.Frame):
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
 
-        def save_case(date, rAgencyId, lEmployeeId, vaCN, vaAId, serviceODate, sAccept, serviceEnd, mdtV, birthCert, policeR, cNum, cStatus, cReason):
-            referralDate = date 
-            referralAgencyId = rAgencyId 
-            leadEmployeeId = lEmployeeId
-            vaCaseNumber = vaCN 
-            vaAgencyId = vaAId 
-            servicesOfferedDate = serviceODate 
-            servicesAccepted =sAccept
-            servicesEndDate = serviceEnd 
-            mdtReady = mdtV 
-            hasBirthCert = birthCert
-            hasPoliceReport = policeR 
-            claimNumber = cNum 
-            claimStatusId = cStatus
-            claimDeniedReason =  cReason 
-
+        def save_case(dateRecieved, agency, personnel, closeReason, closeDate):
+        
             sqlQuery = """
             UPDATE cac_case
             SET
-            case_number = %s,
             cac_received_date = %s,
             case_closed_date = %s,
             closed_reason_id = %s,
-            created_date = %s,
-            mh_lead_employee_id = %s,
-            va_agency_id = %s,
-            va_case_number = %s,
-            va_claim_denied_reason = %s,
-            va_claim_number = %s,
-            va_claim_status_id = %s,
-            va_have_birth_cert = %s,
-            va_has_police_report = %s,
-            va_mdt_ready = %s,
-            va_na = %s,
-            va_referral_agency_id = %s,
-            va_referral_date = %s,
-            va_services_accepted = %s,
-            va_services_offered_date = %s,
-            va_services_end_date = %s
+            cac_id = %s,
+            mh_lead_employee_id = %s
             WHERE case_id = %s
             """ 
             data_tuple = (
-                caseNumber, caseReceivedDate, caseClosedDate, caseClosedReasonId, 
-                caseCreatedDate, leadEmployeeId, vaAgencyId, vaCaseNumber, claimDeniedReason, claimNumber, claimStatusId, hasBirthCert, 
-                hasPoliceReport, mdtReady, vaNa, referralAgencyId, referralDate, servicesAccepted, servicesOfferedDate, 
-                servicesEndDate, caseId
-            )
+                dateRecieved, closeDate, closeReason, agency, personnel, caseId)
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
@@ -897,7 +894,8 @@ class GeneraltabInterface(tk.Frame):
                 print(f"{error}")
                 exit()
 
-        save_button = ttk.Button(widget_frame, text='SAVE', command=lambda:save_case())
+        save_button = ttk.Button(widget_frame, text='SAVE', command=lambda:save_case(str(date_entry.get_date()), aReverse[main_agency.get()], 
+                                                                                     pReverse[main_personnel.get()], closeReasonsReverse[close_reason.get()], str(close_date.get_date())))
         cancel_button = ttk.Button(widget_frame, text='CANCEL')
         delete_button = ttk.Button(widget_frame, text='DELETE CASE')
 
