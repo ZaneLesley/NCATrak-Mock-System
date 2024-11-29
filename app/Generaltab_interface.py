@@ -63,15 +63,15 @@ class GeneraltabInterface(tk.Frame):
             button.pack(side='left', padx=5)
 
         save_cancel_delete_frame = ttk.Frame(scrollable_frame)
-        button_frame.grid(row=1, column=0, columnspan=7, padx=5, pady=5)
+        save_cancel_delete_frame.grid(row=1, column=0, columnspan=7, padx=5, pady=5)
 
-        save_button = ttk.Button(scrollable_frame, text='SAVE')
-        cancel_button = ttk.Button(scrollable_frame, text='CANCEL')
-        delete_button = ttk.Button(scrollable_frame, text='DELETE CASE')
+        save_button = ttk.Button(save_cancel_delete_frame, text='SAVE')
+        cancel_button = ttk.Button(save_cancel_delete_frame, text='CANCEL')
+        delete_button = ttk.Button(save_cancel_delete_frame, text='DELETE CASE')
 
-        save_button.pack(padx=5)
-        cancel_button.pack(padx=5)
-        delete_button.pack(padx=5)
+        save_button.grid(row=0, column=0, padx=5)
+        cancel_button.grid(row=0, column=1, padx=5)
+        delete_button.grid(row=0, column=2, padx=5)
 
         # General tab title
         general_frame = tk.Frame(scrollable_frame)
