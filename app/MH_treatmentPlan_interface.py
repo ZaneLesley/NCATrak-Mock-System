@@ -302,10 +302,10 @@ class MH_treatment_plan_interface(tk.Frame):
         end_date_entry = DateEntry(popup, width=20)
         end_date_entry.grid(row=5, column=1, padx=10, pady=5)
         
-        # Case ID
-        ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
-        case_id_entry = ttk.Entry(popup, width=40)
-        case_id_entry.grid(row=6, column=1, padx=10, pady=5)
+        # # Case ID
+        # ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
+        # case_id_entry = ttk.Entry(popup, width=40)
+        # case_id_entry.grid(row=6, column=1, padx=10, pady=5)
         
         # Authorized Status
         ttk.Label(popup, text="Authorized Status").grid(row=7, column=0, padx=10, pady=5, sticky="w")
@@ -344,7 +344,10 @@ class MH_treatment_plan_interface(tk.Frame):
             agency_name = provider_agency_var.get()
             agency_id = self.get_agency_id_by_name(agency_name)  # Fetch agency_id based on selected agency name
             cac_id = self.get_cac_id_by_agency(agency_name)  # Fetch cac_id based on selected agency name
-            case_id = case_id_entry.get().strip()
+            # case_id = case_id_entry.get().strip()
+            case_id = self.get_case_id_from_file()
+            if case_id is None:
+                return  # Abort if the case ID couldn't be retrieved
             # authorized_status_id = int(authorized_status_var.get())
             selected_status = authorized_status_var.get()
             authorized_status_id = status_mapping.get(selected_status, None)  # Map text to corresponding integer
@@ -394,6 +397,21 @@ class MH_treatment_plan_interface(tk.Frame):
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
             return None
+    @staticmethod
+    def get_case_id_from_file():
+        """Reads the case ID from a file."""
+        try:
+            with open("case_id.txt", "r") as file:
+                case_id = file.read().strip()
+                if case_id.isdigit():
+                    return int(case_id)
+                else:
+                    raise ValueError("Invalid case ID in file.")
+        except Exception as error:
+            print(f"Error reading case ID from file: {error}")
+            messagebox.showerror("Error", "Failed to retrieve case ID.")
+            return None
+
 
 
 

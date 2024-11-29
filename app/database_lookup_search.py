@@ -295,7 +295,7 @@ class lookup_interface(tk.Frame):
             if selected_index:
                 case_index = selected_index
                 case_id = filtered_cases[case_index[0]][1]
-                case_id_file = open("app/case_id.txt", "w")
+                case_id_file = open("case_id.txt", "w")
                 case_id_file.write(str(case_id))
 
         search_cases_by_patient(patient[1])
