@@ -40,7 +40,7 @@ class tkinterApp(tk.Tk):
         # For Testing
         #print(self.frame)
         
-        self.show_frame(people_interface.people_interface)
+        self.show_frame(database_lookup_search.lookup_interface)
             
     
     def show_frame(self, frame_class):

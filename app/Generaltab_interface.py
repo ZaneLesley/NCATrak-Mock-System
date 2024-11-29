@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
 import MH_basic_interface
+import database_lookup_search
 import people_interface
 import MH_assessment
 import MH_treatmentPlan_interface
@@ -21,33 +22,37 @@ class GeneraltabInterface(tk.Frame):
         # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
         # label.grid(row = 0, column=0, padx = 5, pady = 5)
 
+        button0 = ttk.Button(self, text="Lookup", 
+                            command=lambda: controller.show_frame(database_lookup_search.lookup_interface))
+        button0.grid(row=0, column=0, padx=5, pady=5)
+
         button1 = ttk.Button(self, text="General", 
                             command=lambda: controller.show_frame(GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
+        button1.grid(row=0, column=1, padx=5, pady=5)
 
         button2 = ttk.Button(self, text="People", 
                             command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
+        button2.grid(row=0, column=2, padx=5, pady=5)
 
         button3 = ttk.Button(self, text="Mental Health - Basic", 
                             command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
+        button3.grid(row=0, column=3, padx=5, pady=5)
 
         button4 = ttk.Button(self, text="Mental Health - Assessment", 
                             command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
+        button4.grid(row=0, column=4, padx=5, pady=5)
 
         button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
                             command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
+        button5.grid(row=0, column=5, padx=5, pady=5)
 
         button6 = ttk.Button(self, text="VA", 
                             command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
+        button6.grid(row=0, column=6, padx=5, pady=5)
 
         button7 = ttk.Button(self, text="Case Notes", 
                             command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
+        button7.grid(row=0, column=7, padx=5, pady=5)
         
         
         # Create a canvas and a scrollbar

@@ -5,6 +5,7 @@ from tkinter import filedialog
 import psycopg2
 import configparser
 from faker import Faker
+import database_lookup_search
 import Generaltab_interface
 import people_interface
 import MH_basic_interface
@@ -22,37 +23,8 @@ class MHassessment(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
-        # Nav bar buttons
-        button1 = ttk.Button(self, text="General",
-                             command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-
-        button2 = ttk.Button(self, text="People",
-                             command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
-
-        button3 = ttk.Button(self, text="Mental Health - Basic",
-                             command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment",
-                             command=lambda: controller.show_frame(MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan",
-                             command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA",
-                             command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-
-        button7 = ttk.Button(self, text="Case Notes",
-                             command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
 
         # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
@@ -65,20 +37,39 @@ class MHassessment(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        # Create a window in the canvas
+        # Window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-        # Link scrollbar to the canvas
+        # Scrollbar to canvas
         canvas.configure(yscrollcommand=scrollbar.set)
 
         # Use grid over pack for interface linking
-        canvas.grid(row=2, column=0, sticky="nsew")
-        scrollbar.grid(row=2, column=1, sticky="ns")
-        
-        
-        # # Assessments Given Section 
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Navigation Buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
+
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("VA", self.show_va_tab),
+            ("Case Notes", self.show_case_notes),
+        ]
+
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
+
+        # Assessments Given Section 
         assessments_frame = tk.LabelFrame(scrollable_frame, text="Assessments Given", padx=10, pady=10)
-        assessments_frame.pack(fill="x", padx=10, pady=5)
+        assessments_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')
 
         # Button to add new assessment
         ttk.Button(assessments_frame, text="+ Add New Assessment", command=self.add_assessment_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -110,7 +101,7 @@ class MHassessment(tk.Frame):
 
         # Diagnosis Log Section
         diagnosis_frame = tk.LabelFrame(scrollable_frame, text="Diagnosis Log", padx=10, pady=10)
-        diagnosis_frame.pack(fill="x", padx=10, pady=5)
+        diagnosis_frame.grid(row = 2, column = 0, padx=10, pady=5, sticky='w')
 
         # Button to add a new diagnosis
         ttk.Button(diagnosis_frame, text="+ Add Diagnosis", command=self.add_diagnosis_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -143,7 +134,7 @@ class MHassessment(tk.Frame):
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
-        upload_frame.pack(fill="x", padx=10, pady=5)
+        upload_frame.grid(row = 3, column = 0, padx=10, pady=5, sticky='w')
 
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         file_name_var = tk.StringVar()  # Variable to hold the filename
@@ -663,3 +654,27 @@ class MHassessment(tk.Frame):
             messagebox.showerror("Error", "Failed to retrieve case ID.")
             return None
 
+    # -------------------- Navigation Functions --------------------
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
+
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
+
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
+
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
+
+    def show_mh_assessment(self):
+        self.controller.show_frame(MHassessment)
+
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)
