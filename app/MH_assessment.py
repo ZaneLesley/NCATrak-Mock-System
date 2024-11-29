@@ -90,10 +90,11 @@ class MHassessment(tk.Frame):
 
         # Fetch and display existing assessments
         try:
+            case_id = self.get_case_id_from_file()
             config = self.load_config()
             with psycopg2.connect(**config) as conn:
                 with conn.cursor() as cur:
-                    query = "SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment"
+                    query = f"SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment WHERE case_id={case_id}"
                     cur.execute(query)
                     assessments = cur.fetchall()
 
@@ -120,11 +121,12 @@ class MHassessment(tk.Frame):
 
         # Fetch and display existing diagnosis records
         try:
+            case_id = self.get_case_id_from_file()
             config = self.load_config()
             with psycopg2.connect(**config) as conn:
                 with conn.cursor() as cur:
                     # Fetch diagnosis log details
-                    query = "SELECT mh_provider_agency_id, diagnosis_date FROM case_mh_assessment_diagnosis"
+                    query = f"SELECT mh_provider_agency_id, diagnosis_date FROM case_mh_assessment_diagnosis WHERE case_id={case_id}"
                     cur.execute(query)
                     diagnoses = cur.fetchall()
 
@@ -487,10 +489,12 @@ class MHassessment(tk.Frame):
     def load_assessments(self):
         """Fetch and display assessments in the log."""
         try:
+            case_id = self.get_case_id_from_file()
             config = self.load_config()
             with psycopg2.connect(**config) as conn:
                 with conn.cursor() as cur:
-                    query = "SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment"
+                    query = f"SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment WHERE case_id={case_id}"
+                    print(query)
                     cur.execute(query)
                     assessments = cur.fetchall()
 
@@ -507,10 +511,11 @@ class MHassessment(tk.Frame):
     def load_diagnoses(self):
         """Fetch and display diagnoses in the log."""
         try:
+            case_id = self.get_case_id_from_file()
             config = self.load_config()
             with psycopg2.connect(**config) as conn:
                 with conn.cursor() as cur:
-                    query = "SELECT mh_provider_agency_id, diagnosis_date FROM case_mh_assessment_diagnosis"
+                    query = f"SELECT mh_provider_agency_id, diagnosis_date FROM case_mh_assessment_diagnosis WHERE case_id={case_id}"
                     cur.execute(query)
                     diagnoses = cur.fetchall()
 
