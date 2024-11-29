@@ -8,6 +8,7 @@ import MH_assessment
 import MH_treatmentPlan_interface
 import va_tab_interface
 import case_notes
+import database_lookup_search
 import psycopg2
 from datetime import datetime
 import configparser
@@ -20,21 +21,10 @@ class MHBasicInterface(tk.Frame):
     def __init__(self, parent, controller):
 
         tk.Frame.__init__(self, parent)
+
         self.controller = controller
-
-        # Initialize identifiers
-        self.case_id = 1  # Default value; adjust as needed
-        self.cac_id = 1   # Default value; adjust as needed
-
-        # Initialize database connection
-        self.conn = self.connect_to_database()
-        self.cur = self.conn.cursor()
-
-        # In-memory storage for referrals and POCs
-        self.referrals_data = []  # List to store referrals
-        self.poc_data = []        # List to store points of contact
-
-        self.grid_rowconfigure(2, weight=1)
+        
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         # Create a canvas and a scrollbar
@@ -55,51 +45,40 @@ class MHBasicInterface(tk.Frame):
         canvas.configure(yscrollcommand=scrollbar.set)
 
         # Use grid over pack for interface linking
-        canvas.grid(row=2, column=0, sticky="nsew")
-        scrollbar.grid(row=2, column=1, sticky="ns")
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
 
         # Navigation Buttons
-        button1 = ttk.Button(
-            self, text="General",
-            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface)
-        )
-        button1.grid(row=0, column=0, padx=5, pady=5)
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
 
-        button2 = ttk.Button(
-            self, text="People",
-            command=lambda: controller.show_frame(people_interface.people_interface)
-        )
-        button2.grid(row=0, column=1, padx=5, pady=5)
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("VA", self.show_va_tab),
+            ("Case Notes", self.show_case_notes),
+        ]
 
-        button3 = ttk.Button(
-            self, text="Mental Health - Basic",
-            command=lambda: controller.show_frame(MHBasicInterface)
-        )
-        button3.grid(row=0, column=2, padx=5, pady=5)
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
 
-        button4 = ttk.Button(
-            self, text="Mental Health - Assessment",
-            command=lambda: controller.show_frame(MH_assessment.MHassessment)
-        )
-        button4.grid(row=0, column=3, padx=5, pady=5)
+        # Initialize identifiers
+        self.case_id = 1  # Default value; adjust as needed
+        self.cac_id = 1   # Default value; adjust as needed
 
-        button5 = ttk.Button(
-            self, text="Mental Health - Treatment Plan",
-            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
-        )
-        button5.grid(row=0, column=4, padx=5, pady=5)
+        # Initialize database connection
+        self.conn = self.connect_to_database()
+        self.cur = self.conn.cursor()
 
-        button6 = ttk.Button(
-            self, text="VA",
-            command=lambda: controller.show_frame(va_tab_interface.va_interface)
-        )
-        button6.grid(row=0, column=5, padx=5, pady=5)
-
-        button7 = ttk.Button(
-            self, text="Case Notes",
-            command=lambda: controller.show_frame(case_notes.case_notes_interface)
-        )
-        button7.grid(row=0, column=6, padx=5, pady=5)
+        # In-memory storage for referrals and POCs
+        self.referrals_data = []  # List to store referrals
+        self.poc_data = []        # List to store points of contact
 
         # Function for line numbering
         def create_line_numbered_label(frame, text, line_number):
@@ -110,7 +89,7 @@ class MHBasicInterface(tk.Frame):
 
         # Save and Cancel Buttons
         button_frame = ttk.Frame(scrollable_frame)
-        button_frame.pack(anchor="w", pady=10, padx=10)
+        button_frame.grid(row = 1, column=0, pady=10, padx=10)
         save_button = ttk.Button(button_frame, text="Save", command=self.save_data)
         save_button.pack(side="left", padx=5)
         cancel_button = ttk.Button(button_frame, text="Cancel", command=self.cancel)
@@ -120,12 +99,12 @@ class MHBasicInterface(tk.Frame):
         ready_mdt_var = tk.BooleanVar(value=False)
         self.ready_mdt_var = ready_mdt_var
         mdt_frame = tk.Frame(scrollable_frame)
-        mdt_frame.pack(anchor="center", pady=10)
+        mdt_frame.grid(row=2, column=0, pady=10)
         ttk.Checkbutton(mdt_frame, text="Ready for MDT Review", variable=ready_mdt_var).pack()
 
         # Incoming Referral section
         incoming_frame = tk.LabelFrame(scrollable_frame, text="Incoming Referral", padx=10, pady=10)
-        incoming_frame.pack(fill="x", padx=10, pady=5)
+        incoming_frame.grid(row=3, column=0, padx=10, pady=5, sticky='w')
 
         # Date (uses DateEntry)
         ttk.Label(incoming_frame, text="Date").grid(row=0, column=0, padx=5, pady=5)
@@ -151,7 +130,7 @@ class MHBasicInterface(tk.Frame):
 
         # Custom fields section
         custom_frame = tk.LabelFrame(scrollable_frame, text="Custom Fields", padx=10, pady=10)
-        custom_frame.pack(fill="x", padx=10, pady=5)
+        custom_frame.grid(row=4, column=0, padx=10, pady=5, sticky='w')
 
         # MH- Abuse Type
         ttk.Label(custom_frame, text="MH- Abuse Type").grid(row=0, column=0, sticky="w", padx=5, pady=5)
@@ -239,7 +218,7 @@ class MHBasicInterface(tk.Frame):
 
         # Telehealth Services Section
         telehealth_frame = tk.LabelFrame(scrollable_frame, text="Telehealth Services", padx=10, pady=10)
-        telehealth_frame.pack(fill="x", padx=10, pady=5)
+        telehealth_frame.grid(row=5, column=0, padx=10, pady=5, sticky='w')
 
         # Number of miles saved
         ttk.Label(telehealth_frame, text="Number of Miles Saved Providing Telehealth Services Per Session:").grid(row=0, column=0, padx=5, pady=5)
@@ -270,7 +249,7 @@ class MHBasicInterface(tk.Frame):
 
         # Mental Health Provider Log Section
         provider_log_frame = tk.LabelFrame(scrollable_frame, text="Mental Health Provider Log", padx=10, pady=10)
-        provider_log_frame.pack(fill="x", padx=10, pady=5)
+        provider_log_frame.grid(row=6, column=0, padx=10, pady=5, sticky='w')
 
         # Provider and details buttons
         provider_log_buttons_frame = tk.Frame(provider_log_frame)
@@ -299,7 +278,7 @@ class MHBasicInterface(tk.Frame):
 
         # Outside Referrals Section
         outside_referrals_frame = tk.LabelFrame(scrollable_frame, text="Outside Referrals", padx=10, pady=10)
-        outside_referrals_frame.pack(fill="x", padx=10, pady=5)
+        outside_referrals_frame.grid(row=7, column=0, padx=10, pady=5, sticky='w')
 
         # "+ Add New Referral" button
         ttk.Button(outside_referrals_frame, text="+ Add New Referral", command=self.add_new_referral_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -328,7 +307,7 @@ class MHBasicInterface(tk.Frame):
 
         # Additional Points of Contact Section
         additional_poc_frame = tk.LabelFrame(scrollable_frame, text="Additional Points of Contact", padx=10, pady=10)
-        additional_poc_frame.pack(fill="x", padx=10, pady=5)
+        additional_poc_frame.grid(row=8, column=0, padx=10, pady=5, sticky = 'w')
 
         # "+ Add New Point of Contact" button
         ttk.Button(additional_poc_frame, text="+ Add New Point of Contact", command=self.add_new_poc_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -359,7 +338,7 @@ class MHBasicInterface(tk.Frame):
 
         # Contact Info Section
         contact_info_frame = tk.LabelFrame(scrollable_frame, text="Contact Info", padx=10, pady=10)
-        contact_info_frame.pack(fill="x", padx=10, pady=5)
+        contact_info_frame.grid(row=9, column=0, sticky='w', padx=10, pady=5)
 
         # Client Contact Info
         ttk.Label(contact_info_frame, text="Client Contact Info").grid(row=0, column=0, padx=5, pady=5, sticky="w", columnspan=2)
@@ -389,7 +368,7 @@ class MHBasicInterface(tk.Frame):
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
-        upload_frame.pack(fill="x", padx=10, pady=5)
+        upload_frame.grid(row=10, column=0, sticky='w', padx=10, pady=5)
 
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
         file_name_var = tk.StringVar()  # Variable to hold the filename
@@ -1667,6 +1646,30 @@ class MHBasicInterface(tk.Frame):
     def cancel(self):
         # Reset or close the interface
         self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
+
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
+
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
+
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
+
+    def show_mh_basic(self):
+        self.controller.show_frame(MHBasicInterface)
+
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
+
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)
 
     def __del__(self):
         # Close database connection when the interface is destroyed
