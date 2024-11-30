@@ -177,6 +177,10 @@ class lookup_interface(tk.Frame):
         scrollbar = ttk.Scrollbar(self.details_frame, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(self.details_frame)
 
+        # button for creating new case
+        save_button = ttk.Button(self.scrollable_frame, text="Create New Case", command=self.create_new_case_popup)
+        save_button.grid(row=1, column=9, sticky='ne', pady=20)
+
     def get_religion(self, id):
         if id is not None and id >= 0:
             return religions[id]
@@ -429,6 +433,11 @@ class lookup_interface(tk.Frame):
                 messagebox.showinfo("Success", f"Selected case {case_id}")
 
         search_cases_by_patient(patient[1])
+
+    def create_new_case_popup(self):
+        popup = tk.Toplevel(self)
+        popup.title("Create New Case - Search Person")
+        popup.geometry("1200x700")
 
     # to filter patients based on search
     def search_patients(self, event=None):
