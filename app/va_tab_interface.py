@@ -92,6 +92,9 @@ class va_interface(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
+        widget_frame = ttk.Frame(self)
+        widget_frame.grid(row=1, column=0, pady=20)
+
         # Window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
@@ -1908,10 +1911,10 @@ class va_interface(tk.Frame):
                 print(f"{error}")
                 exit()
 
-        save_button = ttk.Button(self.widget_frame, text='SAVE', command= lambda: submit_all_fields(str(date_entry.get_date()), aReverse[referral_source.get()], pReverse[person_entry.get()], va_casenum_entry.get(), aReverse[agency_entry.get()], 
+        save_button = ttk.Button(widget_frame, text='SAVE', command= lambda: submit_all_fields(str(date_entry.get_date()), aReverse[referral_source.get()], pReverse[person_entry.get()], va_casenum_entry.get(), aReverse[agency_entry.get()], 
                                                                                           str(date_services_offered.get_date()), services_accept.get(), str(services_conclusion.get_date()), mdt.get(), birth_cert.get(),
                                                                                             police_report.get(), claim_number.get(), sReverse[status_entry.get()], claim_denied_reason.get()))
-        cancel_button = ttk.Button(self.widget_frame, text='CANCEL')
+        cancel_button = ttk.Button(widget_frame, text='CANCEL')
 
         save_button.grid(row=1, column=0, sticky="w", padx=5)
         cancel_button.grid(row=1, column=1, sticky="w", padx=5)
