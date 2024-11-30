@@ -10,6 +10,7 @@ import MH_basic_interface
 import MH_assessment
 import va_tab_interface
 import case_notes
+import database_lookup_search
 import sv_ttk
 import os
 from configparser import ConfigParser
@@ -20,49 +21,56 @@ class MH_treatment_plan_interface(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        
-        # Configure layout for navigation buttons and main canvas
-        self.grid_rowconfigure(2, weight=1)
+
+        self.controller = controller
+
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-        
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
 
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-        
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
-
-        # Setup scrollable canvas for the main content
+        # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
-        scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.grid(row=2, column=0, sticky="nsew")
-        scrollbar.grid(row=2, column=1, sticky="ns")
 
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        # Window in the canvas
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        # Scrollbar to canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Use grid over pack for interface linking
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Navigation Buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
+
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("Mental Health - Case Notes", self.show_case_notes),
+            ("VA", self.show_va_tab),
+        ]
+
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
+
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
 
         # Function to open file dialog and set the filename
         def select_file():
@@ -72,12 +80,52 @@ class MH_treatment_plan_interface(tk.Frame):
 
         # Treatment Plans Section
         treatment_frame = tk.LabelFrame(scrollable_frame, text="Treatment Plans", padx=10, pady=10)
-        treatment_frame.pack(fill="x", padx=10, pady=5)
+        treatment_frame.grid(row=1, column=0, sticky='w', padx=10, pady=5)
         ttk.Button(treatment_frame, text="+ Add New Treatment Plan", command=self.add_treatment_plan_popup).grid(row=0, column=0, padx=5, pady=5)
+
+        # Column headers for the Treatment Plans Log
+        ttk.Label(treatment_frame, text="Planned Start Date").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(treatment_frame, text="Treatment Model Name").grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(treatment_frame, text="Provider Agency").grid(row=1, column=2, padx=5, pady=5)
+
+        # Fetch and display existing treatment plans
+        try:
+            case_id = self.get_case_id_from_file()
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    # Fetch treatment plans for the current case ID
+                    query = f"""
+                        SELECT planned_start_date, treatment_model_id, provider_agency_id 
+                        FROM case_mh_treatment_plans 
+                        WHERE case_id = {case_id}
+                    """
+                    cur.execute(query)
+                    treatment_plans = cur.fetchall()
+
+                    for index, plan in enumerate(treatment_plans, start=2):  # Start from row 2
+                        # Fetch the model name for the treatment_model_id
+                        cur.execute(
+                            "SELECT model_name FROM case_mh_treatment_models WHERE id = %s", 
+                            (plan[1],)
+                        )
+                        model_name_result = cur.fetchone()
+                        model_name = model_name_result[0] if model_name_result else "Unknown"
+
+                        # Fetch the provider agency name for the provider_agency_id
+                        provider_agency_name = self.get_agency_name_by_id(plan[2])
+
+                        # Display the treatment plan data
+                        ttk.Label(treatment_frame, text=str(plan[0])).grid(row=index, column=0, padx=5, pady=5)
+                        ttk.Label(treatment_frame, text=model_name).grid(row=index, column=1, padx=5, pady=5)
+                        ttk.Label(treatment_frame, text=provider_agency_name).grid(row=index, column=2, padx=5, pady=5)
+        except Exception as error:
+            print(f"Error fetching treatment plans: {error}")
+
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
-        upload_frame.pack(fill="x", padx=10, pady=5)
+        upload_frame.grid(row=2, column=0, sticky='w', padx=10, pady=5)
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         file_name_var = tk.StringVar()
         file_name_entry = ttk.Entry(upload_frame, textvariable=file_name_var, width=50, state="readonly")
@@ -302,10 +350,10 @@ class MH_treatment_plan_interface(tk.Frame):
         end_date_entry = DateEntry(popup, width=20)
         end_date_entry.grid(row=5, column=1, padx=10, pady=5)
         
-        # Case ID
-        ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
-        case_id_entry = ttk.Entry(popup, width=40)
-        case_id_entry.grid(row=6, column=1, padx=10, pady=5)
+        # # Case ID
+        # ttk.Label(popup, text="Case ID").grid(row=6, column=0, padx=10, pady=5, sticky="w")
+        # case_id_entry = ttk.Entry(popup, width=40)
+        # case_id_entry.grid(row=6, column=1, padx=10, pady=5)
         
         # Authorized Status
         ttk.Label(popup, text="Authorized Status").grid(row=7, column=0, padx=10, pady=5, sticky="w")
@@ -344,7 +392,10 @@ class MH_treatment_plan_interface(tk.Frame):
             agency_name = provider_agency_var.get()
             agency_id = self.get_agency_id_by_name(agency_name)  # Fetch agency_id based on selected agency name
             cac_id = self.get_cac_id_by_agency(agency_name)  # Fetch cac_id based on selected agency name
-            case_id = case_id_entry.get().strip()
+            # case_id = case_id_entry.get().strip()
+            case_id = self.get_case_id_from_file()
+            if case_id is None:
+                return  # Abort if the case ID couldn't be retrieved
             # authorized_status_id = int(authorized_status_var.get())
             selected_status = authorized_status_var.get()
             authorized_status_id = status_mapping.get(selected_status, None)  # Map text to corresponding integer
@@ -394,9 +445,58 @@ class MH_treatment_plan_interface(tk.Frame):
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
             return None
+    @staticmethod
+    def get_case_id_from_file():
+        """Reads the case ID from a file."""
+        try:
+            with open("case_id.txt", "r") as file:
+                case_id = file.read().strip()
+                if case_id.isdigit():
+                    return int(case_id)
+                else:
+                    raise ValueError("Invalid case ID in file.")
+        except Exception as error:
+            print(f"Error reading case ID from file: {error}")
+            messagebox.showerror("Error", "Failed to retrieve case ID.")
+            return None
+        
+    def get_agency_name_by_id(self, agency_id):
+        """Fetches the Agency Name for a given agency ID."""
+        try:
+            # Load the database configuration
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    # Execute the query to fetch the Agency Name
+                    cur.execute("SELECT agency_name FROM cac_agency WHERE agency_id = %s", (agency_id,))
+                    result = cur.fetchone()
+                    print(f"Fetching Agency Name for agency ID '{agency_id}': {result[0] if result else 'None'}")
+                    return result[0] if result else "Unknown"
+        except Exception as error:
+            print(f"Error fetching Agency Name for agency ID '{agency_id}': {error}")
+            return "Unknown"
 
+    # -------------------- Navigation Functions --------------------
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
 
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
 
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
 
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
 
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
 
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)

@@ -3,7 +3,6 @@ channels:
   - defaults
 dependencies:
   - faker
-  - numpy=1.22
   - pandas=2.2.2
   - psycopg2
   - python=3.10
