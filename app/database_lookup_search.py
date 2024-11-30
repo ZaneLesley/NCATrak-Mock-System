@@ -63,7 +63,8 @@ races = [
     "Alaska Native",
     "Multiple Races",
     "Not Reported",
-    "Not Tracked"
+    "Not Tracked",
+    "Other"
 ]
 
 case_roles = [
@@ -113,6 +114,7 @@ class lookup_interface(tk.Frame):
         canvas = tk.Canvas(self)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
+        self.scrollable_frame = scrollable_frame
         
         # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
         # label.grid(row = 0, column=0, padx = 5, pady = 5)
@@ -200,6 +202,28 @@ class lookup_interface(tk.Frame):
             return case_roles[id]
         else:
             return "Not Listed"
+        
+    def get_id_of_race(self, race):
+        for i in range((len(races) - 1)):
+            if races[i] == race:
+                return i
+            else:
+                return (len(races) - 1)
+            
+    def get_id_of_religion(self, religion):
+        for i in range((len(religions) - 1)):
+            if religions[i] == religion:
+                return i
+            else:
+                return (len(religions) - 1)
+            
+    def get_id_of_languages(self, language):
+        for i in range((len(languages) - 1)):
+            if languages[i] == language:
+                print(i)
+                return i
+            else:
+                return (len(languages) - 1)
 
     def load_first_100_patients(self):
 
@@ -222,6 +246,8 @@ class lookup_interface(tk.Frame):
         for widget in self.details_frame.winfo_children():
             widget.destroy()
 
+        
+
         tk.Label(self.details_frame, text="First Name:", font=bold_label_font).grid(column=0, row=0, sticky="e", padx=padx, pady=pady)
         first_name_entry = tk.Entry(self.details_frame, font=normal_text_font)
         first_name_entry.insert(0,patient[2])
@@ -242,9 +268,11 @@ class lookup_interface(tk.Frame):
         birthdate_entry.set_date(patient[6])
         birthdate_entry.grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
 
+        race_var = tk.StringVar()
+        race_var.set(self.get_race(patient[9]))
         tk.Label(self.details_frame, text="Race:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
-        race_dropdown = ttk.Combobox(self.details_frame, values=races, font=normal_text_font)
-        race_dropdown.insert(0, string=self.get_race(patient[9]))
+        race_dropdown = ttk.Combobox(self.details_frame, values=races, font=normal_text_font, textvariable=race_var)
+        race_dropdown.insert(0, string=race_var.get())
         race_dropdown.grid(column=1, row=5, sticky="w", padx=padx, pady=pady)
 
         # genders = ["Male", "Female", "Transgender Male", "Transgender Female", "Non-Binary", "Other"]
@@ -262,14 +290,18 @@ class lookup_interface(tk.Frame):
         style = ttk.Style()
         style.configure("TRadiobutton", font=('Helvetica', 12))
 
+        religion_var = tk.StringVar()
+        religion_var.set(self.get_religion(patient[10]))
         tk.Label(self.details_frame, text="Religion:", font=bold_label_font).grid(column=0, row=7, sticky="e", padx=padx, pady=pady)
-        religion_dropdown = ttk.Combobox(self.details_frame, values=religions, font=normal_text_font)
-        religion_dropdown.insert(0, string=self.get_religion(patient[10]))
+        religion_dropdown = ttk.Combobox(self.details_frame, values=religions, font=normal_text_font, textvariable=religion_var)
+        religion_dropdown.insert(0, string=religion_var.get())
         religion_dropdown.grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
 
+        language_var = tk.StringVar()
+        language_var.set(self.get_language(patient[8]))
         tk.Label(self.details_frame, text="Language:", font=bold_label_font).grid(column=0, row=8, sticky="e", padx=padx, pady=pady)
-        language_dropdown = ttk.Combobox(self.details_frame, values=languages, font=normal_text_font)
-        language_dropdown.insert(0, string=self.get_language(patient[8]))
+        language_dropdown = ttk.Combobox(self.details_frame, values=languages, font=normal_text_font, textvariable=language_var)
+        language_dropdown.insert(0, string=language_var.get())
         language_dropdown.grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
 
         prior_convictions_var = tk.BooleanVar()
@@ -300,6 +332,75 @@ class lookup_interface(tk.Frame):
         tk.Label(self.details_frame, text="Case ID\t\tRelationship to Victim\t\tRole\t\tAge\t\tSame Household?\t\tCustody?", font=bold_label_font).grid(column=0, row=10, columnspan=7, sticky="e", padx=padx, pady=pady)
         cases_list = tk.Listbox(self.details_frame, width=entry_width * 4, height=10, font=normal_text_font)
         cases_list.grid(row=11, column=0, columnspan=5, padx=padx, pady=pady)
+
+        def save_person():
+            update_query = """
+                UPDATE person SET 
+                    first_name = %s, 
+                    middle_name = %s, 
+                    last_name = %s, 
+                    date_of_birth = %s, 
+                    language_id = %s, 
+                    race_id = %s, 
+                    religion_id = %s,
+                    prior_convictions = %s,
+                    convicted_against_children = %s,
+                    sex_offender = %s,
+                    sex_predator = %s
+                WHERE person_id = %s;
+            """
+
+            try:
+                config = load_config(filename="database.ini")
+                conn = connect(config)
+                with conn.cursor() as cur:
+                    print(first_name_entry.get(),
+                        middle_name_entry.get(),
+                        last_name_entry.get(),
+                        str(birthdate_entry.get_date()),
+                        self.get_id_of_languages(language_var.get()),
+                        self.get_id_of_race(race_var.get()),
+                        self.get_id_of_religion(religion_var.get()),
+                        prior_convictions_var.get(),
+                        convicted_against_children_var.get(),
+                        sex_offender.get(),
+                        sex_predator.get(),
+                        patient[1])
+                    cur.execute("""
+                        UPDATE person SET 
+                            first_name = %s, 
+                            middle_name = %s, 
+                            last_name = %s, 
+                            date_of_birth = %s, 
+                            language_id = %s, 
+                            race_id = %s, 
+                            religion_id = %s,
+                            prior_convictions = %s,
+                            convicted_against_children = %s,
+                            sex_offender = %s,
+                            sex_predator = %s
+                        WHERE person_id = %s;
+                        """, (
+                        first_name_entry.get(),
+                        middle_name_entry.get(),
+                        last_name_entry.get(),
+                        str(birthdate_entry.get_date()),
+                        str(self.get_id_of_languages(language_var.get())),
+                        str(self.get_id_of_race(race_var.get())),
+                        str(self.get_id_of_religion(religion_var.get())),
+                        str(prior_convictions_var.get()),
+                        str(convicted_against_children_var.get()),
+                        str(sex_offender.get()),
+                        str(sex_predator.get()),
+                        str(patient[1]))
+                    )
+                    conn.commit()
+            except Exception as e:
+                messagebox.showinfo("Error", f"Failed to update person: {e}")
+
+        # button for saving edits to personal profile
+        save_button = ttk.Button(self.scrollable_frame, text="Save", command=save_person)
+        save_button.grid(row=1, column=8, sticky='ne', pady=25)
 
         # to search cases based on specific person
         def search_cases_by_patient(person_id, event=None):
