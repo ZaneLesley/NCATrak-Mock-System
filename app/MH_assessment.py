@@ -69,6 +69,10 @@ class MHassessment(tk.Frame):
             button = ttk.Button(button_frame, text=btn_text, command=btn_command)
             button.pack(side='left', padx=5)
 
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
+
         # Assessments Given Section 
         assessments_frame = tk.LabelFrame(scrollable_frame, text="Assessments Given", padx=10, pady=10)
         assessments_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')

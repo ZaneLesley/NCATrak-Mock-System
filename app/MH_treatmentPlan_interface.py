@@ -68,6 +68,9 @@ class MH_treatment_plan_interface(tk.Frame):
             button = ttk.Button(button_frame, text=btn_text, command=btn_command)
             button.pack(side='left', padx=5)
 
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
 
         # Function to open file dialog and set the filename
         def select_file():

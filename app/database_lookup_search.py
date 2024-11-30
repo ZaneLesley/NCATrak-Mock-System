@@ -138,6 +138,10 @@ class lookup_interface(tk.Frame):
         for btn_text, btn_command in nav_buttons:
             button = ttk.Button(button_frame, text=btn_text, command=btn_command)
             button.pack(side='left', padx=5)
+        
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
 
         # Create a window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")

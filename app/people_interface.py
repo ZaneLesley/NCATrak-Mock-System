@@ -80,6 +80,10 @@ class PeopleInterface(tk.Frame):
             button = ttk.Button(button_frame, text=btn_text, command=btn_command)
             button.pack(side='left', padx=5)
 
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
+
         # -------------------- Save and Cancel Buttons --------------------
         save_cancel_frame = tk.Frame(scrollable_frame)
         save_cancel_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')
