@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from tkinter import filedialog
 from tkcalendar import DateEntry
 import Generaltab_interface
@@ -297,7 +297,7 @@ class lookup_interface(tk.Frame):
         sex_predator_checkbox.grid(column=3, row=3, sticky="w", padx=padx, pady=pady)
 
         # creates a listbox to display search results for cases
-        tk.Label(self.details_frame, text="Case ID\tRelationship to Victim\tRole\tAge\tSame Household?\tCustody?", font=bold_label_font).grid(column=0, row=10, sticky="e", padx=padx, pady=pady)
+        tk.Label(self.details_frame, text="Case ID\t\tRelationship to Victim\t\tRole\t\tAge\t\tSame Household?\t\tCustody?", font=bold_label_font).grid(column=0, row=10, columnspan=7, sticky="e", padx=padx, pady=pady)
         cases_list = tk.Listbox(self.details_frame, width=entry_width * 4, height=10, font=normal_text_font)
         cases_list.grid(row=11, column=0, columnspan=5, padx=padx, pady=pady)
 
@@ -324,7 +324,8 @@ class lookup_interface(tk.Frame):
         def update_cases_list(filtered_cases):
             cases_list.delete(0, tk.END)
             for case in filtered_cases:
-                cases_list.insert(tk.END, f"{case[1]}   {self.get_relationship(case[17])}   {self.get_role(case[18])}   {case[3]}   {case[19]}   {case[13]}")
+                # this might be the most scuffed line of code i've ever written but for some reason tabs aren't working so this is the only way to get the spacing to behave     -zac
+                cases_list.insert(tk.END, f"                {case[1]}                 {self.get_relationship(case[17])}                                                      {self.get_role(case[18])}                    {case[3]}                               {case[19]}                                             {case[13]}")
             cases_list.bind("<Double-1>", on_case_select_from_list)
 
         # callback function when a patient is selected from the list
@@ -335,6 +336,7 @@ class lookup_interface(tk.Frame):
                 case_id = filtered_cases[case_index[0]][1]
                 case_id_file = open("case_id.txt", "w")
                 case_id_file.write(str(case_id))
+                messagebox.showinfo("Success", f"Selected case {case_id}")
 
         search_cases_by_patient(patient[1])
 
