@@ -10,6 +10,7 @@ import MH_basic_interface
 import MH_assessment
 import va_tab_interface
 import case_notes
+import database_lookup_search
 import sv_ttk
 import os
 from configparser import ConfigParser
@@ -20,49 +21,56 @@ class MH_treatment_plan_interface(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        
-        # Configure layout for navigation buttons and main canvas
-        self.grid_rowconfigure(2, weight=1)
+
+        self.controller = controller
+
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-        
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
 
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-        
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
-
-        # Setup scrollable canvas for the main content
+        # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
         scrollable_frame = ttk.Frame(canvas)
-        scrollable_frame.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
-        canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.grid(row=2, column=0, sticky="nsew")
-        scrollbar.grid(row=2, column=1, sticky="ns")
 
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        # Window in the canvas
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        # Scrollbar to canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Use grid over pack for interface linking
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Navigation Buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
+
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("Mental Health - Case Notes", self.show_case_notes),
+            ("VA", self.show_va_tab),
+        ]
+
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
+
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
 
         # Function to open file dialog and set the filename
         def select_file():
@@ -72,12 +80,12 @@ class MH_treatment_plan_interface(tk.Frame):
 
         # Treatment Plans Section
         treatment_frame = tk.LabelFrame(scrollable_frame, text="Treatment Plans", padx=10, pady=10)
-        treatment_frame.pack(fill="x", padx=10, pady=5)
+        treatment_frame.grid(row=1, column=0, sticky='w', padx=10, pady=5)
         ttk.Button(treatment_frame, text="+ Add New Treatment Plan", command=self.add_treatment_plan_popup).grid(row=0, column=0, padx=5, pady=5)
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
-        upload_frame.pack(fill="x", padx=10, pady=5)
+        upload_frame.grid(row=2, column=0, sticky='w', padx=10, pady=5)
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         file_name_var = tk.StringVar()
         file_name_entry = ttk.Entry(upload_frame, textvariable=file_name_var, width=50, state="readonly")
@@ -412,9 +420,27 @@ class MH_treatment_plan_interface(tk.Frame):
             messagebox.showerror("Error", "Failed to retrieve case ID.")
             return None
 
+    # -------------------- Navigation Functions --------------------
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
 
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
 
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
 
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
 
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
 
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatment_plan_interface)
 
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)

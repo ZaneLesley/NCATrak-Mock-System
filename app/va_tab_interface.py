@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog, messagebox
 from tkcalendar import DateEntry
+import database_lookup_search
 import Generaltab_interface
 import people_interface
 import MH_basic_interface
@@ -45,8 +46,10 @@ class va_interface(tk.Frame):
                 exit()
 
         tk.Frame.__init__(self, parent)
-        
-        self.grid_rowconfigure(2, weight=1)
+
+        self.controller = controller
+
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
     
         with open("case_id.txt", "r") as file:
@@ -77,38 +80,7 @@ class va_interface(tk.Frame):
         servicesAccepted = case[30]
         servicesOfferedDate = case[31]
         servicesEndDate = case[32]
-        
-        # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
-        # label.grid(row = 0, column=0, padx = 5, pady = 5)
 
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
-
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-        
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
-        
         # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
@@ -123,26 +95,43 @@ class va_interface(tk.Frame):
         widget_frame = ttk.Frame(self)
         widget_frame.grid(row=1, column=0, pady=20)
 
-        scrollable_frame = ttk.Frame(canvas)
-        # Configure the canvas and scrollbar
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        # Create a window in the canvas
+        # Window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-        # Link scrollbar to the canvas
+        # Scrollbar to canvas
         canvas.configure(yscrollcommand=scrollbar.set)
 
         # Use grid over pack for interface linking
-        canvas.grid(row=2, column=0, sticky="nsew")
-        scrollbar.grid(row=2, column=1, sticky="ns")
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Navigation Buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
+
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("Mental Health - Case Notes", self.show_case_notes),
+            ("VA", self.show_va_tab),
+        ]
+
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
+
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
 
         # VA tab title
         va_frame = tk.Frame(scrollable_frame)
-        va_frame.pack(anchor="center", pady=10, padx=10)
+        va_frame.grid(row=1, column=0, sticky='w', pady=10, padx=10)
         ttk.Label(va_frame, text="VA").pack()
 
         def get_all_states():
@@ -341,7 +330,7 @@ class va_interface(tk.Frame):
 
         # Create the Referral section
         referral_frame = tk.LabelFrame(scrollable_frame, text="Referral", padx=10, pady=10)
-        referral_frame.pack(fill="x", padx=10, pady=5)
+        referral_frame.grid(row=2, column=0, sticky='w', padx=10, pady=5)
 
         # Date (with DateEntry for calendar selection)
         ttk.Label(referral_frame, text="Date").grid(row=0, column=0, padx=5, pady=5)
@@ -372,7 +361,7 @@ class va_interface(tk.Frame):
 
         #Create the VAS section
         vas_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services", padx=10, pady=10)
-        vas_frame.pack(fill="x", padx=10, pady=5)
+        vas_frame.grid(row=3, column=0, sticky='w', padx=10, pady=5)
 
         ttk.Label(vas_frame, text="VA Case Number").grid(row=0, column=0, padx=5, pady=5)
         va_casenum_entry = ttk.Entry(vas_frame) 
@@ -953,7 +942,7 @@ class va_interface(tk.Frame):
                 exit()
 
         vas_log_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services Log", padx=10, pady=10)
-        vas_log_frame.pack(fill="x", padx=10, pady=5)
+        vas_log_frame.grid(row=4, column=0, sticky='w', padx=10, pady=5)
 
         sessions = get_all_sessions()
 
@@ -1393,7 +1382,7 @@ class va_interface(tk.Frame):
 
         # Crime Compensation Application Section
         crime_comp_app_frame = tk.LabelFrame(scrollable_frame, text="Crime Compensation Application", padx=10, pady=10)
-        crime_comp_app_frame.pack(fill="x", padx=10, pady=5)
+        crime_comp_app_frame.grid(row=5, column=0, sticky='w', padx=10, pady=5)
 
         reps, repReverse = get_all_personnel()
 
@@ -1732,7 +1721,7 @@ class va_interface(tk.Frame):
                 exit()
 
         screenings_frame = tk.LabelFrame(scrollable_frame, text="Screenings Given", padx=10, pady=10)
-        screenings_frame.pack(fill="x", padx=10, pady=5)
+        screenings_frame.grid(row=6, column=0, sticky='w', padx=10, pady=5)
 
         #Add New Screening button
         ttk.Button(screenings_frame, text="Add New Screening", command=add_new_screening_popup).grid(row=0, column=0, padx=5, pady=5)
@@ -1781,7 +1770,7 @@ class va_interface(tk.Frame):
 
         # Outside Referrals Section
         outside_referrals_frame = tk.LabelFrame(scrollable_frame, text="Outside Referrals", padx=10, pady=10)
-        outside_referrals_frame.pack(fill="x", padx=10, pady=5)
+        outside_referrals_frame.grid(row=7, column=0, sticky='w', padx=10, pady=5)
 
         ttk.Label(outside_referrals_frame, text="Referred From").grid(row=1, column=1, padx=5, pady=5)
         referral_from_entry = ttk.Entry(outside_referrals_frame)
@@ -1832,7 +1821,7 @@ class va_interface(tk.Frame):
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=4, column=1, padx=5, pady=5)
         # Additional Points of Contact Section
         additional_contact_frame = tk.LabelFrame(scrollable_frame, text="Additional Points of Contact", padx=10, pady=10)
-        additional_contact_frame.pack(fill="x", padx=10, pady=5)
+        additional_contact_frame.grid(row=8, column=0, sticky='w', padx=10, pady=5)
 
         # button to add a new point of contact
         ttk.Button(additional_contact_frame, text="+ Add New Point of Contact", command=add_contact_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -1844,7 +1833,7 @@ class va_interface(tk.Frame):
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
-        upload_frame.pack(fill="x", padx=10, pady=5)
+        upload_frame.grid(row=9, column=0, sticky='w', padx=10, pady=5)
 
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         file_name_var = tk.StringVar()  # Variable to hold the filename
@@ -1863,7 +1852,6 @@ class va_interface(tk.Frame):
         # Add placeholder for upload status (could be enhanced later)
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
-
 
         def submit_all_fields(date, rAgencyId, lEmployeeId, vaCN, vaAId, serviceODate, sAccept, serviceEnd, mdtV, birthCert, policeR, cNum, cStatus, cReason):
             referralDate = date 
@@ -1930,3 +1918,29 @@ class va_interface(tk.Frame):
 
         save_button.grid(row=1, column=0, sticky="w", padx=5)
         cancel_button.grid(row=1, column=1, sticky="w", padx=5)
+        cancel_button.grid(row=1, column=1, sticky="w", padx=5)
+
+    # -------------------- Navigation Functions --------------------
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
+
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
+
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
+
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
+
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
+
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)

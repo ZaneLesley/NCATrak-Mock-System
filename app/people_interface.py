@@ -72,13 +72,17 @@ class PeopleInterface(tk.Frame):
             ("Mental Health - Basic", self.show_mh_basic),
             ("Mental Health - Assessment", self.show_mh_assessment),
             ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("Mental Health - Case Notes", self.show_case_notes),
             ("VA", self.show_va_tab),
-            ("Case Notes", self.show_case_notes),
         ]
 
         for btn_text, btn_command in nav_buttons:
             button = ttk.Button(button_frame, text=btn_text, command=btn_command)
             button.pack(side='left', padx=5)
+
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
 
         # -------------------- Save and Cancel Buttons --------------------
         save_cancel_frame = tk.Frame(scrollable_frame)

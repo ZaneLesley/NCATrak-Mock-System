@@ -39,13 +39,18 @@ class tkinterApp(tk.Tk):
         
         # For Testing
         #print(self.frame)
-        
-        self.show_frame(people_interface.people_interface)
+
+        self.show_frame(database_lookup_search.lookup_interface)
             
-    
     def show_frame(self, frame_class):
         frame = self.frames[frame_class] 
         frame.tkraise()
+
+    def refresh(self):
+        self.destroy()
+        self.__init__()
+        self.geometry("1600x800")
+        self.mainloop()
 
 if __name__ == "__main__":
     app = tkinterApp()

@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from tkcalendar import DateEntry
 import MH_basic_interface
+import database_lookup_search
 import people_interface
 import MH_assessment
 import MH_treatmentPlan_interface
@@ -14,42 +15,12 @@ class GeneraltabInterface(tk.Frame):
     def __init__(self, parent, controller):
         
         tk.Frame.__init__(self, parent)
+
+        self.controller = controller
         
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        
-        # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
-        # label.grid(row = 0, column=0, padx = 5, pady = 5)
 
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
-
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes.case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
-        
-        
         # Create a canvas and a scrollbar
         canvas = tk.Canvas(self)
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
@@ -61,37 +32,54 @@ class GeneraltabInterface(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-        widget_frame = ttk.Frame(self)
-        widget_frame.grid(row=1, column=0, pady=20)
-
-        save_button = ttk.Button(widget_frame, text='SAVE')
-        cancel_button = ttk.Button(widget_frame, text='CANCEL')
-        delete_button = ttk.Button(widget_frame, text='DELETE CASE')
-
-        save_button.grid(row=1, column=0, sticky="w", padx=5)
-        cancel_button.grid(row=1, column=1, sticky="w", padx=5)
-        delete_button.grid(row=1, column=2, sticky="w", padx=5)
-
-        scrollable_frame = ttk.Frame(canvas)
-        # Configure the canvas and scrollbar
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-        # Create a window in the canvas
+        # Window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
 
-        # Link scrollbar to the canvas
+        # Scrollbar to canvas
         canvas.configure(yscrollcommand=scrollbar.set)
 
         # Use grid over pack for interface linking
-        canvas.grid(row=2, column=0, sticky="nsew")
-        scrollbar.grid(row=2, column=1, sticky="ns")
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Navigation Buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
+
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("Mental Health - Case Notes", self.show_case_notes),
+            ("VA", self.show_va_tab),
+        ]
+
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
+
+        # Reload button - fully reloads the application
+        refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
+        refresh_button.pack(side='right', padx=5)
+
+        save_cancel_delete_frame = ttk.Frame(scrollable_frame)
+        save_cancel_delete_frame.grid(row=1, column=0, columnspan=7, padx=5, pady=5)
+
+        save_button = ttk.Button(save_cancel_delete_frame, text='SAVE')
+        cancel_button = ttk.Button(save_cancel_delete_frame, text='CANCEL')
+        delete_button = ttk.Button(save_cancel_delete_frame, text='DELETE CASE')
+
+        save_button.grid(row=0, column=0, padx=5)
+        cancel_button.grid(row=0, column=1, padx=5)
+        delete_button.grid(row=0, column=2, padx=5)
 
         # General tab title
         general_frame = tk.Frame(scrollable_frame)
-        general_frame.pack(anchor="center", pady=10)
+        general_frame.grid(row=2, column=0, pady=10)
         ttk.Label(general_frame, text="Case Tracking").pack()
 
 
@@ -211,7 +199,7 @@ class GeneraltabInterface(tk.Frame):
 
         # Create the cases section
         cases_frame = tk.LabelFrame(scrollable_frame, text="Cases", padx=10, pady=10)
-        cases_frame.pack(fill="x", padx=10, pady=5)
+        cases_frame.grid(row=3, column = 0, padx=10, pady=5, sticky = 'w')
 
         # Date (with DateEntry for calendar selection)
         ttk.Label(cases_frame, text="Service").grid(row=0, column=1, padx=5, pady=5)
@@ -359,7 +347,7 @@ class GeneraltabInterface(tk.Frame):
 
         # Case Information
         case_information_frame = tk.LabelFrame(scrollable_frame, text="Case Information", padx=10, pady=10)
-        case_information_frame.pack(fill="x", padx=10, pady=5)
+        case_information_frame.grid(row=4, column=0, padx=10, pady=5, sticky='w')
 
         ttk.Label(case_information_frame, text="Date Received by CAC").grid(row=0, column=0, padx=5, pady=5)
         date_entry = DateEntry(case_information_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
@@ -453,7 +441,7 @@ class GeneraltabInterface(tk.Frame):
 
         # Linked Cases Services Section
         linked_cases_frame = tk.LabelFrame(scrollable_frame, text="Cases Linked to this Allegation", padx=10, pady=10)
-        linked_cases_frame.pack(fill="x", padx=10, pady=5)
+        linked_cases_frame.grid(row=5, column=0, padx=10, pady=5, sticky='w')
 
         # CAC Case Number
         ttk.Label(linked_cases_frame, text="CAC Case Number").grid(row=1, column=6, padx=5, pady=5)
@@ -473,7 +461,7 @@ class GeneraltabInterface(tk.Frame):
 
         # -Court Activities Section
         court_activities_frame = tk.LabelFrame(scrollable_frame, text="Court Activities", padx=10, pady=10)
-        court_activities_frame.pack(fill="x", padx=10, pady=5)
+        court_activities_frame.grid(row=6, column=0, padx=10, pady=5, sticky='w')
 
         # Court Type
         ttk.Label(court_activities_frame, text="Court Type").grid(row=0, column=0, padx=5, pady=5)
@@ -488,7 +476,7 @@ class GeneraltabInterface(tk.Frame):
         #--------------------------------
         # -Release of Information Section
         information_release_frame = tk.LabelFrame(scrollable_frame, text="Release of Information", padx=10, pady=10)
-        information_release_frame.pack(fill="x", padx=10, pady=5)
+        information_release_frame.grid(row=7, column=0, padx=10, pady=5, sticky='w')
 
 
         ttk.Label(information_release_frame, text="Date Requested").grid(row=1, column=1, padx=5, pady=5)
@@ -563,7 +551,7 @@ class GeneraltabInterface(tk.Frame):
 
         # Outside Referrals Section
         outside_referrals_frame = tk.LabelFrame(scrollable_frame, text="Outside Referrals", padx=10, pady=10)
-        outside_referrals_frame.pack(fill="x", padx=10, pady=5)
+        outside_referrals_frame.grid(row=8, column=0, padx=10, pady=5, sticky='w')
 
         ttk.Label(outside_referrals_frame, text="Referred From").grid(row=1, column=1, padx=5, pady=5)
         referral_from_entry = ttk.Entry(outside_referrals_frame)
@@ -587,7 +575,7 @@ class GeneraltabInterface(tk.Frame):
         # Insurance Information
 
         insurance_information_frame = tk.LabelFrame(scrollable_frame, text="Insurance Information", padx=10, pady=10)
-        insurance_information_frame.pack(fill="x", padx=10, pady=5)
+        insurance_information_frame.grid(row=9, column=0, padx=10, pady=5, sticky='w')
 
         ttk.Label(insurance_information_frame, text="Primary Insurance").grid(row=0, column=1, padx=5, pady=5)
         ttk.Label(insurance_information_frame, text="Secondary Insurance").grid(row=0, column=2, padx=5, pady=5)
@@ -654,7 +642,7 @@ class GeneraltabInterface(tk.Frame):
 
         # Additional Points of Contact Section
         codes_frame = tk.LabelFrame(scrollable_frame, text="ICD Codes", padx=10, pady=10)
-        codes_frame.pack(fill="x", padx=10, pady=5)
+        codes_frame.grid(row=10, column=0, padx=10, pady=5, sticky='w')
 
         # Button to add a new point of contact
         ttk.Button(codes_frame, text="Add new record", command=add_code_record_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -668,7 +656,7 @@ class GeneraltabInterface(tk.Frame):
 
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
-        upload_frame.pack(fill="x", padx=10, pady=5)
+        upload_frame.grid(row=11, column=0, padx=10, pady=5, sticky='w')
 
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="w")
         file_name_var = tk.StringVar()  # Variable to hold the filename
@@ -687,3 +675,27 @@ class GeneraltabInterface(tk.Frame):
         # Add placeholder for upload status (could be enhanced later)
         upload_status_label = ttk.Label(upload_frame, text="Maximum allowed file size is 10 MB.")
         upload_status_label.grid(row=1, column=0, columnspan=3, padx=5, pady=5)
+
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
+
+    def show_general_tab(self):
+        self.controller.show_frame(GeneraltabInterface)
+
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
+
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
+
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
+
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes.case_notes_interface)
