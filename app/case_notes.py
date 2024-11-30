@@ -11,6 +11,7 @@ import os
 import traceback
 
 # Import other interfaces for navigation
+import database_lookup_search
 import Generaltab_interface
 import people_interface
 import MH_basic_interface
@@ -413,21 +414,49 @@ class case_notes_interface(tk.Frame):
 
         self.controller = controller
 
-        # Add navigation buttons at the top
-        nav_frame = ttk.Frame(self)
-        nav_frame.grid(row=0, column=0, padx=10, pady=10, sticky='w')
-
-        # Add buttons to navigate to other interfaces
-        ttk.Button(nav_frame, text="General Tab", command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface)).pack(side='left', padx=5)
-        ttk.Button(nav_frame, text="People", command=lambda: controller.show_frame(people_interface.people_interface)).pack(side='left', padx=5)
-        ttk.Button(nav_frame, text="MH Basic", command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface)).pack(side='left', padx=5)
-        ttk.Button(nav_frame, text="MH Assessment", command=lambda: controller.show_frame(MH_assessment.MHassessment)).pack(side='left', padx=5)
-        ttk.Button(nav_frame, text="MH Treatment Plan", command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)).pack(side='left', padx=5)
-        ttk.Button(nav_frame, text="VA Tab", command=lambda: controller.show_frame(va_tab_interface.va_interface)).pack(side='left', padx=5)
-        # Add more buttons as needed
-
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
+
+        # Create a canvas and a scrollbar
+        canvas = tk.Canvas(self)
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
+        scrollable_frame = ttk.Frame(canvas)
+
+        # Configure the canvas and scrollbar
+        scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+
+        # Window in the canvas
+        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+        # Scrollbar to canvas
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Use grid over pack for interface linking
+        canvas.grid(row=0, column=0, sticky="nsew")
+        scrollbar.grid(row=0, column=1, sticky="ns")
+
+        # Navigation Buttons
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=0, column=0, columnspan=7, padx=5, pady=5, sticky='w')
+
+        # Create a list of tuples with button text and corresponding function placeholders
+        nav_buttons = [
+            ("Lookup", self.show_lookup_page),
+            ("General", self.show_general_tab),
+            ("People", self.show_people_tab),
+            ("Mental Health - Basic", self.show_mh_basic),
+            ("Mental Health - Assessment", self.show_mh_assessment),
+            ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("VA", self.show_va_tab),
+            ("Case Notes", self.show_case_notes),
+        ]
+
+        for btn_text, btn_command in nav_buttons:
+            button = ttk.Button(button_frame, text=btn_text, command=btn_command)
+            button.pack(side='left', padx=5)
 
         # Establish database connection
         self.conn = self.get_connection()
@@ -455,61 +484,12 @@ class case_notes_interface(tk.Frame):
         self.type_mapping = {name: idx for idx, name in enumerate(self.type_options, start=1)}
         self.type_reverse_mapping = {idx: name for name, idx in self.type_mapping.items()}
         
-        tk.Frame.__init__(self, parent)
-        
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        
-        # label = ttk.Label(self, text="back to main page", font = ("Verdana", 35))
-        # label.grid(row = 0, column=0, padx = 5, pady = 5)
-
-        button1 = ttk.Button(self, text="General", 
-                            command=lambda: controller.show_frame(Generaltab_interface.GeneraltabInterface))
-        button1.grid(row=0, column=0, padx=5, pady=5)
-
-        button2 = ttk.Button(self, text="People", 
-                            command=lambda: controller.show_frame(people_interface.people_interface))
-        button2.grid(row=0, column=1, padx=5, pady=5)
-
-        button3 = ttk.Button(self, text="Mental Health - Basic", 
-                            command=lambda: controller.show_frame(MH_basic_interface.MHBasicInterface))
-        button3.grid(row=0, column=2, padx=5, pady=5)
-
-        button4 = ttk.Button(self, text="Mental Health - Assessment", 
-                            command=lambda: controller.show_frame(MH_assessment.MHassessment))
-        button4.grid(row=0, column=3, padx=5, pady=5)
-
-        button5 = ttk.Button(self, text="Mental Health - Treatment Plan", 
-                            command=lambda: controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface))
-        button5.grid(row=0, column=4, padx=5, pady=5)
-
-        button6 = ttk.Button(self, text="VA", 
-                            command=lambda: controller.show_frame(va_tab_interface.va_interface))
-        button6.grid(row=0, column=5, padx=5, pady=5)
-
-        button7 = ttk.Button(self, text="Case Notes", 
-                            command=lambda: controller.show_frame(case_notes_interface))
-        button7.grid(row=0, column=6, padx=5, pady=5)
-        
-        
-        # Create a canvas and a scrollbar
-        canvas = tk.Canvas(self)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        scrollable_frame = ttk.Frame(canvas)
-
-        # Configure the canvas and scrollbar
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
-        )
-
-
         # Setup notebook for tabs
         self.notebook = ttk.Notebook(self)
-        self.notebook.grid(row=1, column=0, padx=10, pady=10)
+        self.notebook.grid(row=1, column=0, sticky = 'w', padx=5)
 
         # Session Log / Appointments tab
-        self.session_log_tab = ttk.Frame(self.notebook, padding=10)
+        self.session_log_tab = ttk.Frame(self.notebook)
         self.notebook.add(self.session_log_tab, text='Session Log / Appointments')
         self.setup_session_log_tab()
 
@@ -931,6 +911,31 @@ class case_notes_interface(tk.Frame):
         if hasattr(self, 'conn') and self.conn:
             self.conn.close()
         self.destroy()
+
+    # -------------------- Navigation Functions --------------------
+    def show_lookup_page(self):
+        self.controller.show_frame(database_lookup_search.lookup_interface)
+
+    def show_general_tab(self):
+        self.controller.show_frame(Generaltab_interface.GeneraltabInterface)
+
+    def show_people_tab(self):
+        self.controller.show_frame(people_interface.people_interface)
+
+    def show_mh_basic(self):
+        self.controller.show_frame(MH_basic_interface.MHBasicInterface)
+
+    def show_mh_assessment(self):
+        self.controller.show_frame(MH_assessment.MHassessment)
+
+    def show_mh_treatment_plan(self):
+        self.controller.show_frame(MH_treatmentPlan_interface.MH_treatment_plan_interface)
+
+    def show_va_tab(self):
+        self.controller.show_frame(va_tab_interface.va_interface)
+
+    def show_case_notes(self):
+        self.controller.show_frame(case_notes_interface)
 
 # Minimal App class to simulate the controller
 class App(tk.Tk):
