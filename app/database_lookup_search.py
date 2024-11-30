@@ -178,8 +178,8 @@ class lookup_interface(tk.Frame):
         scrollable_frame = ttk.Frame(self.details_frame)
 
         # button for creating new case
-        save_button = ttk.Button(self.scrollable_frame, text="Create New Case", command=self.create_new_case_popup)
-        save_button.grid(row=1, column=9, sticky='ne', pady=20)
+        new_case_button = ttk.Button(self.scrollable_frame, text="Create New Case", command=self.create_new_case_popup)
+        new_case_button.grid(row=1, column=9, sticky='ne', pady=20)
 
     def get_religion(self, id):
         if id is not None and id >= 0:
@@ -252,8 +252,6 @@ class lookup_interface(tk.Frame):
         # Clear previous patient details
         for widget in self.details_frame.winfo_children():
             widget.destroy()
-
-        
 
         tk.Label(self.details_frame, text="First Name:", font=bold_label_font).grid(column=0, row=0, sticky="e", padx=padx, pady=pady)
         first_name_entry = tk.Entry(self.details_frame, font=normal_text_font)
@@ -435,9 +433,149 @@ class lookup_interface(tk.Frame):
         search_cases_by_patient(patient[1])
 
     def create_new_case_popup(self):
-        popup = tk.Toplevel(self)
-        popup.title("Create New Case - Search Person")
-        popup.geometry("1200x700")
+        new_case_popup = tk.Toplevel(self)
+        new_case_popup.title("Create New Case")
+        new_case_popup.geometry("1600x900")
+
+        search_person_popup = tk.Toplevel(self)
+        search_person_popup.title("Search Person")
+        search_person_popup.geometry("1100x700")
+
+        search_bar_frame = tk.Frame(search_person_popup)
+        search_bar_frame.grid(row=0, column=0, padx=20, pady=20)
+
+        tk.Label(search_bar_frame, text="Last Name", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5)
+        search_bar = tk.Entry(search_bar_frame, width=40)
+        search_bar.grid(row=0, column=1, padx=padx, pady=pady)
+
+        search_button = tk.Button(search_bar_frame, text="Search", command=lambda:search_by_last_name(search_bar.get()))
+        search_button.grid(row=0, column=2, padx=padx, pady=pady)
+
+        no_match_button = tk.Button(search_bar_frame, text="No Match Found", command=search_person_popup.destroy)
+        no_match_button.grid(row=0, column=3, padx=padx, pady=pady)
+
+        close_button = tk.Button(search_bar_frame, text="Close", command=search_person_popup.destroy)
+        close_button.grid(row=0, column=4, padx=padx, pady=pady)
+
+        filtered_people = []
+
+        results_header_frame = tk.Frame(search_person_popup)
+        results_header_frame.grid(row=1, column=0, sticky='w')
+
+        tk.Label(results_header_frame, text="Select", font=bold_label_font, width=10).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+        tk.Label(results_header_frame, text="View", font=bold_label_font, width=10).grid(row=0, column=1, padx=5, pady=5, sticky='w')
+        tk.Label(results_header_frame, text="Last Name", font=bold_label_font, width=20).grid(row=0, column=2, padx=5, pady=5, sticky='w')
+        tk.Label(results_header_frame, text="First Name", font=bold_label_font, width=20).grid(row=0, column=3, padx=5, pady=5, sticky='w')
+        tk.Label(results_header_frame, text="Middle Name", font=bold_label_font, width=20).grid(row=0, column=4, padx=5, pady=5, sticky='w')
+
+        results_frame = tk.Frame(search_person_popup)
+        results_frame.grid(row=2, column=0)
+
+        def search_by_last_name(lname):
+            try:
+                config = load_config(filename="database.ini")
+                conn = connect(config)
+                with conn.cursor() as cur:
+                    cur.execute("SELECT * FROM person WHERE last_name~*\'{0}\' ORDER BY last_name FETCH FIRST 100 ROWS ONLY".format(lname))
+                    row = cur.fetchone()
+                    while row is not None:
+                        filtered_people.append(row)
+                        row = cur.fetchone()
+                    show_people_by_last_name()
+            except Exception as e:
+                messagebox.showinfo("Error", f"Error executing search: {e}")
+
+        def show_people_by_last_name():
+            results_frame = tk.Frame(search_person_popup)
+            results_frame.grid(row=2, column=0, sticky='w')
+            for i in range(len(filtered_people)):
+                tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
+                tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
+                tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
+
+        def view_person(patient):
+
+            view_person_popup = tk.Toplevel(self)
+            view_person_popup.title("View Person")
+            view_person_popup.geometry("1100x700")
+
+            profile_frame = tk.Frame(view_person_popup)
+            profile_frame.grid(row=0, column=0)
+
+            tk.Label(profile_frame, text="First Name:", font=bold_label_font).grid(column=0, row=0, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=patient[2]).grid(column=1, row=0, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Last Name:", font=bold_label_font).grid(column=0, row=1, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=patient[4]).grid(column=1, row=1, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Middle Name:", font=bold_label_font).grid(column=0, row=2, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=patient[3]).grid(column=1, row=2, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Date of Birth:", font=bold_label_font).grid(column=0, row=4, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=patient[6]).grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Race:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=self.get_race(patient[9])).grid(column=1, row=5, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Gender:", font=bold_label_font).grid(column=0, row=6, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, text="Male" if patient[7] == 'M' else "Female", font=normal_text_font).grid(column=1, row=6, sticky='w', padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Religion:", font=bold_label_font).grid(column=0, row=7, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=self.get_religion(patient[10])).grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Language:", font=bold_label_font).grid(column=0, row=8, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, font=normal_text_font, text=self.get_language(patient[8])).grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Prior Convictions:", font=bold_label_font).grid(column=2, row=0, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, text="Yes" if patient[11] else "No", font=normal_text_font).grid(column=3, row=0, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Convicted of Crimes Against Children:", font=bold_label_font).grid(column=2, row=1, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, text="Yes" if patient[12] else "No", font=normal_text_font).grid(column=3, row=1, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Sexual Offender:", font=bold_label_font).grid(column=2, row=2, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, text="Yes" if patient[13] else "No", font=normal_text_font).grid(column=3, row=2, sticky="w", padx=padx, pady=pady)
+
+            tk.Label(profile_frame, text="Sexual Predator:", font=bold_label_font).grid(column=2, row=3, sticky="e", padx=padx, pady=pady)
+            tk.Label(profile_frame, text="Yes" if patient[14] else "No", font=normal_text_font).grid(column=3, row=3, sticky="w", padx=padx, pady=pady)
+
+            # creates a listbox to display search results for cases
+            tk.Label(profile_frame, text="Case ID\t\tRelationship to Victim\t\tRole\t\tAge\t\tSame Household?\t\tCustody?", font=bold_label_font).grid(column=0, row=10, columnspan=7, sticky="e", padx=padx, pady=pady)
+            cases_list = tk.Listbox(profile_frame, width=entry_width * 4, height=10, font=normal_text_font)
+            cases_list.grid(row=11, column=0, columnspan=5, padx=padx, pady=pady)
+
+            # to search cases based on specific person
+            def search_cases_by_patient(person_id):
+                global filtered_cases_2
+                config = load_config(filename="database.ini")
+                conn = connect(config)
+
+                search_query = self.search_entry.get().lower()
+                filtered_cases_2 = []
+
+                with conn.cursor() as cur:
+                    cur.execute(f"SELECT * FROM case_person WHERE person_id={person_id} FETCH FIRST 100 ROWS ONLY".format(search_query))
+                    row = cur.fetchone()
+
+                    while row is not None:
+                        filtered_cases_2.append(row)
+                        row = cur.fetchone()
+
+                update_cases_list(filtered_cases_2)
+
+            #update the patient list based on search 
+            def update_cases_list(filtered_cases):
+                cases_list.delete(0, tk.END)
+                for case in filtered_cases:
+                    # this might be the most scuffed line of code i've ever written but for some reason tabs aren't working so this is the only way to get the spacing to behave     -zac
+                    cases_list.insert(tk.END, f"                {case[1]}                 {self.get_relationship(case[17])}                                                      {self.get_role(case[18])}                    {case[3]}                               {case[19]}")
+
+            search_cases_by_patient(patient[1])
+
+        def select_person(person):
+            pass
+
 
     # to filter patients based on search
     def search_patients(self, event=None):
