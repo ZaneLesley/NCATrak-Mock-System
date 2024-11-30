@@ -503,7 +503,6 @@ class case_notes_interface(tk.Frame):
             lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
-
         # Setup notebook for tabs
         self.notebook = ttk.Notebook(self)
         self.notebook.grid(row=1, column=0, padx=10, pady=10)
