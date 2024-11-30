@@ -223,40 +223,78 @@ class lookup_interface(tk.Frame):
             widget.destroy()
 
         tk.Label(self.details_frame, text="First Name:", font=bold_label_font).grid(column=0, row=0, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=patient[2], font=normal_text_font).grid(column=1, row=0, sticky="w", padx=padx, pady=pady)
+        first_name_entry = tk.Entry(self.details_frame, font=normal_text_font)
+        first_name_entry.insert(0,patient[2])
+        first_name_entry.grid(column=1, row=0, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Last Name:", font=bold_label_font).grid(column=0, row=1, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=patient[4], font=normal_text_font).grid(column=1, row=1, sticky="w", padx=padx, pady=pady)
+        last_name_entry = tk.Entry(self.details_frame, font=normal_text_font)
+        last_name_entry.insert(0, patient[4])
+        last_name_entry.grid(column=1, row=1, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Middle Name:", font=bold_label_font).grid(column=0, row=2, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=patient[3], font=normal_text_font).grid(column=1, row=2, sticky="w", padx=padx, pady=pady)
+        middle_name_entry = tk.Entry(self.details_frame, font=normal_text_font)
+        middle_name_entry.insert(0, patient[3])
+        middle_name_entry.grid(column=1, row=2, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Date of Birth:", font=bold_label_font).grid(column=0, row=4, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=patient[6], font=normal_text_font).grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
+        birthdate_entry = DateEntry(self.details_frame, font=normal_text_font)
+        birthdate_entry.set_date(patient[6])
+        birthdate_entry.grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Race:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=self.get_race(patient[9]), font=normal_text_font).grid(column=1, row=5, sticky="w", padx=padx, pady=pady)
+        race_dropdown = ttk.Combobox(self.details_frame, values=races, font=normal_text_font)
+        race_dropdown.insert(0, string=self.get_race(patient[9]))
+        race_dropdown.grid(column=1, row=5, sticky="w", padx=padx, pady=pady)
 
+        # genders = ["Male", "Female", "Transgender Male", "Transgender Female", "Non-Binary", "Other"]
+        genders = ["M", "F"]
+        gender_frame = tk.Frame(self.details_frame)
+        gender_frame.grid(row=6, column=1, padx=padx, pady=pady, sticky='w')
+        patient_gender = tk.StringVar()
+        patient_gender.set(patient[7])
         tk.Label(self.details_frame, text="Gender:", font=bold_label_font).grid(column=0, row=6, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=patient[7], font=normal_text_font).grid(column=1, row=6, sticky="w", padx=padx, pady=pady)
+        column_counter = 1
+        for gender in genders:
+            button = ttk.Radiobutton(gender_frame, text=gender, variable=patient_gender, value=gender)
+            button.grid(row=0, column=column_counter)
+            column_counter += 1
+        style = ttk.Style()
+        style.configure("TRadiobutton", font=('Helvetica', 12))
 
         tk.Label(self.details_frame, text="Religion:", font=bold_label_font).grid(column=0, row=7, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=self.get_religion(patient[10]), font=normal_text_font).grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
+        religion_dropdown = ttk.Combobox(self.details_frame, values=religions, font=normal_text_font)
+        religion_dropdown.insert(0, string=self.get_religion(patient[10]))
+        religion_dropdown.grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Language:", font=bold_label_font).grid(column=0, row=8, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text=self.get_language(patient[8]), font=normal_text_font).grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
+        language_dropdown = ttk.Combobox(self.details_frame, values=languages, font=normal_text_font)
+        language_dropdown.insert(0, string=self.get_language(patient[8]))
+        language_dropdown.grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
 
+        prior_convictions_var = tk.BooleanVar()
+        prior_convictions_var.set(patient[11])
         tk.Label(self.details_frame, text="Prior Convictions:", font=bold_label_font).grid(column=2, row=0, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text="Yes" if patient[11] else "No", font=normal_text_font).grid(column=3, row=0, sticky="w", padx=padx, pady=pady)
+        prior_convictions_checkbox = ttk.Checkbutton(self.details_frame, variable=prior_convictions_var, onvalue=True, offvalue=False)
+        prior_convictions_checkbox.grid(column=3, row=0, sticky="w", padx=padx, pady=pady)
 
+        convicted_against_children_var = tk.BooleanVar()
+        convicted_against_children_var.set(patient[12])
         tk.Label(self.details_frame, text="Convicted of Crimes Against Children:", font=bold_label_font).grid(column=2, row=1, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text="Yes" if patient[12] else "No", font=normal_text_font).grid(column=3, row=1, sticky="w", padx=padx, pady=pady)
+        convicted_against_children_checkbox = ttk.Checkbutton(self.details_frame, variable=convicted_against_children_var, onvalue=True, offvalue=False)
+        convicted_against_children_checkbox.grid(column=3, row=1, sticky="w", padx=padx, pady=pady)
 
+        sex_offender = tk.BooleanVar()
+        sex_offender.set(patient[13])
         tk.Label(self.details_frame, text="Sexual Offender:", font=bold_label_font).grid(column=2, row=2, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text="Yes" if patient[13] else "No", font=normal_text_font).grid(column=3, row=2, sticky="w", padx=padx, pady=pady)
+        sex_offender_checkbox = ttk.Checkbutton(self.details_frame, variable=sex_offender, onvalue=True, offvalue=False)
+        sex_offender_checkbox.grid(column=3, row=2, sticky="w", padx=padx, pady=pady)
 
+        sex_predator = tk.BooleanVar()
+        sex_predator.set(patient[14])
         tk.Label(self.details_frame, text="Sexual Predator:", font=bold_label_font).grid(column=2, row=3, sticky="e", padx=padx, pady=pady)
-        tk.Label(self.details_frame, text="Yes" if patient[14] else "No", font=normal_text_font).grid(column=3, row=3, sticky="w", padx=padx, pady=pady)
+        sex_predator_checkbox = ttk.Checkbutton(self.details_frame, variable=sex_predator, onvalue=True, offvalue=False)
+        sex_predator_checkbox.grid(column=3, row=3, sticky="w", padx=padx, pady=pady)
 
         # creates a listbox to display search results for cases
         tk.Label(self.details_frame, text="Case ID\tRelationship to Victim\tRole\tAge\tSame Household?\tCustody?", font=bold_label_font).grid(column=0, row=10, sticky="e", padx=padx, pady=pady)
