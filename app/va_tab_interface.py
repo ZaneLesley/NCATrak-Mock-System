@@ -49,7 +49,7 @@ class va_interface(tk.Frame):
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
     
-        with open("app\case_id.txt", "r") as file:
+        with open("case_id.txt", "r") as file:
             case = get_case(file.read())
 
         if case is None:
