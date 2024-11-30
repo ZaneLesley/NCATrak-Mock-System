@@ -174,19 +174,19 @@ class lookup_interface(tk.Frame):
         scrollable_frame = ttk.Frame(self.details_frame)
 
     def get_religion(self, id):
-        if id is not None:
+        if id is not None and id >= 0:
             return religions[id]
         else:
             return ""
         
     def get_race(self, id):
-        if id is not None:
+        if id is not None and id >= 0:
             return races[id]
         else:
             return ""
         
     def get_language(self, id):
-        if id is not None:
+        if id is not None and id >= 0:
             return languages[id]
         else:
             return ""
@@ -208,22 +208,21 @@ class lookup_interface(tk.Frame):
             if races[i] == race:
                 return i
             else:
-                return (len(races) - 1)
+                return -1
             
     def get_id_of_religion(self, religion):
         for i in range((len(religions) - 1)):
             if religions[i] == religion:
                 return i
             else:
-                return (len(religions) - 1)
+                return -1
             
     def get_id_of_languages(self, language):
         for i in range((len(languages) - 1)):
             if languages[i] == language:
-                print(i)
                 return i
             else:
-                return (len(languages) - 1)
+                return -1
 
     def load_first_100_patients(self):
 
@@ -272,7 +271,6 @@ class lookup_interface(tk.Frame):
         race_var.set(self.get_race(patient[9]))
         tk.Label(self.details_frame, text="Race:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
         race_dropdown = ttk.Combobox(self.details_frame, values=races, font=normal_text_font, textvariable=race_var)
-        race_dropdown.insert(0, string=race_var.get())
         race_dropdown.grid(column=1, row=5, sticky="w", padx=padx, pady=pady)
 
         # genders = ["Male", "Female", "Transgender Male", "Transgender Female", "Non-Binary", "Other"]
@@ -294,14 +292,12 @@ class lookup_interface(tk.Frame):
         religion_var.set(self.get_religion(patient[10]))
         tk.Label(self.details_frame, text="Religion:", font=bold_label_font).grid(column=0, row=7, sticky="e", padx=padx, pady=pady)
         religion_dropdown = ttk.Combobox(self.details_frame, values=religions, font=normal_text_font, textvariable=religion_var)
-        religion_dropdown.insert(0, string=religion_var.get())
         religion_dropdown.grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
 
         language_var = tk.StringVar()
         language_var.set(self.get_language(patient[8]))
         tk.Label(self.details_frame, text="Language:", font=bold_label_font).grid(column=0, row=8, sticky="e", padx=padx, pady=pady)
         language_dropdown = ttk.Combobox(self.details_frame, values=languages, font=normal_text_font, textvariable=language_var)
-        language_dropdown.insert(0, string=language_var.get())
         language_dropdown.grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
 
         prior_convictions_var = tk.BooleanVar()
@@ -354,18 +350,6 @@ class lookup_interface(tk.Frame):
                 config = load_config(filename="database.ini")
                 conn = connect(config)
                 with conn.cursor() as cur:
-                    print(first_name_entry.get(),
-                        middle_name_entry.get(),
-                        last_name_entry.get(),
-                        str(birthdate_entry.get_date()),
-                        self.get_id_of_languages(language_var.get()),
-                        self.get_id_of_race(race_var.get()),
-                        self.get_id_of_religion(religion_var.get()),
-                        prior_convictions_var.get(),
-                        convicted_against_children_var.get(),
-                        sex_offender.get(),
-                        sex_predator.get(),
-                        patient[1])
                     cur.execute("""
                         UPDATE person SET 
                             first_name = %s, 
@@ -395,6 +379,7 @@ class lookup_interface(tk.Frame):
                         str(patient[1]))
                     )
                     conn.commit()
+                    messagebox.showinfo("Success", "Updated record successfully")
             except Exception as e:
                 messagebox.showinfo("Error", f"Failed to update person: {e}")
 
