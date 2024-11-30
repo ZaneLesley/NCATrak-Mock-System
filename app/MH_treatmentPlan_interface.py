@@ -83,6 +83,46 @@ class MH_treatment_plan_interface(tk.Frame):
         treatment_frame.grid(row=1, column=0, sticky='w', padx=10, pady=5)
         ttk.Button(treatment_frame, text="+ Add New Treatment Plan", command=self.add_treatment_plan_popup).grid(row=0, column=0, padx=5, pady=5)
 
+        # Column headers for the Treatment Plans Log
+        ttk.Label(treatment_frame, text="Planned Start Date").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(treatment_frame, text="Treatment Model Name").grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(treatment_frame, text="Provider Agency").grid(row=1, column=2, padx=5, pady=5)
+
+        # Fetch and display existing treatment plans
+        try:
+            case_id = self.get_case_id_from_file()
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    # Fetch treatment plans for the current case ID
+                    query = f"""
+                        SELECT planned_start_date, treatment_model_id, provider_agency_id 
+                        FROM case_mh_treatment_plans 
+                        WHERE case_id = {case_id}
+                    """
+                    cur.execute(query)
+                    treatment_plans = cur.fetchall()
+
+                    for index, plan in enumerate(treatment_plans, start=2):  # Start from row 2
+                        # Fetch the model name for the treatment_model_id
+                        cur.execute(
+                            "SELECT model_name FROM case_mh_treatment_models WHERE id = %s", 
+                            (plan[1],)
+                        )
+                        model_name_result = cur.fetchone()
+                        model_name = model_name_result[0] if model_name_result else "Unknown"
+
+                        # Fetch the provider agency name for the provider_agency_id
+                        provider_agency_name = self.get_agency_name_by_id(plan[2])
+
+                        # Display the treatment plan data
+                        ttk.Label(treatment_frame, text=str(plan[0])).grid(row=index, column=0, padx=5, pady=5)
+                        ttk.Label(treatment_frame, text=model_name).grid(row=index, column=1, padx=5, pady=5)
+                        ttk.Label(treatment_frame, text=provider_agency_name).grid(row=index, column=2, padx=5, pady=5)
+        except Exception as error:
+            print(f"Error fetching treatment plans: {error}")
+
+
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
         upload_frame.grid(row=2, column=0, sticky='w', padx=10, pady=5)
@@ -419,6 +459,22 @@ class MH_treatment_plan_interface(tk.Frame):
             print(f"Error reading case ID from file: {error}")
             messagebox.showerror("Error", "Failed to retrieve case ID.")
             return None
+        
+    def get_agency_name_by_id(self, agency_id):
+        """Fetches the Agency Name for a given agency ID."""
+        try:
+            # Load the database configuration
+            config = self.load_config()
+            with psycopg2.connect(**config) as conn:
+                with conn.cursor() as cur:
+                    # Execute the query to fetch the Agency Name
+                    cur.execute("SELECT agency_name FROM cac_agency WHERE agency_id = %s", (agency_id,))
+                    result = cur.fetchone()
+                    print(f"Fetching Agency Name for agency ID '{agency_id}': {result[0] if result else 'None'}")
+                    return result[0] if result else "Unknown"
+        except Exception as error:
+            print(f"Error fetching Agency Name for agency ID '{agency_id}': {error}")
+            return "Unknown"
 
     # -------------------- Navigation Functions --------------------
     def show_lookup_page(self):
