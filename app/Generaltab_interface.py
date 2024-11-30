@@ -54,8 +54,8 @@ class GeneraltabInterface(tk.Frame):
             ("Mental Health - Basic", self.show_mh_basic),
             ("Mental Health - Assessment", self.show_mh_assessment),
             ("Mental Health - Treatment Plan", self.show_mh_treatment_plan),
+            ("Mental Health - Case Notes", self.show_case_notes),
             ("VA", self.show_va_tab),
-            ("Case Notes", self.show_case_notes),
         ]
 
         for btn_text, btn_command in nav_buttons:
