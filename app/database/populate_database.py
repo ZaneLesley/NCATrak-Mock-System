@@ -52,21 +52,24 @@ data_to_get = [
     
 
 def execute_command(command, data, name):
-    config = load_config()
-    successful_inserts = 0
-    failed_inserts = 0
     try:
+        config = load_config()
+        successful_inserts = 0
+        failed_inserts = 0
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cur:
                 for row in data:
                     try:
+                        cur.execute("SAVEPOINT savepoint_before_insert")
                         cur.execute(command, row)
                         successful_inserts += 1
                     except Exception as e:
+                        cur.execute("ROLLBACK TO SAVEPOINT savepoint_before_insert")
                         failed_inserts += 1
                         print(f"[red]Error inserting row {row}: {e}")
                 conn.commit()
-        print(f"[yellow]{name}: [green]{successful_inserts} rows inserted successfully, [red]{failed_inserts} rows failed.")
+            print(
+                f"[yellow]{name}: [green]{successful_inserts} rows inserted successfully, [red]{failed_inserts} rows failed.")
     except (psycopg2.DatabaseError, Exception) as error:
         print(f"[red]{error} on [yellow]{name}")
         
@@ -98,4 +101,3 @@ def main():
             execute_command(insert_query, data, name=table_name)
         except Exception as e:
             pass
-    print(f"[bold][blue]All Data Successfully Added")
