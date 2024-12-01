@@ -1,10 +1,11 @@
-import psycopg2
 import os
+
 from rich import print
 from rich.prompt import Prompt
+
 from database.create_tables import main as create_tables
-from generator.data_generator import main as data_generator
 from database.populate_database import main as populate_database
+from generator.data_generator import main as data_generator
 
 db_tables = [
     "state",
@@ -42,23 +43,22 @@ If you haven't yet, please read the [red]README.MD [blue]file in the home direct
 [1] Complete Install
 [2] Added New Generated Data
 ''')
-    
+
 while True:
     n = input()
-    if not (n.isdigit() and 4 >= int(n) > 0):
+    if not (n.isdigit() and 2 >= int(n) > 0):
         print("[red]Please insert a number from the options listed.")
     else:
         break
 n = int(n)
 
-# TODO: Implement Each one
-# Complete Install
 if n == 1:
     cwd = os.path.dirname(os.path.abspath(__file__))
     database_ini_path = os.path.join(cwd, "database", "database.ini")
     with open(database_ini_path, "w") as file:
         file.write("[postgresql]\n")
-        data = [Prompt.ask("[yellow]Enter the host\n"), Prompt.ask("[yellow]Enter the database name\n"), Prompt.ask("[yellow]Enter user name\n"),
+        data = [Prompt.ask("[yellow]Enter the host\n"), Prompt.ask("[yellow]Enter the database name\n"),
+                Prompt.ask("[yellow]Enter user name\n"),
                 Prompt.ask("[yellow]Enter password\n")]
         file.write(f"host={data[0]}\ndatabase={data[1]}\nuser={data[2]}\npassword={data[3]}")
     print("[green]Database.ini file has been created.")
@@ -76,12 +76,4 @@ elif n == 2:
     data_generator()
     print("[green]Database tables generated.")
     populate_database()
-    print("[bold green] Additional data added.")
-# Configure Data Generation Defaults
-elif n == 3:
-    pass
-# Delete Database
-elif n == 4:
-    pass
-        
-    
+    print("[bold green]Additional data added.")
