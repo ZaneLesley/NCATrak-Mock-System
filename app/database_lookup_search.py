@@ -165,6 +165,14 @@ states = [
     "Other"
 ]
 
+state_abbreviations = [
+"AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "DC", "FL", 
+"GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", 
+"MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", 
+"NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", 
+"SC", "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", 
+"WY", ""]
+
 education_levels = [
     "None",
     "Preschool",
@@ -328,6 +336,13 @@ class lookup_interface(tk.Frame):
                 return i
             else:
                 return -1
+            
+    def get_id_from_item(self, list, item):
+        for i in range(len(list) - 1):
+            if list[i] == item:
+                return i
+            else:
+                return -1
 
     def load_first_100_patients(self):
 
@@ -433,22 +448,6 @@ class lookup_interface(tk.Frame):
         cases_list.grid(row=11, column=0, columnspan=5, padx=padx, pady=pady)
 
         def save_person():
-            update_query = """
-                UPDATE person SET 
-                    first_name = %s, 
-                    middle_name = %s, 
-                    last_name = %s, 
-                    date_of_birth = %s, 
-                    language_id = %s, 
-                    race_id = %s, 
-                    religion_id = %s,
-                    prior_convictions = %s,
-                    convicted_against_children = %s,
-                    sex_offender = %s,
-                    sex_predator = %s
-                WHERE person_id = %s;
-            """
-
             try:
                 config = load_config(filename="database.ini")
                 conn = connect(config)
@@ -552,6 +551,17 @@ class lookup_interface(tk.Frame):
             )
         )
 
+        # Variable for tracking the CAC ID of the main person in the case - set to 1 by default, changed to the correct
+        # ID if the user selects an existing person
+        cac_id = 1
+
+        # Variable for tracking the Person ID of the main person in the case - set to a random valid ID by default, changed to an
+        # existing ID if the user selects an existing person
+        person_id = 0
+
+        # Boolean for tracking whether or not we're using an existing person - makes SQL queries simpler
+        using_existing_person = False
+
         # Personal Profile Information
         personal_profile_frame = tk.LabelFrame(scrollable_frame, text="Personal Profile", width=200)
         personal_profile_frame.grid(row=1, column=0, sticky='w')
@@ -578,7 +588,7 @@ class lookup_interface(tk.Frame):
 
         genders = ["M", "F"]
         gender_frame = tk.Frame(personal_profile_frame)
-        tk.Label(personal_profile_frame, text="Gender:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
+        tk.Label(personal_profile_frame, text="Gender*:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
         gender_frame.grid(row=5, column=1, padx=padx, pady=pady, sticky='w')
         gender_var = tk.StringVar()
         column_counter = 1
@@ -614,14 +624,14 @@ class lookup_interface(tk.Frame):
         convicted_against_children_checkbox = ttk.Checkbutton(personal_profile_frame, variable=convicted_against_children_var, onvalue=True, offvalue=False)
         convicted_against_children_checkbox.grid(column=1, row=10, sticky="w", padx=padx, pady=pady)
 
-        sex_offender = tk.BooleanVar()
+        sex_offender_var = tk.BooleanVar()
         tk.Label(personal_profile_frame, text="Sexual Offender:", font=bold_label_font).grid(column=0, row=11, sticky="e", padx=padx, pady=pady)
-        sex_offender_checkbox = ttk.Checkbutton(personal_profile_frame, variable=sex_offender, onvalue=True, offvalue=False)
+        sex_offender_checkbox = ttk.Checkbutton(personal_profile_frame, variable=sex_offender_var, onvalue=True, offvalue=False)
         sex_offender_checkbox.grid(column=1, row=11, sticky="w", padx=padx, pady=pady)
 
-        sex_predator = tk.BooleanVar()
+        sex_predator_var = tk.BooleanVar()
         tk.Label(personal_profile_frame, text="Sexual Predator:", font=bold_label_font).grid(column=0, row=12, sticky="e", padx=padx, pady=pady)
-        sex_predator_checkbox = ttk.Checkbutton(personal_profile_frame, variable=sex_predator, onvalue=True, offvalue=False)
+        sex_predator_checkbox = ttk.Checkbutton(personal_profile_frame, variable=sex_predator_var, onvalue=True, offvalue=False)
         sex_predator_checkbox.grid(column=1, row=12, sticky="w", padx=padx, pady=pady)
 
 
@@ -664,8 +674,8 @@ class lookup_interface(tk.Frame):
         state_dropdown.grid(row=5, column=1, padx=5, pady=5, sticky='w')
 
         tk.Label(case_information_frame, text="Zip Code:", font=bold_label_font).grid(row=6, column=0, padx=5, pady=5, sticky='w')
-        city_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
-        city_entry.grid(row=6, column=1, padx=5, pady=5, sticky='w')
+        zip_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+        zip_entry.grid(row=6, column=1, padx=5, pady=5, sticky='w')
 
         tk.Label(case_information_frame, text="Home Phone:", font=bold_label_font).grid(row=7, column=0, padx=5, pady=5, sticky='w')
         home_phone_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
@@ -708,12 +718,6 @@ class lookup_interface(tk.Frame):
 
         def cancel():
             new_case_popup.destroy()
-
-        def save_and_open():
-            pass
-
-        def add_another_person():
-            pass
 
         def lookup_person():
 
@@ -854,7 +858,237 @@ class lookup_interface(tk.Frame):
                 search_cases_by_patient(patient[1])
 
             def select_person(person):
-                pass
+
+                # Update the CAC and person IDs
+                using_existing_person = True
+                cac_id = person[0]
+                person_id = person[1]
+
+                # Populate all existing fields
+                if person[2] is not None:
+                    first_name_entry.delete(0, tk.END)
+                    first_name_entry.insert(0, person[2])
+                
+                if person[3] is not None:
+                    middle_name_entry.delete(0, tk.END)
+                    middle_name_entry.insert(0, person[3])
+
+                if person[4] is not None:
+                    last_name_entry.delete(0, tk.END)
+                    last_name_entry.insert(0, person[4])
+
+                if person[5] is not None:
+                    suffix_entry.delete(0, tk.END)
+                    suffix_entry.insert(0, person[5])
+                
+                if person[6] is not None:
+                    birthdate_entry.set_date(person[6])
+
+                if person[7] is not None:
+                    gender_var.set(person[7])
+
+                if person[8] is not None:
+                    language_var.set(self.get_language(person[8]))
+
+                if person[9] is not None:
+                    race_var.set(self.get_race(person[9]))
+
+                if person[10] is not None:
+                    religion_var.set(self.get_religion(person[10]))
+
+                if person[11] is not None:
+                    prior_convictions_var.set(person[11])
+
+                if person[12] is not None:
+                    convicted_against_children_var.set(person[12])
+
+                if person[13] is not None:
+                    sex_offender_var.set(person[13])
+
+                if person[14] is not None:
+                    sex_predator_var.set(person[14])
+
+                # Close the popup
+                search_person_popup.destroy()
+
+        def save_and_open():
+
+            # Collect data from personal profile form
+            first_name = first_name_entry.get()
+            if first_name == "":
+                messagebox.showinfo("Error", "First Name is required")
+                return
+            middle_name = middle_name_entry.get()
+            last_name = last_name_entry.get()
+            if last_name == "":
+                messagebox.showinfo("Error", "Last Name is required")
+                return
+            suffix = suffix_entry.get()
+            birthdate = birthdate_entry.get_date()
+            gender = gender_var.get()
+            if gender == "":
+                messagebox.showinfo("Error", "Gender is required")
+                return
+            race_id = self.get_id_of_race(race_var.get())
+            religion_id = self.get_id_of_religion(religion_var.get())
+            language_id = self.get_id_of_languages(language_var.get())
+            prior_convictions = prior_convictions_var.get()
+            convicted_against_children = convicted_against_children_var.get()
+            sex_offender = sex_offender_var.get()
+            sex_predator = sex_predator_var.get()
+
+            # Collect data from case information form
+            victim_status_id = self.get_id_from_item(victim_statuses, vic_status_var.get())
+            age = age_entry.get()
+            if age == "":
+                messagebox.showinfo("Error", "Age at Time of Referral is Required")
+                return
+            age_unit = age_unit_var.get()
+            address_line_1 = addr_line_1_entry.get()
+            address_line_2 = addr_line_2_entry.get()
+            city = city_entry.get()
+            state_id = self.get_id_from_item(states, state_var.get())
+            state_abbr = state_abbreviations[state_id]
+            print(state_abbr)
+            zip_code = zip_entry.get()
+            home_phone = home_phone_entry.get()
+            work_phone = work_phone_entry.get()
+            cell_phone = cell_phone_entry.get()
+            school_or_employer = employer_entry.get()
+            education_level_id = self.get_id_from_item(education_levels, education_level_var.get())
+            marital_status_id = self.get_id_from_item(marital_statuses, marital_status_var.get())
+            income_level_id = self.get_id_from_item(income_levels, income_level_var.get())
+
+            # Collect information from referral form
+            referred_date = received_date_entry.get_date()
+            if referred_date == "":
+                messagebox.showinfo("Error", "Date Received by CAC is required")
+                return
+            
+            # Update the database
+            try:
+                config = load_config(filename="database.ini")
+                conn = connect(config)
+                with conn.cursor() as cur:
+
+                    # Update person table
+                    if using_existing_person:
+                        query = """
+                            UPDATE person SET 
+                                first_name = %s, 
+                                middle_name = %s, 
+                                last_name = %s,
+                                suffix = %s, 
+                                date_of_birth = %s, 
+                                language_id = %s, 
+                                race_id = %s, 
+                                religion_id = %s,
+                                prior_convictions = %s,
+                                convicted_against_children = %s,
+                                sex_offender = %s,
+                                sex_predator = %s
+                            WHERE person_id = %s;
+                            """
+                        cur.execute(query, (first_name, 
+                                            middle_name, 
+                                            last_name, 
+                                            suffix, 
+                                            birthdate, 
+                                            language_id, 
+                                            race_id, 
+                                            religion_id, 
+                                            prior_convictions, 
+                                            convicted_against_children, 
+                                            sex_offender, 
+                                            sex_predator,
+                                            person_id))
+                    else:
+                        query = """
+                                INSERT INTO person (cac_id, 
+                                                    person_id,
+                                                    first_name, 
+                                                    middle_name, 
+                                                    last_name, 
+                                                    suffix, 
+                                                    date_of_birth, 
+                                                    language_id, 
+                                                    race_id, 
+                                                    religion_id,
+                                                    prior_convictions,
+                                                    convicted_against_children,
+                                                    sex_offender,
+                                                    sex_predator)
+                                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                """
+                        cur.execute(query, (cac_id,
+                                            person_id,
+                                            first_name,
+                                            middle_name,
+                                            last_name,
+                                            suffix,
+                                            birthdate,
+                                            language_id,
+                                            race_id,
+                                            religion_id,
+                                            prior_convictions,
+                                            convicted_against_children,
+                                            sex_offender,
+                                            sex_predator))
+
+                    # Update cac_case table
+                    case_id = 0
+                    query = """
+                            INSERT INTO cac_case (cac_id, case_id, cac_received_date)
+                            VALUES (%s, %s, %s);
+                            """
+                    cur.execute(query, (cac_id, case_id, referred_date))
+                    
+                    # Update case_person table
+                    query = """
+                            INSERT INTO case_person (person_id,
+                                                    case_id,
+                                                    cac_id,
+                                                    age,
+                                                    age_unit,
+                                                    address_line_1,
+                                                    address_line_2,
+                                                    city,
+                                                    state_abbr,
+                                                    zip,
+                                                    cell_phone_number,
+                                                    home_phone_number,
+                                                    work_phone_number,
+                                                    education_level_id,
+                                                    income_level_id,
+                                                    marital_status_id,
+                                                    school_or_employer,
+                                                    victim_status_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                            """    
+                    cur.execute(query, (person_id, 
+                                        case_id,
+                                        cac_id,
+                                        age,
+                                        age_unit,
+                                        address_line_1,
+                                        address_line_2,
+                                        city,
+                                        state_abbr,
+                                        zip_code,
+                                        cell_phone,
+                                        home_phone,
+                                        work_phone,
+                                        education_level_id, 
+                                        income_level_id,
+                                        marital_status_id,
+                                        school_or_employer,
+                                        victim_status_id))
+                    conn.commit()
+            except Exception as e:
+                messagebox.showinfo("Error", f"Failed to save: {e}")
+
+        def add_another_person():
+            pass
 
         case_buttons_frame = tk.Frame(scrollable_frame)
         case_buttons_frame.grid(row=0, column=0, sticky='w')
