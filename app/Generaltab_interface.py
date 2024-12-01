@@ -44,7 +44,7 @@ class GeneraltabInterface(tk.Frame):
                 print(f"{error}")
                 exit()
 
-        with open("app\case_id.txt", "r") as file:
+        with open("case_id.txt", "r") as file:
             case = get_case(file.read())
 
         if case is None:
@@ -441,20 +441,38 @@ class GeneraltabInterface(tk.Frame):
                 exit()
 
         def insert_new_personnel(email, first, last, title, number):
+            # SQL query to insert a new employee
             sqlQuery = """insert into employee (employee_id, agency_id, cac_id, email_addr, 
             first_name, last_name, job_title, phone_number)
             values (%s, %s, %s, %s, %s, %s, %s, %s)"""
+            getRandomAgencyIdQuery = """SELECT agency_id FROM cac_agency ORDER BY RANDOM() LIMIT 1"""
+            getRandomCacIdQuery = """SELECT cac_id FROM cac_agency ORDER BY RANDOM() LIMIT 1"""
+
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute(sqlQuery,
-                                    (random.randint(1, 99999999), 64669736, 1, email, first, last, title, number))
-                        conn.commit
+                        # Fetch a random agency_id
+                        cur.execute(getRandomAgencyIdQuery)
+                        random_agency_id = cur.fetchone()[0]
+
+                        # Fetch random cac id
+                        cur.execute(getRandomCacIdQuery)
+                        random_cac_id = cur.fetchone()[0]
+
+                        # Insert the new employee
+                        cur.execute(sqlQuery, (
+                            random.randint(1, 99999999),  # Random employee_id
+                            random_agency_id,  # Random agency_id
+                            random_cac_id,  # cac_id
+                            email, first, last, title, number
+                        ))
+
+                        conn.commit()  # Commit the transaction
                         messagebox.showinfo("Save", "Person has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
-                print(f"{error}")
-                exit()
+                print(f"Error: {error}")
+
 
         def add_personnel_popup():
             popup = tk.Toplevel(self)
