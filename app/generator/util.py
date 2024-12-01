@@ -20,6 +20,7 @@ def write_to_csv(data: list, name: str):
     df = pd.DataFrame(data)
     
     folder = "csvs"
+    os.path.join(os.path.abspath(__file__), "generator")
     os.makedirs(folder, exist_ok=True)
     filename = os.path.join(folder, name + ".csv")
     

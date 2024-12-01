@@ -59,8 +59,8 @@ if n == 1:
     database_ini_path = os.path.join(cwd, "database", "database.ini")
     with open(database_ini_path, "w") as file:
         file.write("[postgresql]\n")
-        data = [input("Enter the host\n"), input("Enter the database name\n"), input("Enter user name\n"),
-                input("Enter password\n")]
+        data = [input("[yellow]Enter the host\n"), input("[yellow]Enter the database name\n"), input("[yellow]Enter user name\n"),
+                input("[yellow]Enter password\n")]
         file.write(f"host={data[0]}\ndatabase={data[1]}\nuser={data[2]}\npassword={data[3]}")
     print("[green]Database.ini file has been created.")
 
