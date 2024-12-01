@@ -326,6 +326,8 @@ class lookup_interface(tk.Frame):
         new_case_button = ttk.Button(self.scrollable_frame, text="Create New Case", command=self.create_new_case_popup)
         new_case_button.grid(row=1, column=9, sticky='ne', pady=20)
 
+        self.recently_created_cases = []
+
     def get_religion(self, id):
         if id is not None and id >= 0:
             return religions[id]
@@ -973,7 +975,6 @@ class lookup_interface(tk.Frame):
             city = city_entry.get()
             state_id = self.get_id_from_item(states, state_var.get())
             state_abbr = None if state_id == None else state_abbreviations[state_id]
-            print(state_abbr)
             zip_code = zip_entry.get()
             home_phone = home_phone_entry.get()
             work_phone = work_phone_entry.get()
@@ -991,6 +992,9 @@ class lookup_interface(tk.Frame):
                 messagebox.showinfo("Error", "Date Received by CAC is required")
                 return
             
+            # generate unique id for new case
+            case_id = fake.unique.random_number(digits=9)
+
             # Update the database
             try:
                 config = load_config(filename="database.ini")
@@ -1062,7 +1066,6 @@ class lookup_interface(tk.Frame):
                                             sex_predator))
 
                     # Update cac_case table
-                    case_id = fake.unique.random_number(digits=9)
                     query = """
                             INSERT INTO cac_case (cac_id, case_id, cac_received_date)
                             VALUES (%s, %s, %s);
@@ -1117,6 +1120,65 @@ class lookup_interface(tk.Frame):
                     messagebox.showinfo("Success", "New case saved.")
             except Exception as e:
                 messagebox.showinfo("Error", f"Failed to save: {e}")
+
+            case_id_file = open("case_id.txt", "w")
+            case_id_file.write(str(case_id))
+            self.recently_created_cases.append(case_id)
+            new_case_popup.destroy()
+
+            # Display post-case-creation screen
+            confirmation_popup = tk.Toplevel(self)
+            confirmation_popup.title("Create New Case")
+            confirmation_popup.geometry("1100x700")
+            
+            recent_cases_frame = tk.LabelFrame(confirmation_popup, text="Recently Opened Cases")
+            recent_cases_frame.grid(row=1, column=0, padx=5, pady=5)
+
+            tk.Label(recent_cases_frame, text="Case ID", font=bold_label_font, width=15).grid(row=0, column=0, padx=5, pady=5)
+            tk.Label(recent_cases_frame, text="Alleged Victim/Client", font=bold_label_font, width=45).grid(row=0, column=1, padx=5, pady=5)
+
+            j = 1
+            for case in self.recently_created_cases:
+
+                current_case_id = case
+                person_name = ""
+                try:
+                    config = load_config(filename="database.ini")
+                    conn = connect(config)
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT * FROM case_person WHERE case_id=%s AND role_id=0;", (current_case_id,))
+                        case_person = cur.fetchone()
+                        if not case_person is None:
+                            case_person_id = case_person[0]
+                            cur.execute("SELECT * FROM person WHERE person_id=%s;", (case_person_id,))
+                            victim_person = cur.fetchone()
+                            if not victim_person is None:
+                                person_name = victim_person[2] + " " + victim_person[4]
+
+                    tk.Label(recent_cases_frame, text=current_case_id, font=normal_text_font, width=15).grid(row=j, column=0, padx=5, pady=5)
+                    tk.Label(recent_cases_frame, text=person_name, font=normal_text_font, width=45).grid(row=j, column=1, padx=5, pady=5)
+
+                    j += 1
+
+                except Exception as e:
+                    messagebox.showinfo("Error", f"Failed to query database for recent cases: {e}")
+
+            def done_add_new():
+                confirmation_popup.destroy()
+                self.create_new_case_popup()
+
+            def done_and_view():
+                confirmation_popup.destroy()
+                self.controller.refresh()
+
+            confirmation_buttons_frame = tk.Frame(confirmation_popup)
+            confirmation_buttons_frame.grid(row=0, column=0)
+
+            done_add_new_button = tk.Button(confirmation_buttons_frame, text="Done and Add New Case", command=done_add_new)
+            done_add_new_button.grid(row=0, column=0, padx=5, pady=5)
+
+            done_and_view_button = tk.Button(confirmation_buttons_frame, text="Done and View Case", command=done_and_view)
+            done_and_view_button.grid(row=0, column=1, padx=5, pady=5)
 
         def add_another_person():
             pass
