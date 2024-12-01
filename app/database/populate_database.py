@@ -73,10 +73,10 @@ def main():
         data_name = data_to_get[i]
         # File Moving across different os
         cwd = os.path.dirname(os.path.abspath(__file__))
-        table_file_path = os.path.join(cwd, "database", "data_tables_variables")
+        table_file_path = os.path.join(cwd, "data_tables_variables")
         variable_file_path = os.path.join(table_file_path, table_name + ".sql")
         parent_dir = os.path.dirname(cwd)
-        generator_dir = os.path.join(parent_dir, "database", "generator")
+        generator_dir = os.path.join(parent_dir, "generator")
         csvs_dir = os.path.join(generator_dir, "csvs")
         data_file_path = os.path.join(csvs_dir, data_name)
         
