@@ -78,18 +78,20 @@ def main():
         generator_dir = os.path.join(parent_dir, "generator")
         csvs_dir = os.path.join(generator_dir, "csvs")
         data_file_path = os.path.join(csvs_dir, data_name)
-        
-        with open(variable_file_path, "r") as file:
-            insert_query = file.read()
-            file.close()
-        
-        data = []
-        with open(data_file_path, "r") as file:
-            df = pd.read_csv(file)
-            # Fix nan to None so SQL can read it (https://stackoverflow.com/questions/14162723/replacing-pandas-or-numpy-nan-with-a-none-to-use-with-mysqldb)
-            df = df.replace(np.nan, None)
-            data = [tuple(row) for row in df.itertuples(index=False, name=None)]
-            file.close()
 
-        execute_command(insert_query, data, name=table_name)
-print(f"[bold][blue]All Data Successfully Added")
+        try:
+            with open(variable_file_path, "r") as file:
+                insert_query = file.read()
+                file.close()
+
+            data = []
+            with open(data_file_path, "r") as file:
+                df = pd.read_csv(file)
+                # Fix nan to None so SQL can read it (https://stackoverflow.com/questions/14162723/replacing-pandas-or-numpy-nan-with-a-none-to-use-with-mysqldb)
+                df = df.replace(np.nan, None)
+                data = [tuple(row) for row in df.itertuples(index=False, name=None)]
+                file.close()
+            execute_command(insert_query, data, name=table_name)
+        except Exception as e:
+            pass
+    print(f"[bold][blue]All Data Successfully Added")
