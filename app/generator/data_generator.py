@@ -3,7 +3,7 @@ from faker_education import SchoolProvider
 import random
 from datetime import datetime
 from rich import print
-import util
+from . import util
 
 # Configurable
 # Note: CAC_TO_GENERATE * CAC_TO_AGENCY_RATIO < 32767
@@ -517,7 +517,7 @@ def generator_mh_treatment_models(amount: int):
         
         case_mh_treatment_models_data.append(instrument)
         
-if __name__ == "__main__":
+def main():
     print("[bold blue]NCA-Trak-Mock Data Generator")
     print("[yellow]How many data entries would you like to be generated?")
     n = int(input())

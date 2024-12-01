@@ -1,6 +1,6 @@
 import psycopg2
 import os
-from config import load_config
+from .config import load_config
 
 tables_to_create = [
     "state",
@@ -38,7 +38,7 @@ def execute_command(command):
     except (psycopg2.DatabaseError, Exception) as error:
         print(error)
 
-if __name__ == '__main__':
+def main():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Delete all existing tables so the new database can be built
@@ -47,8 +47,11 @@ if __name__ == '__main__':
     with open(delete_tables_file_path, "r") as delete_tables_file:
         commands = delete_tables_file.read().split(";")
         for command in commands:
-            if not command == "":
-                execute_command(command)
+            try:
+                if not command == "":
+                    execute_command(command)
+            except Exception as error:
+                print(f"Error: {error}\nIf tables never existed, this can be ignored.")
         delete_tables_file.close()
     
     # Create new tables from the above list
@@ -61,4 +64,4 @@ if __name__ == '__main__':
                 if not command == "":
                     execute_command(command)
 
-    print("All database tables created. Databases will need to be repopulated using generated data.")
+    # print("All database tables created. Databases will need to be repopulated using generated data.")
