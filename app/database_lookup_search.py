@@ -11,6 +11,7 @@ import va_tab_interface
 import case_notes
 from database.config import load_config
 from database.connect import connect
+from faker import Faker
 
 heading_font = ("Helvetica", 18, "bold")
 bold_label_font = ("Helvetica", 12, "bold")
@@ -204,6 +205,45 @@ income_levels = [
     "greater than $75,000"
 ]
 
+def generate_unique_person_id():
+    existing_person_ids = []
+    try:
+        config = load_config(filename="database.ini")
+        conn = connect(config)
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM person;")
+            row = cur.fetchone()
+            while row is not None:
+                existing_person_ids.append(row[1])
+    except Exception as e:
+        messagebox.showinfo("Error", f"Error in generating unique person ID - unsuccessful query: {e}")
+        return
+    
+    fake = Faker()
+    new_id = fake.unique.random_number(digits=9)
+    while new_id in existing_person_ids:
+        new_id = fake.unique.random_number(digits=9)
+
+def generate_unique_case_id():
+    existing_case_ids = []
+    try:
+        config = load_config(filename="database.ini")
+        conn = connect(config)
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM cac_case;")
+            row = cur.fetchone()
+            while row is not None:
+                existing_case_ids.append(row[1])
+    except Exception as e:
+        messagebox.showinfo("Error", f"Error in generating unique case ID - unsuccessful query: {e}")
+        return
+    
+    fake = Faker()
+    new_id = fake.unique.random_number(digits=9)
+    while new_id in existing_case_ids:
+        new_id = fake.unique.random_number(digits=9)
+
+fake = Faker()
 class lookup_interface(tk.Frame):
     
     def __init__(self, parent, controller):
@@ -316,33 +356,12 @@ class lookup_interface(tk.Frame):
         else:
             return "Not Listed"
         
-    def get_id_of_race(self, race):
-        for i in range((len(races) - 1)):
-            if races[i] == race:
-                return i
-            else:
-                return -1
-            
-    def get_id_of_religion(self, religion):
-        for i in range((len(religions) - 1)):
-            if religions[i] == religion:
-                return i
-            else:
-                return -1
-            
-    def get_id_of_languages(self, language):
-        for i in range((len(languages) - 1)):
-            if languages[i] == language:
-                return i
-            else:
-                return -1
-            
-    def get_id_from_item(self, list, item):
-        for i in range(len(list) - 1):
-            if list[i] == item:
-                return i
-            else:
-                return -1
+    def get_id_from_item(self, the_list: list, item):
+        try:
+            result = the_list.index(item)
+        except:
+            result = None
+        return result
 
     def load_first_100_patients(self):
 
@@ -471,9 +490,9 @@ class lookup_interface(tk.Frame):
                         middle_name_entry.get(),
                         last_name_entry.get(),
                         str(birthdate_entry.get_date()),
-                        str(self.get_id_of_languages(language_var.get())),
-                        str(self.get_id_of_race(race_var.get())),
-                        str(self.get_id_of_religion(religion_var.get())),
+                        str(self.get_id_from_item(languages, language_var.get())),
+                        str(self.get_id_from_item(races, race_var.get())),
+                        str(self.get_id_from_item(religions, religion_var.get())),
                         str(prior_convictions_var.get()),
                         str(convicted_against_children_var.get()),
                         str(sex_offender.get()),
@@ -553,14 +572,17 @@ class lookup_interface(tk.Frame):
 
         # Variable for tracking the CAC ID of the main person in the case - set to 1 by default, changed to the correct
         # ID if the user selects an existing person
-        cac_id = 1
+        cac_id_var = tk.IntVar()
+        cac_id_var.set(1)
 
         # Variable for tracking the Person ID of the main person in the case - set to a random valid ID by default, changed to an
         # existing ID if the user selects an existing person
-        person_id = 0
+        person_id_var = tk.IntVar()
+        person_id_var.set(fake.unique.random_number(digits=9))
 
         # Boolean for tracking whether or not we're using an existing person - makes SQL queries simpler
-        using_existing_person = False
+        using_existing_person = tk.BooleanVar()
+        using_existing_person.set(False)
 
         # Personal Profile Information
         personal_profile_frame = tk.LabelFrame(scrollable_frame, text="Personal Profile", width=200)
@@ -860,9 +882,9 @@ class lookup_interface(tk.Frame):
             def select_person(person):
 
                 # Update the CAC and person IDs
-                using_existing_person = True
-                cac_id = person[0]
-                person_id = person[1]
+                using_existing_person.set(True)
+                cac_id_var.set(person[0])
+                person_id_var.set(person[1])
 
                 # Populate all existing fields
                 if person[2] is not None:
@@ -914,6 +936,8 @@ class lookup_interface(tk.Frame):
         def save_and_open():
 
             # Collect data from personal profile form
+            cac_id = cac_id_var.get()
+            person_id = person_id_var.get()
             first_name = first_name_entry.get()
             if first_name == "":
                 messagebox.showinfo("Error", "First Name is required")
@@ -929,9 +953,9 @@ class lookup_interface(tk.Frame):
             if gender == "":
                 messagebox.showinfo("Error", "Gender is required")
                 return
-            race_id = self.get_id_of_race(race_var.get())
-            religion_id = self.get_id_of_religion(religion_var.get())
-            language_id = self.get_id_of_languages(language_var.get())
+            race_id = self.get_id_from_item(races, race_var.get())
+            religion_id = self.get_id_from_item(religions, religion_var.get())
+            language_id = self.get_id_from_item(languages, language_var.get())
             prior_convictions = prior_convictions_var.get()
             convicted_against_children = convicted_against_children_var.get()
             sex_offender = sex_offender_var.get()
@@ -948,7 +972,7 @@ class lookup_interface(tk.Frame):
             address_line_2 = addr_line_2_entry.get()
             city = city_entry.get()
             state_id = self.get_id_from_item(states, state_var.get())
-            state_abbr = state_abbreviations[state_id]
+            state_abbr = None if state_id == None else state_abbreviations[state_id]
             print(state_abbr)
             zip_code = zip_entry.get()
             home_phone = home_phone_entry.get()
@@ -958,6 +982,8 @@ class lookup_interface(tk.Frame):
             education_level_id = self.get_id_from_item(education_levels, education_level_var.get())
             marital_status_id = self.get_id_from_item(marital_statuses, marital_status_var.get())
             income_level_id = self.get_id_from_item(income_levels, income_level_var.get())
+            relationship_id = 0 # When a new case is made, the person who's info is in the form is the victim/"self"
+            role_id = 0 # When a new case is made, the person who's info is in the form is the victim/"self"
 
             # Collect information from referral form
             referred_date = received_date_entry.get_date()
@@ -972,7 +998,7 @@ class lookup_interface(tk.Frame):
                 with conn.cursor() as cur:
 
                     # Update person table
-                    if using_existing_person:
+                    if using_existing_person.get():
                         query = """
                             UPDATE person SET 
                                 first_name = %s, 
@@ -1036,7 +1062,7 @@ class lookup_interface(tk.Frame):
                                             sex_predator))
 
                     # Update cac_case table
-                    case_id = 0
+                    case_id = fake.unique.random_number(digits=9)
                     query = """
                             INSERT INTO cac_case (cac_id, case_id, cac_received_date)
                             VALUES (%s, %s, %s);
@@ -1062,8 +1088,10 @@ class lookup_interface(tk.Frame):
                                                     income_level_id,
                                                     marital_status_id,
                                                     school_or_employer,
-                                                    victim_status_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                                    victim_status_id,
+                                                    relationship_id,
+                                                    role_id)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                             """    
                     cur.execute(query, (person_id, 
                                         case_id,
@@ -1082,8 +1110,11 @@ class lookup_interface(tk.Frame):
                                         income_level_id,
                                         marital_status_id,
                                         school_or_employer,
-                                        victim_status_id))
+                                        victim_status_id,
+                                        relationship_id,
+                                        role_id))
                     conn.commit()
+                    messagebox.showinfo("Success", "New case saved.")
             except Exception as e:
                 messagebox.showinfo("Error", f"Failed to save: {e}")
 
