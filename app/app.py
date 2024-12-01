@@ -36,9 +36,7 @@ class tkinterApp(tk.Tk):
             frame = F(parent=container, controller=self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
-        
-        # For Testing
-        #print(self.frame)
+            print(f"Completed loading for frame {frame}")
 
         self.show_frame(database_lookup_search.lookup_interface)
             

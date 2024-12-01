@@ -1,5 +1,5 @@
 import os
-from config import load_config
+from .config import load_config
 import psycopg2
 import pandas as pd
 import numpy as np
@@ -57,7 +57,7 @@ def execute_command(command, data, name):
         config = load_config()
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cur:
-                if (data):
+                if data:
                     cur.executemany(command, data)
                     conn.commit()
                     print(f"[yellow]{name} [green]Successfully Added")
@@ -67,16 +67,16 @@ def execute_command(command, data, name):
         print(f"[red]{error} on [yellow]{name}")
         exit()
         
-if __name__ == '__main__':
+def main():
     for i in range(len(tables_to_fill)):
         table_name = tables_to_fill[i]
         data_name = data_to_get[i]
         # File Moving across different os
         cwd = os.path.dirname(os.path.abspath(__file__))
-        table_file_path = os.path.join(cwd, "data_tables_variables")
+        table_file_path = os.path.join(cwd, "database", "data_tables_variables")
         variable_file_path = os.path.join(table_file_path, table_name + ".sql")
         parent_dir = os.path.dirname(cwd)
-        generator_dir = os.path.join(parent_dir, "generator")
+        generator_dir = os.path.join(parent_dir, "database", "generator")
         csvs_dir = os.path.join(generator_dir, "csvs")
         data_file_path = os.path.join(csvs_dir, data_name)
         
