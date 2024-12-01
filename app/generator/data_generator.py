@@ -297,7 +297,7 @@ def generator_case_va_session_log(amount: int):
         session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         #[ ] Not sure if this is the right format for this object, need to check.
         session["session_date"] = fake.date_time_between(start_date=person["cac_recieved_date"])
-        session["session_status"] = fake.random_int(min=1, max=9)
+        session["session_status"] = fake.random_int(min=1, max=6)
         
         case_va_session_log_data.append(session)
         

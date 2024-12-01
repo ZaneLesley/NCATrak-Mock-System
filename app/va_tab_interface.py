@@ -957,15 +957,12 @@ class va_interface(tk.Frame):
         ttk.Label(vas_log_frame, text="Status").grid(row=1, column=5, padx=5, pady=5)
 
         sessionStatuses = {
-                1: "Cancelled",
-                2: "To Be Scheduled",
-                3: "Scheduled",
-                4: "Attended",
-                5: "No Show",
-                6: "Cancelled & Rescheduled",
-                7: "Client Cancelled",
-                8: "Clinician Rescheduled",
-                9: "Declined"
+                1: "Attended",
+                2: "Cancelled",
+                3: "No Show",
+                4: "Canceled and rescheduled",
+                5: "To be scheduled",
+                6: "Scheduled"
             }
 
         for session in sessions:
