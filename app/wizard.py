@@ -57,10 +57,15 @@ if n == 1:
     database_ini_path = os.path.join(cwd, "database", "database.ini")
     with open(database_ini_path, "w") as file:
         file.write("[postgresql]\n")
-        data = [Prompt.ask("[yellow]Enter the host\n"), Prompt.ask("[yellow]Enter the database name\n"),
+        data = [Prompt.ask("[yellow]Enter the host\n"), Prompt.ask("[yellow]Enter the database name\n").lower(),
                 Prompt.ask("[yellow]Enter user name\n"),
                 Prompt.ask("[yellow]Enter password\n")]
-        file.write(f"host={data[0]}\ndatabase={data[1]}\nuser={data[2]}\npassword={data[3]}")
+        user_input = Prompt.ask("[yellow]Custom Port (most likely not)? If so enter the port #### else hit enter\n")
+        if user_input:
+            data.append(user_input)
+        file.write(f"host={data[0]}\ndatabase={data[1]}\nuser={data[2]}\npassword={data[3]}\n")
+        if user_input:
+            file.write(f"port={data[4]}\n")
     print("[green]Database.ini file has been created.")
     create_tables()
     print("[green]Database tables created.")

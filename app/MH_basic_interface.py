@@ -410,7 +410,8 @@ class MHBasicInterface(tk.Frame):
             'host': config.get('postgresql', 'host'),
             'database': config.get('postgresql', 'database'),
             'user': config.get('postgresql', 'user'),
-            'password': config.get('postgresql', 'password')
+            'password': config.get('postgresql', 'password'),
+            'port': config.get('postgresql', 'port', fallback='5432')
         }
 
         # Connect to the PostgreSQL database
