@@ -65,7 +65,6 @@ def execute_command(command, data, name):
                     print(f"[red]No Data inputted for [yellow]{name}")
     except (psycopg2.DatabaseError, Exception) as error:
         print(f"[red]{error} on [yellow]{name}")
-        exit()
         
 def main():
     for i in range(len(tables_to_fill)):
@@ -91,5 +90,5 @@ def main():
             df = df.replace(np.nan, None)
             data = [tuple(row) for row in df.itertuples(index=False, name=None)]
             file.close()
-        execute_command(insert_query, data, name=table_name)
+            execute_command(insert_query, data, name=table_name)
 print(f"[bold][blue]All Data Successfully Added")

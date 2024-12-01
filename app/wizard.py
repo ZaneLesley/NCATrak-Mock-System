@@ -40,9 +40,7 @@ If you haven't yet, please read the [red]README.MD [blue]file in the home direct
 [yellow]Please Select From the following options:
 [white]
 [1] Complete Install
-[2] Data Regeneration
-[3] Configure Data Generation Defaults
-[4] Delete Database
+[2] Added New Generated Data
 ''')
     
 while True:
@@ -64,18 +62,21 @@ if n == 1:
                 Prompt.ask("[yellow]Enter password\n")]
         file.write(f"host={data[0]}\ndatabase={data[1]}\nuser={data[2]}\npassword={data[3]}")
     print("[green]Database.ini file has been created.")
-
     create_tables()
     print("[green]Database tables created.")
     data_generator()
     print("[green]Database tables generated.")
     populate_database()
     print("[green]Database tables populated.")
-    print("[green][bold] Installation complete.")
+    print("[green][bold]Installation complete. Please run app.py to use the program.")
 
-# Data Regeneration
+# Add New Generated Data
 elif n == 2:
-    pass
+    print("[green]Database tables created.")
+    data_generator()
+    print("[green]Database tables generated.")
+    populate_database()
+    print("[bold green] Additional data added.")
 # Configure Data Generation Defaults
 elif n == 3:
     pass
