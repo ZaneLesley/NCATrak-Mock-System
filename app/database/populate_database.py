@@ -1,5 +1,5 @@
 import os
-from config import load_config
+from .config import load_config
 import psycopg2
 import pandas as pd
 import numpy as np
@@ -52,22 +52,28 @@ data_to_get = [
     
 
 def execute_command(command, data, name):
-
     try:
         config = load_config()
+        successful_inserts = 0
+        failed_inserts = 0
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cur:
-                if (data):
-                    cur.executemany(command, data)
-                    conn.commit()
-                    print(f"[yellow]{name} [green]Successfully Added")
-                else:
-                    print(f"[red]No Data inputted for [yellow]{name}")
+                for row in data:
+                    try:
+                        cur.execute("SAVEPOINT savepoint_before_insert")
+                        cur.execute(command, row)
+                        successful_inserts += 1
+                    except Exception as e:
+                        cur.execute("ROLLBACK TO SAVEPOINT savepoint_before_insert")
+                        failed_inserts += 1
+                        print(f"[red]Error inserting row {row}: {e}")
+                conn.commit()
+            print(
+                f"[yellow]{name}: [green]{successful_inserts} rows inserted successfully, [red]{failed_inserts} rows failed.")
     except (psycopg2.DatabaseError, Exception) as error:
         print(f"[red]{error} on [yellow]{name}")
-        exit()
         
-if __name__ == '__main__':
+def main():
     for i in range(len(tables_to_fill)):
         table_name = tables_to_fill[i]
         data_name = data_to_get[i]
@@ -79,17 +85,19 @@ if __name__ == '__main__':
         generator_dir = os.path.join(parent_dir, "generator")
         csvs_dir = os.path.join(generator_dir, "csvs")
         data_file_path = os.path.join(csvs_dir, data_name)
-        
-        with open(variable_file_path, "r") as file:
-            insert_query = file.read()
-            file.close()
-        
-        data = []
-        with open(data_file_path, "r") as file:
-            df = pd.read_csv(file)
-            # Fix nan to None so SQL can read it (https://stackoverflow.com/questions/14162723/replacing-pandas-or-numpy-nan-with-a-none-to-use-with-mysqldb)
-            df = df.replace(np.nan, None)
-            data = [tuple(row) for row in df.itertuples(index=False, name=None)]
-            file.close()
-        execute_command(insert_query, data, name=table_name)
-print(f"[bold][blue]All Data Successfully Added")
+
+        try:
+            with open(variable_file_path, "r") as file:
+                insert_query = file.read()
+                file.close()
+
+            data = []
+            with open(data_file_path, "r") as file:
+                df = pd.read_csv(file)
+                # Fix nan to None so SQL can read it (https://stackoverflow.com/questions/14162723/replacing-pandas-or-numpy-nan-with-a-none-to-use-with-mysqldb)
+                df = df.replace(np.nan, None)
+                data = [tuple(row) for row in df.itertuples(index=False, name=None)]
+                file.close()
+            execute_command(insert_query, data, name=table_name)
+        except Exception as e:
+            pass

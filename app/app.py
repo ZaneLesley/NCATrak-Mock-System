@@ -37,7 +37,7 @@ class tkinterApp(tk.Tk):
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky="nsew")
             print(f"Completed loading for frame {frame}")
-        
+
         # For Testing
         #print(self.frame)
 
