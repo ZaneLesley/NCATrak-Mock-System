@@ -18,9 +18,8 @@ def find_column(key: str, column: str, table: list, value: str) -> dict:
 
 def write_to_csv(data: list, name: str):
     df = pd.DataFrame(data)
-    
-    folder = "csvs"
-    generator_path = os.path.join(os.path.abspath(__file__), "generator")
+
+    generator_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "generator", "csvs")
     os.makedirs(generator_path, exist_ok=True)
     filename = os.path.join(generator_path, name + ".csv")
     
