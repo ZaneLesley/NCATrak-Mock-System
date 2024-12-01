@@ -52,17 +52,21 @@ data_to_get = [
     
 
 def execute_command(command, data, name):
-
+    config = load_config()
+    successful_inserts = 0
+    failed_inserts = 0
     try:
-        config = load_config()
         with psycopg2.connect(**config) as conn:
             with conn.cursor() as cur:
-                if data:
-                    cur.executemany(command, data)
-                    conn.commit()
-                    print(f"[yellow]{name} [green]Successfully Added")
-                else:
-                    print(f"[red]No Data inputted for [yellow]{name}")
+                for row in data:
+                    try:
+                        cur.execute(command, row)
+                        successful_inserts += 1
+                    except Exception as e:
+                        failed_inserts += 1
+                        print(f"[red]Error inserting row {row}: {e}")
+                conn.commit()
+        print(f"[yellow]{name}: [green]{successful_inserts} rows inserted successfully, [red]{failed_inserts} rows failed.")
     except (psycopg2.DatabaseError, Exception) as error:
         print(f"[red]{error} on [yellow]{name}")
         
