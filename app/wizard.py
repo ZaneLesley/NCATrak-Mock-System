@@ -1,6 +1,7 @@
 import psycopg2
 import os
 from rich import print
+from rich.prompt import Prompt
 from database.create_tables import main as create_tables
 from generator.data_generator import main as data_generator
 from database.populate_database import main as populate_database
@@ -59,8 +60,8 @@ if n == 1:
     database_ini_path = os.path.join(cwd, "database", "database.ini")
     with open(database_ini_path, "w") as file:
         file.write("[postgresql]\n")
-        data = [input("[yellow]Enter the host\n"), input("[yellow]Enter the database name\n"), input("[yellow]Enter user name\n"),
-                input("[yellow]Enter password\n")]
+        data = [Prompt.ask("[yellow]Enter the host\n"), Prompt.ask("[yellow]Enter the database name\n"), Prompt.ask("[yellow]Enter user name\n"),
+                Prompt.ask("[yellow]Enter password\n")]
         file.write(f"host={data[0]}\ndatabase={data[1]}\nuser={data[2]}\npassword={data[3]}")
     print("[green]Database.ini file has been created.")
 
