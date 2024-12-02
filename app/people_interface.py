@@ -257,20 +257,10 @@ class PeopleInterface(tk.Frame):
             return None
 
     def get_current_case_id(self):
-        try:
-            cur = self.conn.cursor()
-            query = "SELECT case_id FROM cac_case LIMIT 1;"
-            cur.execute(query)
-            result = cur.fetchone()
-            cur.close()
-            if result:
-                return result[0]
-            else:
-                messagebox.showerror("Error", "No cases found in the database.")
-                return None
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to retrieve case ID: {e}")
-            return None
+        case_id_file = open("case_id.txt", "r")
+        case_id = int(case_id_file.readline())
+        case_id_file.close()
+        return case_id
 
     def get_cac_id(self):
         try:
