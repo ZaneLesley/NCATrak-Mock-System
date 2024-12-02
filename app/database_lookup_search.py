@@ -1249,9 +1249,12 @@ class lookup_interface(tk.Frame):
                            work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                            relationship_id, role_id, referred_date]
             victims.append(case_person)
+            new_case_popup.destroy()
+            show_add_more_people_screen()
+
+        def show_add_more_people_screen():
 
             # Show add more people screen
-            new_case_popup.destroy()
             add_new_person_popup = tk.Toplevel(self)
             add_new_person_popup.title("Add New Person")
             add_new_person_popup.geometry("1600x900")
@@ -1457,9 +1460,6 @@ class lookup_interface(tk.Frame):
                 received_date_entry = DateEntry(referral_information_frame, font=normal_text_font)
                 received_date_entry.grid(row=0, column=1, padx=5, pady=5)
 
-                def save_new_victim():
-                    pass
-
                 def cancel_new_victim():
                     new_victim_popup.destroy()
 
@@ -1655,6 +1655,76 @@ class lookup_interface(tk.Frame):
                         # Close the popup
                         search_person_popup.destroy()
 
+                def save_new_victim():
+                    # Is this an existing person?
+                    is_existing_person = using_existing_person.get()
+                    
+                    # Collect data from personal profile form
+                    cac_id = cac_id_var.get()
+                    person_id = person_id_var.get()
+                    first_name = first_name_entry.get()
+                    if first_name == "":
+                        messagebox.showinfo("Error", "First Name is required")
+                        return
+                    middle_name = middle_name_entry.get()
+                    last_name = last_name_entry.get()
+                    if last_name == "":
+                        messagebox.showinfo("Error", "Last Name is required")
+                        return
+                    suffix = suffix_entry.get()
+                    birthdate = birthdate_entry.get_date()
+                    gender = gender_var.get()
+                    if gender == "":
+                        messagebox.showinfo("Error", "Gender is required")
+                        return
+                    race_id = self.get_id_from_item(races, race_var.get())
+                    religion_id = self.get_id_from_item(religions, religion_var.get())
+                    language_id = self.get_id_from_item(languages, language_var.get())
+                    prior_convictions = prior_convictions_var.get()
+                    convicted_against_children = convicted_against_children_var.get()
+                    sex_offender = sex_offender_var.get()
+                    sex_predator = sex_predator_var.get()
+
+                    # Collect data from case information form
+                    victim_status_id = self.get_id_from_item(victim_statuses, vic_status_var.get())
+                    age = age_entry.get()
+                    if age == "":
+                        messagebox.showinfo("Error", "Age at Time of Referral is Required")
+                        return
+                    age_unit = age_unit_var.get()
+                    address_line_1 = addr_line_1_entry.get()
+                    address_line_2 = addr_line_2_entry.get()
+                    city = city_entry.get()
+                    state_id = self.get_id_from_item(states, state_var.get())
+                    state_abbr = None if state_id == None else state_abbreviations[state_id]
+                    zip_code = zip_entry.get()
+                    home_phone = home_phone_entry.get()
+                    work_phone = work_phone_entry.get()
+                    cell_phone = cell_phone_entry.get()
+                    school_or_employer = employer_entry.get()
+                    education_level_id = self.get_id_from_item(education_levels, education_level_var.get())
+                    marital_status_id = self.get_id_from_item(marital_statuses, marital_status_var.get())
+                    income_level_id = self.get_id_from_item(income_levels, income_level_var.get())
+                    relationship_id = 0 # When a new case is made, the person who's info is in the form is the victim/"self"
+                    role_id = 0 # When a new case is made, the person who's info is in the form is the victim/"self"
+
+                    # Collect information from referral form
+                    referred_date = received_date_entry.get_date()
+                    if referred_date == "":
+                        messagebox.showinfo("Error", "Date Received by CAC is required")
+                        return
+                    
+                    case_person = [is_existing_person, cac_id, person_id, first_name, middle_name, last_name, suffix, birthdate, gender, race_id, 
+                                religion_id, language_id, prior_convictions, convicted_against_children, sex_offender, sex_predator, 
+                                victim_status_id, age, age_unit, address_line_1, address_line_2, city, state_abbr, zip_code, home_phone, 
+                                work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
+                                relationship_id, role_id, referred_date]
+                    victims.append(case_person)
+
+                    new_victim_popup.destroy()
+                    add_new_person_popup.destroy()
+                    show_add_more_people_screen()
+
                 new_victim_buttons_frame = tk.Frame(scrollable_frame)
                 new_victim_buttons_frame.grid(row=0, column=0)
                 save_victim_button = tk.Button(new_victim_buttons_frame, text="Save Person", command=save_new_victim)
@@ -1663,6 +1733,7 @@ class lookup_interface(tk.Frame):
                 cancel_new_victim_button.grid(row=0, column=1, padx=5, pady=5)
                 lookup_new_victim_button = tk.Button(new_victim_buttons_frame, text="Lookup Person", command=lookup_new_victim)
                 lookup_new_victim_button.grid(row=0, column=2, padx=5, pady=5)
+
 
             def add_new_non_victim():
                 pass
@@ -1690,6 +1761,7 @@ class lookup_interface(tk.Frame):
                 tk.Button(victims_frame, text="Delete", width=10).grid(row=k+2, column=1, padx=5, pady=5)
                 tk.Label(victims_frame, text=vic[3], font=normal_text_font, width=20).grid(row=k+2, column=2, padx=5, pady=5)
                 tk.Label(victims_frame, text=vic[5], font=normal_text_font, width=20).grid(row=k+2, column=3, padx=5, pady=5)
+                k += 1
 
             # Other People
             non_victims_frame = tk.LabelFrame(add_new_person_popup, text="Other People")
@@ -1706,6 +1778,7 @@ class lookup_interface(tk.Frame):
                 tk.Button(non_victims_frame, text="Delete", width=10).grid(row=k+2, column=1, padx=5, pady=5)
                 tk.Label(non_victims_frame, text=nvic[3], font=normal_text_font, width=20).grid(row=k+2, column=2, padx=5, pady=5)
                 tk.Label(non_victims_frame, text=nvic[5], font=normal_text_font, width=20).grid(row=k+2, column=3, padx=5, pady=5)
+                k += 1
 
         case_buttons_frame = tk.Frame(scrollable_frame)
         case_buttons_frame.grid(row=0, column=0, sticky='w')
