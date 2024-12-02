@@ -278,35 +278,86 @@ class GeneraltabInterface(tk.Frame):
 
         # Date (with DateEntry for calendar selection)
         ttk.Label(cases_frame, text="Service").grid(row=0, column=1, padx=5, pady=5)
-        service_field = ttk.Label(cases_frame)
-        service_field.grid(row=1, column=1, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Referral Date").grid(row=0, column=2, sticky="w")
-        referral_date = ttk.Label(cases_frame, text="Test Date")
-        referral_date.grid(row=1, column=2, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Referred By").grid(row=0, column=3, padx=5, pady=5)
-        referred_by_field = ttk.Label(cases_frame, text="Placeholder")
-        referred_by_field.grid(row=1, column=3, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Providing Agency").grid(row=0, column=4, padx=5, pady=5)
-        providing_agency = ttk.Label(cases_frame, text="test agency")
-        providing_agency.grid(row=1, column=4, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Primary Contact").grid(row=0, column=5, padx=5, pady=5)
-        primary_contact = ttk.Label(cases_frame, text="Temp")
-        primary_contact.grid(row=1, column=5, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Status").grid(row=0, column=6, padx=5, pady=5)
-        status_field = ttk.Label(cases_frame, text="Temp")
-        status_field.grid(row=1, column=6, padx=5, pady=5)
 
         ttk.Label(cases_frame, text="Status Date").grid(row=0, column=7, padx=5, pady=5)
-        status_date = ttk.Label(cases_frame, text="Temp date")
-        status_date.grid(row=1, column=7, padx=5, pady=5)
 
-        # Add the "Edit" button next to the personnel dropdown
-        ttk.Button(cases_frame, text="Edit", command=add_editbutton_popup).grid(row=1, column=0, padx=5, pady=5)
+        def load_general_case(frame=None, caseid=None):
+            try:
+                if caseid is None:
+                    raise ValueError("A case ID must be provided.")
+
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("SELECT * FROM case_mh_provider WHERE case_id = %s", (caseid,))
+                        cases = cur.fetchall()
+
+                        cur.execute("SELECT * FROM case_va_session_attendee WHERE case_id = %s", (caseid,))
+                        va_cases = cur.fetchall()
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"Error: {error}")
+                ttk.Label(frame, text="An error occurred while fetching data.").grid(row=0, column=0, columnspan=7,
+                                                                                     pady=10)
+                return
+
+            # Check if no data exists
+            if not cases and not va_cases:
+                ttk.Label(frame, text="No case found with the provided ID.").grid(row=1, column=0, columnspan=7,
+                                                                                  pady=10)
+                return
+            row_counter = 1
+
+            for case in cases:
+                labels_data = {
+                    "Service Field": "MH",
+                    "Referral Date": "",
+                    "Referred By": "",
+                    "Providing Agency": "",
+                    "Primary Contact": "",
+                    "Status": "",
+                    "Status Date": ""
+                }
+
+                # Add labels dynamically
+                for i, (label, value) in enumerate(labels_data.items(), start=1):
+                    ttk.Label(frame, text=value).grid(row=row_counter, column=i, padx=5, pady=5)
+
+                # Add Edit button
+                ttk.Button(frame, text="Edit", command=add_editbutton_popup).grid(row=row_counter, column=0, padx=5,
+                                                                                  pady=5)
+                row_counter += 1
+
+            for case in va_cases:
+                labels_data = {
+                    "Service Field": "VA",
+                    "Referral Date": "",  # Replace with correct index
+                    "Referred By": "",  # Replace with correct index
+                    "Providing Agency": "",  # Replace with correct index
+                    "Primary Contact": "",  # Replace with correct index
+                    "Status": "",  # Replace with correct index
+                    "Status Date": "",  # Replace with correct index
+                }
+
+                # Add labels dynamically
+                for i, (label, value) in enumerate(labels_data.items(), start=1):
+                    ttk.Label(frame, text=value).grid(row=row_counter, column=i, padx=5, pady=5)
+
+                # Add Edit button
+                ttk.Button(frame, text="Edit", command=add_editbutton_popup).grid(row=row_counter, column=0, padx=5,
+                                                                                  pady=5)
+                row_counter += 1
+
+        load_general_case(cases_frame, caseId)
 
         # ------------------------------
 
