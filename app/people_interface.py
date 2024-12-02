@@ -257,20 +257,10 @@ class PeopleInterface(tk.Frame):
             return None
 
     def get_current_case_id(self):
-        try:
-            cur = self.conn.cursor()
-            query = "SELECT case_id FROM cac_case LIMIT 1;"
-            cur.execute(query)
-            result = cur.fetchone()
-            cur.close()
-            if result:
-                return result[0]
-            else:
-                messagebox.showerror("Error", "No cases found in the database.")
-                return None
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to retrieve case ID: {e}")
-            return None
+        case_id_file = open("case_id.txt", "r")
+        case_id = int(case_id_file.readline())
+        case_id_file.close()
+        return case_id
 
     def get_cac_id(self):
         try:
@@ -325,19 +315,36 @@ class PeopleInterface(tk.Frame):
 
     def get_role_name(self, role_id):
         role_mapping = {
-            1: 'Victim',
-            2: 'Perpetrator',
-            3: 'Witness',
-            4: 'Other'
+            1: 'Alleged Victim/Client',
+            2: 'Alleged Co-Victim',
+            3: 'Alleged Offender',
+            4: 'Caregiver',
+            5: 'Other'
         }
         return role_mapping.get(role_id, 'N/A')
 
     def get_relationship_name(self, relationship_id):
         relationship_mapping = {
-            1: 'Parent',
-            2: 'Sibling',
-            3: 'Guardian',
-            4: 'Other'
+            1: 'Self',
+            2: 'Mother',
+            3: 'Biological Mother',
+            4: 'Adoptive Mother',
+            5: 'Step-Mother',
+            6: 'Father\'s Girlfriend',
+            7: 'Father',
+            8: 'Biological Father',
+            9: 'Adoptive Father',
+            10: 'Step-Father',
+            11: 'Mother\'s Boyfriend',
+            12: 'Brother',
+            13: 'Sister',
+            14: 'Step-Brother',
+            15: 'Step-Sister',
+            16: 'Step-Brother',
+            17: 'Step-Sister',
+            18: 'Grandmother',
+            19: 'Grandfather',
+            20: 'Other Known Person'
         }
         return relationship_mapping.get(relationship_id, 'N/A')
 
@@ -725,6 +732,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
 from datetime import datetime
+import math
 
 class PersonalProfileForm(tk.Toplevel):
     def __init__(self, master, person_id=None, mode='add'):
@@ -759,7 +767,7 @@ class PersonalProfileForm(tk.Toplevel):
         self.radio_buttons_bio_sex = []
         self.radio_buttons_ethnicity = []
 
-        # Define Mappings for Race, Religion, Language, Role, and Relationship
+        # Define Mappings for Race, Religion, Language, Role, Relationship, Ethnicity, Education Level, Marital Status, Income Level
         self.race_mapping = {
             'White': 1,
             'Black or African American': 2,
@@ -800,6 +808,35 @@ class PersonalProfileForm(tk.Toplevel):
             'Other': 4
         }
 
+        self.ethnicity_mapping = {
+            'Non-Hispanic': 1,
+            'Hispanic': 2
+        }
+
+        self.education_level_mapping = {
+            'High School': 1,
+            'Bachelor\'s Degree': 2,
+            'Master\'s Degree': 3,
+            'Doctorate': 4,
+            'Other': 5
+        }
+
+        self.marital_status_mapping = {
+            'Single': 1,
+            'Married': 2,
+            'Divorced': 3,
+            'Widowed': 4,
+            'Other': 5
+        }
+
+        self.income_level_mapping = {
+            'Below Poverty Line': 1,
+            'Low Income': 2,
+            'Middle Income': 3,
+            'High Income': 4,
+            'Other': 5
+        }
+
         # Initialize in-memory storage for Runaway Incidents
         self.runaway_incidents = []
 
@@ -833,13 +870,18 @@ class PersonalProfileForm(tk.Toplevel):
             ('Unknown Date of Birth', 'Unknown Date of Birth:', False),
             ('Date of Death', 'Date of Death:', False),  # Not in database
             ('Biological Sex', 'Biological Sex:', True),
-            ('Self Identified Gender', 'Self Identified Gender:', True)
+            ('Self Identified Gender', 'Self Identified Gender:', True),
+            ('Ethnicity', 'Ethnicity:', False),
+            ('Bio Custom Field 7', 'Bio Custom Field 7:', False),
+            ('Bio Custom Field 8', 'Bio Custom Field 8:', False),
+            ('Bio Custom Field 9', 'Bio Custom Field 9:', False)
         ]
 
-        for idx, (field_key, field_label, required) in enumerate(basic_fields):
+        row_idx = 0
+        for field_key, field_label, required in basic_fields:
             # Required field labels in red
             label = ttk.Label(basic_info_frame, text=field_label, foreground="red" if required else "black")
-            label.grid(row=idx, column=0, sticky='e', padx=5, pady=5)
+            label.grid(row=row_idx, column=0, sticky='e', padx=5, pady=5)
 
             if field_key == 'Biological Sex':
                 self.fields[field_key] = tk.StringVar()
@@ -851,8 +893,9 @@ class PersonalProfileForm(tk.Toplevel):
                         variable=self.fields[field_key],
                         value=option
                     )
-                    rb.grid(row=idx, column=1 + col, sticky='w', padx=5, pady=2)
+                    rb.grid(row=row_idx, column=1 + col, sticky='w', padx=5, pady=2)
                     self.radio_buttons_bio_sex.append(rb)
+                row_idx += 1
             elif field_key == 'Self Identified Gender':
                 self.fields[field_key] = {}
                 options = [
@@ -869,10 +912,11 @@ class PersonalProfileForm(tk.Toplevel):
                         text=option,
                         variable=var
                     )
-                    row_offset = idx + (opt_idx // num_columns)
+                    row_offset = row_idx + (opt_idx // num_columns)
                     col_offset = 1 + (opt_idx % num_columns)
                     cb.grid(row=row_offset, column=col_offset, sticky='w', padx=5, pady=2)
                     self.fields[field_key][option] = var
+                row_idx = row_offset + 1
             elif field_key in ['Date of Birth', 'Date of Death']:
                 self.fields[field_key] = DateEntry(
                     basic_info_frame,
@@ -882,7 +926,8 @@ class PersonalProfileForm(tk.Toplevel):
                     borderwidth=2,
                     date_pattern='yyyy-mm-dd'
                 )
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                self.fields[field_key].grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
             elif field_key == 'Unknown Date of Birth':
                 # It's a checkbox
                 self.fields[field_key] = tk.BooleanVar()
@@ -890,10 +935,26 @@ class PersonalProfileForm(tk.Toplevel):
                     basic_info_frame,
                     variable=self.fields[field_key]
                 )
-                cb.grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                cb.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
+            elif field_key == 'Ethnicity':
+                # Options: Non-Hispanic, Hispanic
+                self.fields[field_key] = tk.StringVar()
+                options = ['Non-Hispanic', 'Hispanic']
+                for col, option in enumerate(options):
+                    rb = ttk.Radiobutton(
+                        basic_info_frame,
+                        text=option,
+                        variable=self.fields[field_key],
+                        value=option
+                    )
+                    rb.grid(row=row_idx, column=1 + col, sticky='w', padx=5, pady=2)
+                    self.radio_buttons_ethnicity.append(rb)
+                row_idx += 1
             else:
                 self.fields[field_key] = ttk.Entry(basic_info_frame)
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                self.fields[field_key].grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
 
         # Section 2: Demographics
         demographics_frame = ttk.LabelFrame(self.scrollable_frame, text="Demographics")
@@ -1084,7 +1145,9 @@ class PersonalProfileForm(tk.Toplevel):
             ('Sexual Predator', 'Sexual Predator:', False),
             ('Do they like cookies?', 'Do they like cookies?:', False),
             ('Developmental Age', 'Developmental Age:', False),
-            ('Date Added', 'Date Added:', False)
+            ('Date Added', 'Date Added:', False),
+            ('Custom Field (4)', 'Custom Field (4):', False),
+            ('Custom Field (5)', 'Custom Field (5):', False)
         ]
 
         for idx, (field_key, field_label, required) in enumerate(additional_fields):
@@ -1151,7 +1214,7 @@ class PersonalProfileForm(tk.Toplevel):
             ('Relationship to Alleged Victim/Client', 'Relationship to Alleged Victim/Client:', True),
             ('Role', 'Role:', True),
             ('Victim Status', 'Victim Status:', False),
-            ('Age at Time of Referral', 'Age at Time of Referral:', False),  # Exclude from save since column doesn't exist
+            ('Age at Time of Referral', 'Age at Time of Referral:', False),
             ('In Same Household as Alleged Victim/Client', 'In Same Household as Alleged Victim/Client:', False),
             ('Has Custody of Alleged Victim/Client', 'Has Custody of Alleged Victim/Client:', False),
             ('Address Line 1', 'Address Line 1:', False),
@@ -1160,12 +1223,36 @@ class PersonalProfileForm(tk.Toplevel):
             ('State', 'State:', False),
             ('Zip', 'Zip:', False),
             ('County', 'County:', False),
-            ('Region', 'Region:', False)
+            ('Region', 'Region:', False),
+            ('Resides Out of Country', 'Resides Out of Country:', False),
+            ('Home Phone', 'Home Phone:', False),
+            ('Work Phone', 'Work Phone:', False),
+            ('Cell Phone', 'Cell Phone:', False),
+            ('Email Address', 'Email Address:', False),
+            ('School Or Employer', 'School Or Employer:', False),
+            ('Education Level', 'Education Level:', False),
+            ('Marital Status', 'Marital Status:', False),
+            ('Income Level of Household', 'Income Level of Household:', False),
+            ('Does this youth have Youth Problematic Sexual Behaviors?', 'Does this youth have Youth Problematic Sexual Behaviors?', False),
+            ('Military Connection', 'Military Connection:', False),
+            ('Military Type', 'Military Type:', False),
+            ('If National Guard or Reserves, are you currently active/on Title 10 status?', 'If National Guard or Reserves, are you currently active/on Title 10 status?', False),
+            ('Military Dependent Relationship', 'Military Dependent Relationship:', False),
+            ('Military Connection Name', 'Military Connection Name:', False),
+            ('Custom Field (1)', 'Custom Field (1):', False),
+            ('CSF Eligible (2)', 'CSF Eligible (2):', False),
+            ('Does family need transportation assistance? (3)', 'Does family need transportation assistance? (3):', False),
+            ('Community (5)', 'Community (5):', False),
+            ('Case Person Custom Field 6', 'Case Person Custom Field 6:', False),
+            ('Case Person Custom Field 7', 'Case Person Custom Field 7:', False),
+            ('Case Person Custom Field 8', 'Case Person Custom Field 8:', False),
+            ('Case Person Custom Field 9', 'Case Person Custom Field 9:', False)
         ]
 
-        for idx, (field_key, field_label, required) in enumerate(case_specific_fields):
+        row_idx = 0
+        for field_key, field_label, required in case_specific_fields:
             label = ttk.Label(case_specific_frame, text=field_label, foreground="red" if required else "black")
-            label.grid(row=idx, column=0, sticky='e', padx=5, pady=5)
+            label.grid(row=row_idx, column=0, sticky='e', padx=5, pady=5)
 
             if field_key == 'Relationship to Alleged Victim/Client':
                 # Predefined options with mapping to integer IDs
@@ -1178,7 +1265,8 @@ class PersonalProfileForm(tk.Toplevel):
                     state="readonly"
                 )
                 relationship_combobox['values'] = options
-                relationship_combobox.grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                relationship_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
             elif field_key == 'Role':
                 # Predefined options with mapping to integer IDs
                 self.fields[field_key] = tk.StringVar()
@@ -1190,35 +1278,148 @@ class PersonalProfileForm(tk.Toplevel):
                     state="readonly"
                 )
                 role_combobox['values'] = options
-                role_combobox.grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                role_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
             elif field_key == 'Victim Status':
                 self.fields[field_key] = ttk.Combobox(case_specific_frame, state="readonly")
                 self.fields[field_key]['values'] = ['Status 1', 'Status 2', 'Status 3']  # Replace with actual statuses
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                self.fields[field_key].grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
             elif field_key == 'Age at Time of Referral':
                 frame_age = ttk.Frame(case_specific_frame)
-                frame_age.grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                frame_age.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
                 self.fields['Age at Time of Referral'] = ttk.Entry(frame_age, width=5)
                 self.fields['Age at Time of Referral'].pack(side='left')
                 self.fields['Age Unit'] = ttk.Combobox(frame_age, state="readonly", width=10)
-                self.fields['Age Unit']['values'] = ['Years', 'Months', 'Days']  # Add other units if needed
-                self.fields['Age Unit'].pack(side='left', padx=(5,0))
-                # Set default value to 'Years'
+                age_units = [('Years', 'YR'), ('Months', 'MO'), ('Days', 'DA')]
+                self.age_unit_mapping = {unit[0]: unit[1] for unit in age_units}
+                age_unit_names = [unit[0] for unit in age_units]
+                self.fields['Age Unit']['values'] = age_unit_names
+                self.fields['Age Unit'].pack(side='left', padx=(5, 0))
                 self.fields['Age Unit'].set('Years')
-            elif field_key in ['In Same Household as Alleged Victim/Client', 'Has Custody of Alleged Victim/Client']:
+                row_idx += 1
+            elif field_key in ['In Same Household as Alleged Victim/Client', 'Has Custody of Alleged Victim/Client',
+                               'Resides Out of Country', 'Does this youth have Youth Problematic Sexual Behaviors?',
+                               'CSF Eligible (2)', 'Does family need transportation assistance? (3)']:
                 self.fields[field_key] = tk.BooleanVar()
                 cb = ttk.Checkbutton(
                     case_specific_frame,
                     variable=self.fields[field_key]
                 )
-                cb.grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                cb.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
             elif field_key == 'State':
+                states = [
+                    ('Alabama', 'AL'),
+                    ('Alaska', 'AK'),
+                    ('Arizona', 'AZ'),
+                    ('Arkansas', 'AR'),
+                    ('California', 'CA'),
+                    ('Colorado', 'CO'),
+                    ('Connecticut', 'CT'),
+                    ('Delaware', 'DE'),
+                    ('District of Columbia', 'DC'),
+                    ('Florida', 'FL'),
+                    ('Georgia', 'GA'),
+                    ('Hawaii', 'HI'),
+                    ('Idaho', 'ID'),
+                    ('Illinois', 'IL'),
+                    ('Indiana', 'IN'),
+                    ('Iowa', 'IA'),
+                    ('Kansas', 'KS'),
+                    ('Kentucky', 'KY'),
+                    ('Louisiana', 'LA'),
+                    ('Maine', 'ME'),
+                    ('Maryland', 'MD'),
+                    ('Massachusetts', 'MA'),
+                    ('Michigan', 'MI'),
+                    ('Minnesota', 'MN'),
+                    ('Mississippi', 'MS'),
+                    ('Missouri', 'MO'),
+                    ('Montana', 'MT'),
+                    ('Nebraska', 'NE'),
+                    ('Nevada', 'NV'),
+                    ('New Hampshire', 'NH'),
+                    ('New Jersey', 'NJ'),
+                    ('New Mexico', 'NM'),
+                    ('New York', 'NY'),
+                    ('North Carolina', 'NC'),
+                    ('North Dakota', 'ND'),
+                    ('Ohio', 'OH'),
+                    ('Oklahoma', 'OK'),
+                    ('Oregon', 'OR'),
+                    ('Pennsylvania', 'PA'),
+                    ('Rhode Island', 'RI'),
+                    ('South Carolina', 'SC'),
+                    ('South Dakota', 'SD'),
+                    ('Tennessee', 'TN'),
+                    ('Texas', 'TX'),
+                    ('Utah', 'UT'),
+                    ('Vermont', 'VT'),
+                    ('Virginia', 'VA'),
+                    ('Washington', 'WA'),
+                    ('West Virginia', 'WV'),
+                    ('Wisconsin', 'WI'),
+                    ('Wyoming', 'WY'),
+                ]
+                self.state_abbr_mapping = {state[0]: state[1] for state in states}
+                state_names = [state[0] for state in states]
                 self.fields[field_key] = ttk.Combobox(case_specific_frame, state="readonly")
-                self.fields[field_key]['values'] = ['District of Columbia', 'State 1', 'State 2']  # Replace with actual states
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                self.fields[field_key]['values'] = state_names
+                self.fields[field_key].grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
+            elif field_key == 'Education Level':
+                self.fields[field_key] = tk.StringVar()
+                options = list(self.education_level_mapping.keys())
+                self.fields[field_key].set('Select Education Level')
+                education_combobox = ttk.Combobox(
+                    case_specific_frame,
+                    textvariable=self.fields[field_key],
+                    state="readonly"
+                )
+                education_combobox['values'] = options
+                education_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
+            elif field_key == 'Marital Status':
+                self.fields[field_key] = tk.StringVar()
+                options = list(self.marital_status_mapping.keys())
+                self.fields[field_key].set('Select Marital Status')
+                marital_combobox = ttk.Combobox(
+                    case_specific_frame,
+                    textvariable=self.fields[field_key],
+                    state="readonly"
+                )
+                marital_combobox['values'] = options
+                marital_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
+            elif field_key == 'Income Level of Household':
+                self.fields[field_key] = tk.StringVar()
+                options = list(self.income_level_mapping.keys())
+                self.fields[field_key].set('Select Income Level')
+                income_combobox = ttk.Combobox(
+                    case_specific_frame,
+                    textvariable=self.fields[field_key],
+                    state="readonly"
+                )
+                income_combobox['values'] = options
+                income_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
+            elif field_key == 'Community (5)':
+                self.fields[field_key] = tk.StringVar()
+                options = ['West Hills', 'Cedar Bluff Apartments', 'Hardin Valley', 'Glenview']
+                self.fields[field_key].set('Select Community')
+                community_combobox = ttk.Combobox(
+                    case_specific_frame,
+                    textvariable=self.fields[field_key],
+                    state="readonly"
+                )
+                community_combobox['values'] = options
+                community_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
             else:
                 self.fields[field_key] = ttk.Entry(case_specific_frame)
-                self.fields[field_key].grid(row=idx, column=1, sticky='w', padx=5, pady=5)
+                self.fields[field_key].grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                row_idx += 1
 
         # Control Buttons
         button_frame = ttk.Frame(self.scrollable_frame)
@@ -1454,21 +1655,27 @@ class PersonalProfileForm(tk.Toplevel):
 
                 # Handle 'Age at Time of Referral' and 'Age Unit'
                 age = case_person[2]
-                age_unit = case_person[3]
+                age_unit_code = case_person[3]
                 if age:
                     self.fields['Age at Time of Referral'].delete(0, tk.END)
                     self.fields['Age at Time of Referral'].insert(0, str(age))
-                    self.fields['Age Unit'].set(age_unit if age_unit else 'Years')
+                    # Map age_unit_code back to full name
+                    reverse_age_unit_mapping = {v: k for k, v in self.age_unit_mapping.items()}
+                    age_unit_name = reverse_age_unit_mapping.get(age_unit_code, 'Years')
+                    self.fields['Age Unit'].set(age_unit_name)
                 else:
                     self.fields['Age at Time of Referral'].delete(0, tk.END)
                     self.fields['Age Unit'].set('Years')
 
                 # Handle address fields
                 address_fields = ['Address Line 1', 'Address Line 2', 'City', 'State', 'Zip']
-                for idx, key in enumerate(address_fields, start=4):
-                    value = case_person[idx]
+                for idx_field, key in enumerate(address_fields, start=4):
+                    value = case_person[idx_field]
                     if key == 'State':
-                        self.fields[key].set(value if value else '')
+                        # Map state abbreviation back to state name
+                        reverse_state_mapping = {v: k for k, v in self.state_abbr_mapping.items()}
+                        state_name = reverse_state_mapping.get(value, '')
+                        self.fields[key].set(state_name)
                     else:
                         if isinstance(self.fields[key], ttk.Entry):
                             self.fields[key].delete(0, tk.END)
@@ -1553,13 +1760,25 @@ class PersonalProfileForm(tk.Toplevel):
 
             # Ensure Age Unit is selected if 'Age at Time of Referral' is filled
             age_at_referral = data.get('Age at Time of Referral')
-            age_unit = data.get('Age Unit')
+            age_unit_name = data.get('Age Unit')
             if age_at_referral:
-                if not age_unit:
+                if not age_unit_name:
                     messagebox.showwarning("Validation Error", "Age Unit is required when Age at Time of Referral is provided.")
+                    return
+                age_unit_code = self.age_unit_mapping.get(age_unit_name, None)
+                if age_unit_code is None:
+                    messagebox.showwarning("Validation Error", "Invalid Age Unit selected.")
                     return
             else:
                 data['Age Unit'] = ''
+                age_unit_code = None
+
+            # Map State to state_abbr
+            state_name = data.get('State')
+            state_abbr = self.state_abbr_mapping.get(state_name, None)
+            if state_abbr is None and state_name != '':
+                messagebox.showwarning("Validation Error", "Invalid State selected.")
+                return
 
             cur = self.conn.cursor()
 
@@ -1683,11 +1902,11 @@ class PersonalProfileForm(tk.Toplevel):
                     relationship_id,
                     role_id,
                     int(data.get('Age at Time of Referral')) if data.get('Age at Time of Referral') else None,
-                    data.get('Age Unit'),
+                    age_unit_code,
                     data.get('Address Line 1'),
                     data.get('Address Line 2'),
                     data.get('City'),
-                    self.fields['State'].get(),
+                    state_abbr,
                     data.get('Zip'),
                     data.get('In Same Household as Alleged Victim/Client'),
                     data.get('School or Employer')
@@ -1812,11 +2031,11 @@ class PersonalProfileForm(tk.Toplevel):
                     relationship_id,
                     role_id,
                     int(data.get('Age at Time of Referral')) if data.get('Age at Time of Referral') else None,
-                    data.get('Age Unit'),
+                    age_unit_code,
                     data.get('Address Line 1'),
                     data.get('Address Line 2'),
                     data.get('City'),
-                    self.fields['State'].get(),
+                    state_abbr,
                     data.get('Zip'),
                     data.get('In Same Household as Alleged Victim/Client'),
                     data.get('School or Employer'),
@@ -1839,6 +2058,7 @@ class PersonalProfileForm(tk.Toplevel):
         except Exception as e:
             self.conn.rollback()
             messagebox.showerror("Error", f"Failed to save person information: {e}")
+
 
 # -------------------- Alias for Compatibility with app.py --------------------
 people_interface = PeopleInterface
