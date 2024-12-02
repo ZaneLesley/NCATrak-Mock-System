@@ -3,7 +3,7 @@ from faker_education import SchoolProvider
 import random
 from datetime import datetime
 from rich import print
-import util
+from . import util
 
 # Configurable
 # Note: CAC_TO_GENERATE * CAC_TO_AGENCY_RATIO < 32767
@@ -124,7 +124,7 @@ attribute = [
 # child_advocacy_center
 def generate_cac_agency():
     fake = Faker()
-    fake.seed_instance(0)
+    # fake.seed_instance()
     for _ in range(CAC_TO_GENERATE):
         cac = {}
         # Data to be generated
@@ -143,7 +143,7 @@ def generate_cac_agency():
 def generate_child_advocacy_center():
     data = []
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for cac in child_advocacy_center_data:
         for _ in range(CAC_TO_AGENCY_RATIO):
             agency = {}
@@ -163,7 +163,7 @@ def generate_child_advocacy_center():
 # TODO: Fix Nones
 def generate_person(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         person = {}
         
@@ -192,7 +192,7 @@ def generate_person(amount: int):
 
 def generator_cac_case(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     counter = 0
     for _ in range(amount):
         person = random.choice(person_data)
@@ -244,7 +244,7 @@ def generator_cac_case(amount: int):
 def generator_case_person(amount: int):
     fake = Faker()
     fake.add_provider(SchoolProvider)
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     temp = cac_case_data.copy()
     for _ in range(amount):
         person  = random.choice(temp)
@@ -285,7 +285,7 @@ def generator_case_person(amount: int):
          
 def generator_case_va_session_log(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         session = {}
         person = random.choice(cac_case_data)
@@ -297,13 +297,13 @@ def generator_case_va_session_log(amount: int):
         session["va_provider_agency_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
         #[ ] Not sure if this is the right format for this object, need to check.
         session["session_date"] = fake.date_time_between(start_date=person["cac_recieved_date"])
-        session["session_status"] = fake.random_int(min=1, max=9)
+        session["session_status"] = fake.random_int(min=1, max=6)
         
         case_va_session_log_data.append(session)
         
 def generator_case_va_session_attendee(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         session = {}
         case = random.choice(case_va_session_log_data)
@@ -317,7 +317,7 @@ def generator_case_va_session_attendee(amount: int):
         
 def generator_case_va_session_service(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         session = {}
         case = random.choice(case_va_session_log_data)
@@ -332,7 +332,7 @@ def generator_case_va_session_service(amount: int):
 
 def generator_case_mh_assessments_instruments(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for temp in assessment_instrument:
         instrument = {}
         instrument["instruments_id"] = temp[0]
@@ -342,7 +342,7 @@ def generator_case_mh_assessments_instruments(amount: int):
         
 def generator_case_mh_assessments(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         assessment = {}
         case = random.choice(cac_case_data)
@@ -368,7 +368,7 @@ def generator_case_mh_assessments(amount: int):
         
 def generator_case_mh_assessment_measure_scores(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         assessment = {}
         case = random.choice(case_mh_assessments_data)
@@ -384,7 +384,7 @@ def generator_case_mh_assessment_measure_scores(amount: int):
 
 def generator_mh_assessment_diagnosis_log(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         case = random.choice(cac_case_data)
         log = {}
@@ -396,7 +396,7 @@ def generator_mh_assessment_diagnosis_log(amount: int):
         
 def generator_mh_session_log_enc(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         case = random.choice(cac_case_data)
         log = {}
@@ -423,7 +423,7 @@ def generator_mh_session_log_enc(amount: int):
         
 def generator_mh_treatment_plan(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         treatment = {}
         case = random.choice(cac_case_data)
@@ -447,7 +447,7 @@ def generator_mh_treatment_plan(amount: int):
 # FIXME: Maybe Review and ensure this one is correct with case vs person
 def generator_mh_session_attendee(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         person = random.choice(case_mh_session_log_enc_data)
         session = {}
@@ -461,7 +461,7 @@ def generator_mh_session_attendee(amount: int):
     
 def generator_mh_session_attribute_group(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         attendee = random.choice(case_mh_session_attendee_data)
         group = {}
@@ -478,7 +478,7 @@ def generator_mh_session_attribute_group(amount: int):
         
 def generator_mh_provider_log(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         case = random.choice(cac_case_data)
         log = {}
@@ -498,7 +498,7 @@ def generator_mh_provider_log(amount: int):
         
 def generator_mh_service_barriers(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for _ in range(amount):
         barrier = {}
         barrier["id"] = fake.unique.random_number(digits = 9)
@@ -509,7 +509,7 @@ def generator_mh_service_barriers(amount: int):
         
 def generator_mh_treatment_models(amount: int):
     fake = Faker()
-    fake.seed_instance(0)
+#     fake.seed_instance(0)
     for temp in treatment_models:
         instrument = {}
         instrument["id"] = temp[0]
@@ -517,7 +517,7 @@ def generator_mh_treatment_models(amount: int):
         
         case_mh_treatment_models_data.append(instrument)
         
-if __name__ == "__main__":
+def main():
     print("[bold blue]NCA-Trak-Mock Data Generator")
     print("[yellow]How many data entries would you like to be generated?")
     n = int(input())

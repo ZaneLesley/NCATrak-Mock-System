@@ -12,8 +12,6 @@ This software aims to give professors at the [University of Oklahoma Health Scie
 
 ## Installation
 
-WIP (I'll do this towards the end, okay...)
-
 ### Anaconda Setup Instructions
 
 This section will walk you thorough the installation and setup of Anaconda, which ensures that all of our code is cross-platform compatible.
@@ -22,9 +20,13 @@ This section will walk you thorough the installation and setup of Anaconda, whic
 
 Follow Anaconda's [Installation Guide](https://docs.anaconda.com/anaconda/install/). Be sure to select the correct guide for your operating system.
 
-#### Step 2: Setup a Virtual Environment
+#### Step 2 (Windows): Setup a Virtual Environment
 
-- On Linux or MacOS, open a terminal window. On Windows, open Anaconda Prompt.
+Please follow the [guide provided by Anaconda](https://docs.anaconda.com/navigator/tutorials/manage-environments/#importing-an-environment)
+
+#### Step 2 (Linux / Mac): Setup a Virtual Environment 
+
+- On Linux or MacOS
 - Navigate to the folder containing the current version of the NCA mock system using the command:
 
 ```shell
@@ -34,13 +36,13 @@ cd directory/of/mock/system/install
 - Run the following command to create a virtual environment called NCA-Trak that installs all of the dependencies listed in the environment.yml file:
 
 ```shell
-conda env create -n NCA-Trak --file environment.yml
+conda env create -n 'put_a_name' --file environment.yml
 ```
 
 - Activate the virtual environment by running the command:
 
 ```shell
-conda activate NCA-Trak
+conda activate 'previously_put_name'
 ```
 
 - Verify the virtual environment is running by entering the command 
@@ -59,8 +61,6 @@ and confirming that all of the packages listed in the environment.yml file are l
 
 
 Once all packages have been installed, your Anaconda VNV should now be up and running!
-
-*Note: The virtual environment name "NCA-Trak" is currently a placeholder, and will be changed for future versions.*
 
 ### Database Setup Instructions
 
@@ -89,7 +89,7 @@ postgres=#
 - Enter the command
 
 ```shell
-CREATE DATABASE test_setup_database;
+CREATE DATABASE 'database_name';
 ```
 
 - You can now exit psql by entering the command:
@@ -98,43 +98,60 @@ CREATE DATABASE test_setup_database;
 exit
 ```
 
-#### Step 3: Create database.ini file
+### Configuring the Database
 
-*(NOTE: This section assumes that you have already downloaded all of the code and have an up-and-running Conda environment with all of the correct packages installed.)*
-
-- Open the location where you have downloaded the current version of the NCA mock system in either an IDE or a terminal.
-
-- In the Database folder, create a new file called “database.ini”
-
-- Copy-paste the following into the database.ini file:
+- Navigate to the folder where you installed the project
 
 ```shell
-[postgresql]
-host=localhost
-database=test_setup_database
-user=postgres
-password=<password>
+cd directory\of\mock\system\install
 ```
 
-- Replace *<password>* with the same password you used to log into PostgreSQL. Save the file.
-
-- Verify that you can connect to the database by running the connect.py script. This script should run successfully with no output and no errors if it has connected successfully.
-
-#### Step 4: Create and populate the database tables
-
-- Run the script “create_tables.py”. This will create the table currently being used for the personal profile page.
-
+example:
 ```shell
-python3 create_tables.py
+cd D:\Dev\NCATrak-Mock-System
 ```
-- Next, run the script “populate_database.py”. This pulls the mock data stored in the data.csv file and populates the newly-created data table.
+
+- Go into the app folder
 
 ```shell
-python3 populate_database.py
-``` 
+cd app
+```
 
-And that’s it! You should now be able to run the script “database_lookup_search.py” to search and select personal profiles by name.
+- Run the wizard.py file
 
 ```shell
-database_lookup_search.py
+python wizard.py
+```
+
+- Input 1 and follow the steps, your input should look something like this to begin
+```shell
+Please Select From the following options:
+
+[1] Complete Install
+[2] Added New Generated Data
+
+1
+Enter the host
+: localhost
+Enter the database name
+: test_setup_database
+Enter user name
+: postgres
+Enter password
+: password
+Enter 
+Custom Port (most likely not)? If so enter the port #### else hit enter
+: (hit enter)
+```
+
+```Shell
+How many data entries would you like to be generated?
+50 ## We have generated up to 10,000 at one time before, so consider that the max tested limit.
+Generating Data...
+```
+
+- After finishing the wizard, you should be able to run `app.py` in the current directory you are in. ie `D:\Dev\NCATrak-Mock-System\app`
+
+```shell
+python app.py
 ```
