@@ -257,20 +257,10 @@ class PeopleInterface(tk.Frame):
             return None
 
     def get_current_case_id(self):
-        try:
-            cur = self.conn.cursor()
-            query = "SELECT case_id FROM cac_case LIMIT 1;"
-            cur.execute(query)
-            result = cur.fetchone()
-            cur.close()
-            if result:
-                return result[0]
-            else:
-                messagebox.showerror("Error", "No cases found in the database.")
-                return None
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to retrieve case ID: {e}")
-            return None
+        case_id_file = open("case_id.txt", "r")
+        case_id = int(case_id_file.readline())
+        case_id_file.close()
+        return case_id
 
     def get_cac_id(self):
         try:
@@ -325,19 +315,36 @@ class PeopleInterface(tk.Frame):
 
     def get_role_name(self, role_id):
         role_mapping = {
-            1: 'Victim',
-            2: 'Perpetrator',
-            3: 'Witness',
-            4: 'Other'
+            1: 'Alleged Victim/Client',
+            2: 'Alleged Co-Victim',
+            3: 'Alleged Offender',
+            4: 'Caregiver',
+            5: 'Other'
         }
         return role_mapping.get(role_id, 'N/A')
 
     def get_relationship_name(self, relationship_id):
         relationship_mapping = {
-            1: 'Parent',
-            2: 'Sibling',
-            3: 'Guardian',
-            4: 'Other'
+            1: 'Self',
+            2: 'Mother',
+            3: 'Biological Mother',
+            4: 'Adoptive Mother',
+            5: 'Step-Mother',
+            6: 'Father\'s Girlfriend',
+            7: 'Father',
+            8: 'Biological Father',
+            9: 'Adoptive Father',
+            10: 'Step-Father',
+            11: 'Mother\'s Boyfriend',
+            12: 'Brother',
+            13: 'Sister',
+            14: 'Step-Brother',
+            15: 'Step-Sister',
+            16: 'Step-Brother',
+            17: 'Step-Sister',
+            18: 'Grandmother',
+            19: 'Grandfather',
+            20: 'Other Known Person'
         }
         return relationship_mapping.get(relationship_id, 'N/A')
 
