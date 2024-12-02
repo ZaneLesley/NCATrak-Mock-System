@@ -141,62 +141,105 @@ class GeneraltabInterface(tk.Frame):
 
         # General tab title
         general_frame = tk.Frame(scrollable_frame)
-        general_frame.pack(anchor="center", pady=10)
-        ttk.Label(general_frame, text="Case Tracking").pack()
+        general_frame.pack(anchor="w", pady=10)
+        ttk.Label(general_frame, text="").pack()
 
         def get_all_cases():
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("""select cac_case.mh_referral_date, cac_agency.agency_name, employee.first_name, employee.last_name,   
-                                    from cac_case;""")
+                        cur.execute("""select cac_case.mh_referral_date, cac_agency.agency_name, child_advocacy_center.cac_name, employee.first_name, employee.last_name,   
+                                    cac_case.case_closed_date, cac_case.case_id 
+                                    from cac_case
+                                    left join cac_agency on cac_case.va_referral_agency_id = cac_agency.agency_id
+                                    left join child_advocacy_center on cac_case.cac_id = child_advocacy_center.cac_id
+                                    left join employee on cac_case.mh_lead_employee_id = employee.employee_id;""")
                         cases = cur.fetchall()
                         return cases
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
                 exit()
 
+        def update_case(id, referralDate, agency1, worker, agency2, contact):
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("""update cac_case 
+                                    set mh_referral_date = %s,
+                                    va_referral_agency_id = %s,
+                                    cac_id = %s,
+                                    mh_lead_employee_id = %s
+                                    where case_id = %s;""", (referralDate, agency1, agency2, contact, id))
+                        conn.commit()
+                        messagebox.showinfo("Success!", "Case Updated!")
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
 
         # Function to create edit case details
-        def add_editbutton_popup():
+        def add_editbutton_popup(caseId, service, status, case):
             popup = tk.Toplevel(self)
             popup.title("Edit")
-            popup.geometry("500x400")
+            popup.geometry("450x300")
 
-            ttk.Label(popup, text="Service", foreground='black').grid(row=1, column=0, padx=5, pady=5)
-            service_name = ttk.Label(popup, text="LI")
+            cacAgencies, cacReverse = get_all_CAC_agencies()
+            personnel, rPersonnel = get_all_personnel()
+
+            agencies, aReverse = get_all_agencies()
+
+            ttk.Label(popup, text="Fields marked with (*) are required.", foreground='red').grid(row=0, column=0, padx=5, pady=5, sticky='w')
+
+            field_frame = ttk.Frame(popup)
+            field_frame.grid(row=1, column=0, padx=5, pady=5, sticky='w')
+
+            ttk.Label(field_frame, text="Service", foreground='black').grid(row=1, column=0, padx=5, pady=5)
+            service_name = ttk.Label(field_frame, text=service)
             service_name.grid(row=1, column=1, padx=5, pady=5)
 
-            ttk.Label(popup, text="Referral Date", foreground='black').grid(row=2, column=0, padx=5, pady=5)
-            referral_date_entry = DateEntry(popup, width=12, background='darkblue', foreground='white', borderwidth=2)
+            ttk.Label(field_frame, text="Referral Date *", foreground='black').grid(row=2, column=0, padx=5, pady=5)
+            referral_date_entry = DateEntry(field_frame, width=12, background='darkblue', foreground='white', borderwidth=2)
             referral_date_entry.grid(row=2, column=1, padx=5, pady=5)
+            referral_date_entry.set_date(case[0])
 
-            ttk.Label(popup, text="Referred By", foreground='black').grid(row=3, column=0, padx=5, pady=5)
-            referral_group_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Referred By *", foreground='black').grid(row=3, column=0, padx=5, pady=5)
+            referral_group_entry = ttk.Combobox(field_frame, values=list(agencies.values()))
             referral_group_entry.grid(row=3, column=1, padx=5, pady=5)
-            referral_worker_entry = ttk.Combobox(popup)
+            if case[1] is not None:
+                referral_group_entry.set(case[1])
+
+            referral_worker_entry = ttk.Combobox(field_frame, values=list(personnel.values()))
             referral_worker_entry.grid(row=3, column=2, padx=5, pady=5)
 
-            ttk.Label(popup, text="Providing Agency").grid(row=4, column=0, padx=5, pady=5)
-            providing_agency_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Providing Agency *").grid(row=4, column=0, padx=5, pady=5)
+            providing_agency_entry = ttk.Combobox(field_frame, values=list(cacAgencies.values()))
             providing_agency_entry.grid(row=4, column=1, padx=5, pady=5)
+            if case[2] is not None:
+                providing_agency_entry.set(case[2])
 
-            ttk.Label(popup, text="Primary Contact").grid(row=5, column=0, padx=5, pady=5)
-            primary_contact_entry = ttk.Combobox(popup)
+            ttk.Label(field_frame, text="Primary Contact *").grid(row=5, column=0, padx=5, pady=5)
+            primary_contact_entry = ttk.Combobox(field_frame, values=list(personnel.values()))
             primary_contact_entry.grid(row=5, column=1, padx=5, pady=5)
+            if case[3] is not None and case[4] is not None:
+                primary_contact_entry.set(case[3] + " " + case[4])
 
-            ttk.Label(popup, text="Status").grid(row=6, column=0, padx=5, pady=5)
-            status_entry = ttk.Label(popup, text="Referred")
+            ttk.Label(field_frame, text="Status").grid(row=6, column=0, padx=5, pady=5)
+            status_entry = ttk.Label(field_frame, text=status)
             status_entry.grid(row=6, column=1, padx=5, pady=5)
 
-            ttk.Label(popup, text="Status Date").grid(row=7, column=0, padx=5, pady=5)
-            status_date_entry = ttk.Label(popup, text="08/25/2021")
+            ttk.Label(field_frame, text="Status Date").grid(row=7, column=0, padx=5, pady=5)
+            status_date_entry = ttk.Label(field_frame, text=str(case[5]))
             status_date_entry.grid(row=7, column=1, padx=5, pady=5)
 
+            button_frame = ttk.Frame(popup)
+            button_frame.grid(row=2, column=0, columnspan=3, pady=15)
+
             # Update and Cancel buttons
-            ttk.Button(popup, text="Update", command=lambda: [popup.destroy()]).grid(row=9, column=0, padx=5, pady=5)
-            ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=9, column=1, padx=5, pady=5)
+            ttk.Button(button_frame, text="Update", command=lambda: [update_case(caseId, referral_date_entry.get_date(), aReverse[referral_group_entry.get()],
+                                                                          rPersonnel[referral_worker_entry.get()], cacReverse[providing_agency_entry.get()], rPersonnel[primary_contact_entry.get()]), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
+            ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5)
 
         def add_allegation_record_popup():
             popup = tk.Toplevel(self)
@@ -272,40 +315,73 @@ class GeneraltabInterface(tk.Frame):
             ttk.Button(popup, text="Cancel", command=lambda: [popup.destroy()]).grid(row=14, column=1, padx=5, pady=5)
 
         # Create the cases section
-        cases_frame = tk.LabelFrame(scrollable_frame, text="Cases", padx=10, pady=10)
+        cases_frame = tk.LabelFrame(scrollable_frame, text="Case Tracking", padx=10, pady=10)
         cases_frame.pack(fill="x", padx=10, pady=5)
+
+        cases = get_all_cases()
 
         # Date (with DateEntry for calendar selection)
         ttk.Label(cases_frame, text="Service").grid(row=0, column=1, padx=5, pady=5)
-        service_field = ttk.Label(cases_frame)
-        service_field.grid(row=1, column=1, padx=5, pady=5)
-
         ttk.Label(cases_frame, text="Referral Date").grid(row=0, column=2, sticky="w")
-        referral_date = ttk.Label(cases_frame, text="Test Date")
-        referral_date.grid(row=1, column=2, padx=5, pady=5)
-
         ttk.Label(cases_frame, text="Referred By").grid(row=0, column=3, padx=5, pady=5)
-        referred_by_field = ttk.Label(cases_frame, text="Placeholder")
-        referred_by_field.grid(row=1, column=3, padx=5, pady=5)
-
         ttk.Label(cases_frame, text="Providing Agency").grid(row=0, column=4, padx=5, pady=5)
-        providing_agency = ttk.Label(cases_frame, text="test agency")  
-        providing_agency.grid(row=1, column=4, padx=5, pady=5)
-
         ttk.Label(cases_frame, text="Primary Contact").grid(row=0, column=5, padx=5, pady=5)
-        primary_contact = ttk.Label(cases_frame, text="Temp")  
-        primary_contact.grid(row=1, column=5, padx=5, pady=5)
-
         ttk.Label(cases_frame, text="Status").grid(row=0, column=6, padx=5, pady=5)
-        status_field = ttk.Label(cases_frame, text="Temp")  
-        status_field.grid(row=1, column=6, padx=5, pady=5)
-
         ttk.Label(cases_frame, text="Status Date").grid(row=0, column=7, padx=5, pady=5)
-        status_date = ttk.Label(cases_frame, text="Temp date")  
-        status_date.grid(row=1, column=7, padx=5, pady=5)
 
-        # Add the "Edit" button next to the personnel dropdown
-        ttk.Button(cases_frame, text="Edit", command=add_editbutton_popup).grid(row=1, column=0, padx=5, pady=5)
+        services = {
+            0: "MDT",
+            1: "CPS",
+            2: "LE",
+            3: "Medical",
+            4: "FI",
+            5: "MH",
+            6: "VA",
+            7: "Prosecution"
+        }
+        statuses = {
+            0: "Adjourned",
+            1: "Closed",
+            2: "Closed",
+            3: "NA",
+            4: "Referred",
+            5: "Complete",
+            6: "Scheduled",
+            7: "Reviewed"
+        }
+
+        rowCounter = 1
+        for c in cases:
+            if c[3] is None or c[4] is None:
+                contactName = "NA"
+            else:
+                contactName = c[3] + " " + c[4]
+
+            service, status = random.randint(0, 7), random.randint(0, 7)
+
+            service_field = ttk.Label(cases_frame, text=services[service])
+            service_field.grid(row=rowCounter, column=1, padx=5, pady=5)
+
+            referral_date = ttk.Label(cases_frame, text=str(c[0]))
+            referral_date.grid(row=rowCounter, column=2, padx=5, pady=5)
+
+            referred_by_field = ttk.Label(cases_frame, text=str(c[1]))
+            referred_by_field.grid(row=rowCounter, column=3, padx=5, pady=5)
+
+            providing_agency = ttk.Label(cases_frame, text=str(c[2]))  
+            providing_agency.grid(row=rowCounter, column=4, padx=5, pady=5)
+
+            primary_contact = ttk.Label(cases_frame, text=contactName)  
+            primary_contact.grid(row=rowCounter, column=5, padx=5, pady=5)
+
+            status_field = ttk.Label(cases_frame, text=statuses[status])  
+            status_field.grid(row=rowCounter, column=6, padx=5, pady=5)
+
+            status_date = ttk.Label(cases_frame, text=str(c[5]))  
+            status_date.grid(row=rowCounter, column=7, padx=5, pady=5)
+
+            ttk.Button(cases_frame, text="Edit", command=lambda: add_editbutton_popup(c[6], services[service], statuses[status], c)).grid(row=rowCounter, column=0, padx=5, pady=5)
+            rowCounter += 1
 
         #------------------------------
 
@@ -322,7 +398,7 @@ class GeneraltabInterface(tk.Frame):
                 print(f"{error}")
                 exit()
 
-        def get_all_agencies():
+        def get_all_CAC_agencies():
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
@@ -331,6 +407,20 @@ class GeneraltabInterface(tk.Frame):
                         agencies = cur.fetchall()
                         agencyMap = {agency[0]: agency[1] for agency in agencies}
                         agencyMapReversed = {agency[1]: agency[0] for agency in agencies}
+                        return agencyMap, agencyMapReversed
+            except (psycopg2.DatabaseError, Exception) as error:
+                print(f"{error}")
+                exit()
+
+        def get_all_agencies():
+            try:
+                config = load_config()
+                with psycopg2.connect(**config) as conn:
+                    with conn.cursor() as cur:
+                        cur.execute("select * from cac_agency order by agency_name;")
+                        agencies = cur.fetchall()
+                        agencyMap = {agency[0]: agency[2] for agency in agencies}
+                        agencyMapReversed = {agency[2]: agency[0] for agency in agencies}
                         return agencyMap, agencyMapReversed
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
@@ -513,7 +603,7 @@ class GeneraltabInterface(tk.Frame):
         if caseReceivedDate is not None:
             date_entry.set_date(caseReceivedDate)
 
-        agencies, aReverse = get_all_agencies() 
+        agencies, aReverse = get_all_CAC_agencies() 
 
         ttk.Label(case_information_frame, text="Main Agency Involved").grid(row=1, column=0, padx=5, pady=5)
         main_agency = ttk.Combobox(case_information_frame, values=list(agencies.values()))
