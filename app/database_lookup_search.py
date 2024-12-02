@@ -1263,7 +1263,406 @@ class lookup_interface(tk.Frame):
                 add_new_person_popup.destroy()
 
             def add_new_victim():
-                pass
+                 
+                # Yes, this is just copy-pasted from the original form up above. Yes, there is most certainly a better way to do this.
+                # No, I don't have the time for that.
+
+                new_victim_popup = tk.Toplevel(self)
+                new_victim_popup.title("Create New Case")
+                new_victim_popup.geometry("1600x900")
+
+                # Scrollable Frame Setup
+                new_canvas = tk.Canvas(new_victim_popup)
+                new_scrollbar = ttk.Scrollbar(new_canvas, orient="vertical", command=new_canvas.yview)
+                new_canvas.configure(yscrollcommand=new_scrollbar.set)
+                new_scrollbar.pack(side="right", fill="y")
+
+                new_canvas.pack(side="left", fill="both", expand=True)
+                scrollable_frame = ttk.Frame(new_canvas)
+
+                new_canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+
+                scrollable_frame.bind(
+                    "<Configure>",
+                    lambda e: new_canvas.configure(
+                        scrollregion=new_canvas.bbox("all")
+                    )
+                )
+
+                # Variable for tracking the CAC ID of the main person in the case - set to 1 by default, changed to the correct
+                # ID if the user selects an existing person
+                cac_id_var = tk.IntVar()
+                cac_id_var.set(1)
+
+                # Variable for tracking the Person ID of the main person in the case - set to a random valid ID by default, changed to an
+                # existing ID if the user selects an existing person
+                person_id_var = tk.IntVar()
+                person_id_var.set(fake.unique.random_number(digits=9))
+
+                # Boolean for tracking whether or not we're using an existing person - makes SQL queries simpler
+                using_existing_person = tk.BooleanVar()
+                using_existing_person.set(False)
+
+                # Personal Profile Information
+                personal_profile_frame = tk.LabelFrame(scrollable_frame, text="Personal Profile", width=200)
+                personal_profile_frame.grid(row=1, column=0, sticky='w')
+
+                tk.Label(personal_profile_frame, text="First Name*", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5, sticky='e')
+                first_name_entry = tk.Entry(personal_profile_frame, font=normal_text_font, width=50)
+                first_name_entry.grid(row=0, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(personal_profile_frame, text="Middle Name", font=bold_label_font).grid(row=1, column=0, padx=5, pady=5, sticky='e')
+                middle_name_entry = tk.Entry(personal_profile_frame, font=normal_text_font, width=50)
+                middle_name_entry.grid(row=1, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(personal_profile_frame, text="Last Name*", font=bold_label_font).grid(row=2, column=0, padx=5, pady=5, sticky='e')
+                last_name_entry = tk.Entry(personal_profile_frame, font=normal_text_font, width=50)
+                last_name_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(personal_profile_frame, text="Suffix", font=bold_label_font).grid(row=3, column=0, padx=5, pady=5, sticky='e')
+                suffix_entry = tk.Entry(personal_profile_frame, font=normal_text_font, width=8)
+                suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
+                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+                birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
+
+                genders = ["M", "F"]
+                gender_frame = tk.Frame(personal_profile_frame)
+                tk.Label(personal_profile_frame, text="Gender*:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
+                gender_frame.grid(row=5, column=1, padx=padx, pady=pady, sticky='w')
+                gender_var = tk.StringVar()
+                column_counter = 1
+                for gender in genders:
+                    button = ttk.Radiobutton(gender_frame, text=gender, variable=gender_var, value=gender)
+                    button.grid(row=0, column=column_counter)
+                    column_counter += 1
+                style = ttk.Style()
+                style.configure("TRadiobutton", font=('Helvetica', 12))
+
+                race_var = tk.StringVar()
+                tk.Label(personal_profile_frame, text="Race:", font=bold_label_font).grid(column=0, row=6, sticky="e", padx=padx, pady=pady)
+                race_dropdown = ttk.Combobox(personal_profile_frame, values=races, font=normal_text_font, textvariable=race_var)
+                race_dropdown.grid(column=1, row=6, sticky="w", padx=padx, pady=pady)
+
+                religion_var = tk.StringVar()
+                tk.Label(personal_profile_frame, text="Religion:", font=bold_label_font).grid(column=0, row=7, sticky="e", padx=padx, pady=pady)
+                religion_dropdown = ttk.Combobox(personal_profile_frame, values=religions, font=normal_text_font, textvariable=religion_var)
+                religion_dropdown.grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
+
+                language_var = tk.StringVar()
+                tk.Label(personal_profile_frame, text="Language:", font=bold_label_font).grid(column=0, row=8, sticky="e", padx=padx, pady=pady)
+                language_dropdown = ttk.Combobox(personal_profile_frame, values=languages, font=normal_text_font, textvariable=language_var)
+                language_dropdown.grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
+
+                prior_convictions_var = tk.BooleanVar()
+                tk.Label(personal_profile_frame, text="Prior Convictions:", font=bold_label_font).grid(column=0, row=9, sticky="e", padx=padx, pady=pady)
+                prior_convictions_checkbox = ttk.Checkbutton(personal_profile_frame, variable=prior_convictions_var, onvalue=True, offvalue=False)
+                prior_convictions_checkbox.grid(column=1, row=9, sticky="w", padx=padx, pady=pady)
+
+                convicted_against_children_var = tk.BooleanVar()
+                tk.Label(personal_profile_frame, text="Convicted of Crimes Against Children:", font=bold_label_font).grid(column=0, row=10, sticky="e", padx=padx, pady=pady)
+                convicted_against_children_checkbox = ttk.Checkbutton(personal_profile_frame, variable=convicted_against_children_var, onvalue=True, offvalue=False)
+                convicted_against_children_checkbox.grid(column=1, row=10, sticky="w", padx=padx, pady=pady)
+
+                sex_offender_var = tk.BooleanVar()
+                tk.Label(personal_profile_frame, text="Sexual Offender:", font=bold_label_font).grid(column=0, row=11, sticky="e", padx=padx, pady=pady)
+                sex_offender_checkbox = ttk.Checkbutton(personal_profile_frame, variable=sex_offender_var, onvalue=True, offvalue=False)
+                sex_offender_checkbox.grid(column=1, row=11, sticky="w", padx=padx, pady=pady)
+
+                sex_predator_var = tk.BooleanVar()
+                tk.Label(personal_profile_frame, text="Sexual Predator:", font=bold_label_font).grid(column=0, row=12, sticky="e", padx=padx, pady=pady)
+                sex_predator_checkbox = ttk.Checkbutton(personal_profile_frame, variable=sex_predator_var, onvalue=True, offvalue=False)
+                sex_predator_checkbox.grid(column=1, row=12, sticky="w", padx=padx, pady=pady)
+
+
+                # Case Information Section
+                case_information_frame = tk.LabelFrame(scrollable_frame, text="Case Specific Information")
+                case_information_frame.grid(row=2, column=0, sticky='w')
+
+                vic_status_var = tk.StringVar()
+                tk.Label(case_information_frame, text="Victim Status:", font=bold_label_font).grid(column=0, row=0, sticky="w", padx=padx, pady=pady)
+                status_dropdown = ttk.Combobox(case_information_frame, values=victim_statuses, font=normal_text_font, textvariable=vic_status_var, width=50)
+                status_dropdown.grid(column=1, row=0, sticky="w", padx=padx, pady=pady)
+
+                age_frame = tk.Frame(case_information_frame)
+                age_frame.grid(row=1, column=0, columnspan=8, sticky='w')
+
+                tk.Label(age_frame, text="Age at Time of Referral*:", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+                age_entry = tk.Entry(age_frame, font=normal_text_font, width=8)
+                age_entry.grid(row=0, column=1, padx=5, pady=5, sticky='w')
+
+                age_unit_var = tk.StringVar()
+                age_unit_var.set("Years")
+                age_unit_dropdown = ttk.Combobox(age_frame, values=age_units, font=normal_text_font, textvariable=age_unit_var)
+                age_unit_dropdown.grid(row=0, column=2, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Address Line 1:", font=bold_label_font).grid(row=2, column=0, padx=5, pady=5, sticky='w')
+                addr_line_1_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                addr_line_1_entry.grid(row=2, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Address Line 2:", font=bold_label_font).grid(row=3, column=0, padx=5, pady=5, sticky='w')
+                addr_line_2_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                addr_line_2_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="City:", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='w')
+                city_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                city_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="State:", font=bold_label_font).grid(row=5, column=0, padx=5, pady=5, sticky='w')
+                state_var = tk.StringVar()
+                state_dropdown = ttk.Combobox(case_information_frame, font=normal_text_font, width=50, values=states, textvariable=state_var)
+                state_dropdown.grid(row=5, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Zip Code:", font=bold_label_font).grid(row=6, column=0, padx=5, pady=5, sticky='w')
+                zip_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                zip_entry.grid(row=6, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Home Phone:", font=bold_label_font).grid(row=7, column=0, padx=5, pady=5, sticky='w')
+                home_phone_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                home_phone_entry.grid(row=7, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Work Phone:", font=bold_label_font).grid(row=8, column=0, padx=5, pady=5, sticky='w')
+                work_phone_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                work_phone_entry.grid(row=8, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Cell Phone:", font=bold_label_font).grid(row=9, column=0, padx=5, pady=5, sticky='w')
+                cell_phone_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                cell_phone_entry.grid(row=9, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="School or Employer:", font=bold_label_font).grid(row=10, column=0, padx=5, pady=5, sticky='w')
+                employer_entry = tk.Entry(case_information_frame, font=normal_text_font, width=50)
+                employer_entry.grid(row=10, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Education Level:", font=bold_label_font).grid(row=11, column=0, padx=5, pady=5, sticky='w')
+                education_level_var = tk.StringVar()
+                education_level_dropdown = ttk.Combobox(case_information_frame, values=education_levels, textvariable=education_level_var, font=normal_text_font, width=50)
+                education_level_dropdown.grid(row=11, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Marital Status:", font=bold_label_font).grid(row=12, column=0, padx=5, pady=5, sticky='w')
+                marital_status_var = tk.StringVar()
+                marital_status_dropdown = ttk.Combobox(case_information_frame, values=marital_statuses, textvariable=marital_status_var, font=normal_text_font, width=50)
+                marital_status_dropdown.grid(row=12, column=1, padx=5, pady=5, sticky='w')
+
+                tk.Label(case_information_frame, text="Income Level of Household:", font=bold_label_font).grid(row=13, column=0, padx=5, pady=5, sticky='w')
+                income_level_var = tk.StringVar()
+                income_level_dropdown = ttk.Combobox(case_information_frame, values=income_levels, textvariable=income_level_var, font=normal_text_font, width=50)
+                income_level_dropdown.grid(row=13, column=1, padx=5, pady=5, sticky='w')
+
+
+                referral_information_frame = tk.LabelFrame(scrollable_frame, text="Referral Information")
+                referral_information_frame.grid(row=3, column=0, sticky='w')
+
+                tk.Label(referral_information_frame, text="Date Received by CAC*", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+                received_date_entry = DateEntry(referral_information_frame, font=normal_text_font)
+                received_date_entry.grid(row=0, column=1, padx=5, pady=5)
+
+                def save_new_victim():
+                    pass
+
+                def cancel_new_victim():
+                    new_victim_popup.destroy()
+
+                def lookup_new_victim():
+                    
+                    search_person_popup = tk.Toplevel(self)
+                    search_person_popup.title("Search Person")
+                    search_person_popup.geometry("1100x700")
+
+                    search_bar_frame = tk.Frame(search_person_popup)
+                    search_bar_frame.grid(row=0, column=0, padx=20, pady=20)
+
+                    tk.Label(search_bar_frame, text="Last Name", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5)
+                    search_bar = tk.Entry(search_bar_frame, width=40)
+                    search_bar.grid(row=0, column=1, padx=padx, pady=pady)
+
+                    search_button = tk.Button(search_bar_frame, text="Search", command=lambda:search_by_last_name(search_bar.get()))
+                    search_button.grid(row=0, column=2, padx=padx, pady=pady)
+
+                    no_match_button = tk.Button(search_bar_frame, text="No Match Found", command=search_person_popup.destroy)
+                    no_match_button.grid(row=0, column=3, padx=padx, pady=pady)
+
+                    close_button = tk.Button(search_bar_frame, text="Close", command=search_person_popup.destroy)
+                    close_button.grid(row=0, column=4, padx=padx, pady=pady)
+
+                    filtered_people = []
+
+                    results_header_frame = tk.Frame(search_person_popup)
+                    results_header_frame.grid(row=1, column=0, sticky='w')
+
+                    tk.Label(results_header_frame, text="Select", font=bold_label_font, width=10).grid(row=0, column=0, padx=5, pady=5, sticky='w')
+                    tk.Label(results_header_frame, text="View", font=bold_label_font, width=10).grid(row=0, column=1, padx=5, pady=5, sticky='w')
+                    tk.Label(results_header_frame, text="Last Name", font=bold_label_font, width=20).grid(row=0, column=2, padx=5, pady=5, sticky='w')
+                    tk.Label(results_header_frame, text="First Name", font=bold_label_font, width=20).grid(row=0, column=3, padx=5, pady=5, sticky='w')
+                    tk.Label(results_header_frame, text="Middle Name", font=bold_label_font, width=20).grid(row=0, column=4, padx=5, pady=5, sticky='w')
+
+                    results_frame = tk.Frame(search_person_popup)
+                    results_frame.grid(row=2, column=0)
+
+                    def search_by_last_name(lname):
+                        try:
+                            config = load_config(filename="database.ini")
+                            conn = connect(config)
+                            with conn.cursor() as cur:
+                                cur.execute("SELECT * FROM person WHERE last_name~*\'{0}\' ORDER BY last_name FETCH FIRST 100 ROWS ONLY".format(lname))
+                                row = cur.fetchone()
+                                while row is not None:
+                                    filtered_people.append(row)
+                                    row = cur.fetchone()
+                                show_people_by_last_name()
+                        except Exception as e:
+                            messagebox.showinfo("Error", f"Error executing search: {e}")
+
+                    def show_people_by_last_name():
+                        results_frame = tk.Frame(search_person_popup)
+                        results_frame.grid(row=2, column=0, sticky='w')
+                        for i in range(len(filtered_people)):
+                            tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                            tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                            tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
+                            tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
+                            tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
+
+                    def view_person(patient):
+
+                        view_person_popup = tk.Toplevel(self)
+                        view_person_popup.title("View Person")
+                        view_person_popup.geometry("1100x700")
+
+                        profile_frame = tk.Frame(view_person_popup)
+                        profile_frame.grid(row=0, column=0)
+
+                        tk.Label(profile_frame, text="First Name:", font=bold_label_font).grid(column=0, row=0, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=patient[2]).grid(column=1, row=0, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Last Name:", font=bold_label_font).grid(column=0, row=1, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=patient[4]).grid(column=1, row=1, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Middle Name:", font=bold_label_font).grid(column=0, row=2, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=patient[3]).grid(column=1, row=2, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Date of Birth:", font=bold_label_font).grid(column=0, row=4, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=patient[6]).grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Race:", font=bold_label_font).grid(column=0, row=5, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=self.get_race(patient[9])).grid(column=1, row=5, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Gender:", font=bold_label_font).grid(column=0, row=6, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, text="Male" if patient[7] == 'M' else "Female", font=normal_text_font).grid(column=1, row=6, sticky='w', padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Religion:", font=bold_label_font).grid(column=0, row=7, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=self.get_religion(patient[10])).grid(column=1, row=7, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Language:", font=bold_label_font).grid(column=0, row=8, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, font=normal_text_font, text=self.get_language(patient[8])).grid(column=1, row=8, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Prior Convictions:", font=bold_label_font).grid(column=2, row=0, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, text="Yes" if patient[11] else "No", font=normal_text_font).grid(column=3, row=0, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Convicted of Crimes Against Children:", font=bold_label_font).grid(column=2, row=1, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, text="Yes" if patient[12] else "No", font=normal_text_font).grid(column=3, row=1, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Sexual Offender:", font=bold_label_font).grid(column=2, row=2, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, text="Yes" if patient[13] else "No", font=normal_text_font).grid(column=3, row=2, sticky="w", padx=padx, pady=pady)
+
+                        tk.Label(profile_frame, text="Sexual Predator:", font=bold_label_font).grid(column=2, row=3, sticky="e", padx=padx, pady=pady)
+                        tk.Label(profile_frame, text="Yes" if patient[14] else "No", font=normal_text_font).grid(column=3, row=3, sticky="w", padx=padx, pady=pady)
+
+                        # creates a listbox to display search results for cases
+                        tk.Label(profile_frame, text="Case ID\t\tRelationship to Victim\t\tRole\t\tAge\t\tSame Household?\t\tCustody?", font=bold_label_font).grid(column=0, row=10, columnspan=7, sticky="e", padx=padx, pady=pady)
+                        cases_list = tk.Listbox(profile_frame, width=entry_width * 4, height=10, font=normal_text_font)
+                        cases_list.grid(row=11, column=0, columnspan=5, padx=padx, pady=pady)
+
+                        # to search cases based on specific person
+                        def search_cases_by_patient(person_id):
+                            global filtered_cases_2
+                            config = load_config(filename="database.ini")
+                            conn = connect(config)
+
+                            search_query = self.search_entry.get().lower()
+                            filtered_cases_2 = []
+
+                            with conn.cursor() as cur:
+                                cur.execute(f"SELECT * FROM case_person WHERE person_id={person_id} FETCH FIRST 100 ROWS ONLY".format(search_query))
+                                row = cur.fetchone()
+
+                                while row is not None:
+                                    filtered_cases_2.append(row)
+                                    row = cur.fetchone()
+
+                            update_cases_list(filtered_cases_2)
+
+                        #update the patient list based on search 
+                        def update_cases_list(filtered_cases):
+                            cases_list.delete(0, tk.END)
+                            for case in filtered_cases:
+                                # this might be the most scuffed line of code i've ever written but for some reason tabs aren't working so this is the only way to get the spacing to behave     -zac
+                                cases_list.insert(tk.END, f"                {case[1]}                 {self.get_relationship(case[17])}                                                      {self.get_role(case[18])}                    {case[3]}                               {case[19]}")
+
+                        search_cases_by_patient(patient[1])
+
+                    def select_person(person):
+
+                        # Update the CAC and person IDs
+                        using_existing_person.set(True)
+                        cac_id_var.set(person[0])
+                        person_id_var.set(person[1])
+
+                        # Populate all existing fields
+                        if person[2] is not None:
+                            first_name_entry.delete(0, tk.END)
+                            first_name_entry.insert(0, person[2])
+                        
+                        if person[3] is not None:
+                            middle_name_entry.delete(0, tk.END)
+                            middle_name_entry.insert(0, person[3])
+
+                        if person[4] is not None:
+                            last_name_entry.delete(0, tk.END)
+                            last_name_entry.insert(0, person[4])
+
+                        if person[5] is not None:
+                            suffix_entry.delete(0, tk.END)
+                            suffix_entry.insert(0, person[5])
+                        
+                        if person[6] is not None:
+                            birthdate_entry.set_date(person[6])
+
+                        if person[7] is not None:
+                            gender_var.set(person[7])
+
+                        if person[8] is not None:
+                            language_var.set(self.get_language(person[8]))
+
+                        if person[9] is not None:
+                            race_var.set(self.get_race(person[9]))
+
+                        if person[10] is not None:
+                            religion_var.set(self.get_religion(person[10]))
+
+                        if person[11] is not None:
+                            prior_convictions_var.set(person[11])
+
+                        if person[12] is not None:
+                            convicted_against_children_var.set(person[12])
+
+                        if person[13] is not None:
+                            sex_offender_var.set(person[13])
+
+                        if person[14] is not None:
+                            sex_predator_var.set(person[14])
+
+                        # Close the popup
+                        search_person_popup.destroy()
+
+                new_victim_buttons_frame = tk.Frame(scrollable_frame)
+                new_victim_buttons_frame.grid(row=0, column=0)
+                save_victim_button = tk.Button(new_victim_buttons_frame, text="Save Person", command=save_new_victim)
+                save_victim_button.grid(row=0, column=0, padx=5, pady=5)
+                cancel_new_victim_button = tk.Button(new_victim_buttons_frame, text="Cancel", command=cancel_new_victim)
+                cancel_new_victim_button.grid(row=0, column=1, padx=5, pady=5)
+                lookup_new_victim_button = tk.Button(new_victim_buttons_frame, text="Lookup Person", command=lookup_new_victim)
+                lookup_new_victim_button.grid(row=0, column=2, padx=5, pady=5)
 
             def add_new_non_victim():
                 pass
