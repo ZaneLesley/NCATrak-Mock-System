@@ -1260,7 +1260,341 @@ class lookup_interface(tk.Frame):
             add_new_person_popup.geometry("1600x900")
 
             def save_and_open_case():
-                pass
+
+                case_id = fake.unique.random_number(digits=9)
+                
+                z = 0
+                for victim in victims:
+
+                    # Collect victim data into usable names
+                    using_existing_person = victim[0]
+                    cac_id = victim[1]
+                    person_id = victim[2]
+                    first_name = victim[3]
+                    middle_name = victim[4]
+                    last_name = victim[5]
+                    suffix = victim[6]
+                    birthdate = victim[7]
+                    gender = victim[8]
+                    race_id = victim[9]
+                    religion_id = victim[10]
+                    language_id = victim[11]
+                    prior_convictions = victim[12]
+                    convicted_against_children = victim[13]
+                    sex_offender = victim[14]
+                    sex_predator = victim[15]
+                    victim_status_id = victim[16]
+                    age = victim[17]
+                    age_unit = victim[18]
+                    address_line_1 = victim[19]
+                    address_line_2 = victim[20]
+                    city = victim[21]
+                    state_abbr = victim[22]
+                    zip_code = victim[23]
+                    home_phone = victim[24]
+                    work_phone = victim[25]
+                    cell_phone = victim[26]
+                    school_or_employer = victim[27]
+                    education_level_id = victim[28]
+                    marital_status_id = victim[29]
+                    income_level_id = victim[30]
+                    relationship_id = victim[31]
+                    role_id = victim[32]
+                    referred_date = victim[33]
+                    
+                    # Update the database
+                    try:
+                        config = load_config(filename="database.ini")
+                        conn = connect(config)
+                        with conn.cursor() as cur:
+
+                            # Update person table
+                            if using_existing_person:
+                                query = """
+                                    UPDATE person SET 
+                                        first_name = %s, 
+                                        middle_name = %s, 
+                                        last_name = %s,
+                                        suffix = %s, 
+                                        date_of_birth = %s, 
+                                        language_id = %s, 
+                                        race_id = %s, 
+                                        religion_id = %s,
+                                        prior_convictions = %s,
+                                        convicted_against_children = %s,
+                                        sex_offender = %s,
+                                        sex_predator = %s
+                                    WHERE person_id = %s;
+                                    """
+                                cur.execute(query, (first_name, 
+                                                    middle_name, 
+                                                    last_name, 
+                                                    suffix, 
+                                                    birthdate, 
+                                                    language_id, 
+                                                    race_id, 
+                                                    religion_id, 
+                                                    prior_convictions, 
+                                                    convicted_against_children, 
+                                                    sex_offender, 
+                                                    sex_predator,
+                                                    person_id))
+                            else:
+                                query = """
+                                        INSERT INTO person (cac_id, 
+                                                            person_id,
+                                                            first_name, 
+                                                            middle_name, 
+                                                            last_name, 
+                                                            suffix, 
+                                                            date_of_birth, 
+                                                            language_id, 
+                                                            race_id, 
+                                                            religion_id,
+                                                            prior_convictions,
+                                                            convicted_against_children,
+                                                            sex_offender,
+                                                            sex_predator)
+                                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                        """
+                                cur.execute(query, (cac_id,
+                                                    person_id,
+                                                    first_name,
+                                                    middle_name,
+                                                    last_name,
+                                                    suffix,
+                                                    birthdate,
+                                                    language_id,
+                                                    race_id,
+                                                    religion_id,
+                                                    prior_convictions,
+                                                    convicted_against_children,
+                                                    sex_offender,
+                                                    sex_predator))
+
+                            if not z > 0:
+                                # Update cac_case table
+                                query = """
+                                        INSERT INTO cac_case (cac_id, case_id, cac_received_date)
+                                        VALUES (%s, %s, %s);
+                                        """
+                                cur.execute(query, (cac_id, case_id, referred_date))
+                            
+                            # Update case_person table
+                            query = """
+                                    INSERT INTO case_person (person_id,
+                                                            case_id,
+                                                            cac_id,
+                                                            age,
+                                                            age_unit,
+                                                            address_line_1,
+                                                            address_line_2,
+                                                            city,
+                                                            state_abbr,
+                                                            zip,
+                                                            cell_phone_number,
+                                                            home_phone_number,
+                                                            work_phone_number,
+                                                            education_level_id,
+                                                            income_level_id,
+                                                            marital_status_id,
+                                                            school_or_employer,
+                                                            victim_status_id,
+                                                            relationship_id,
+                                                            role_id)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    """    
+                            cur.execute(query, (person_id, 
+                                                case_id,
+                                                cac_id,
+                                                age,
+                                                age_unit,
+                                                address_line_1,
+                                                address_line_2,
+                                                city,
+                                                state_abbr,
+                                                zip_code,
+                                                cell_phone,
+                                                home_phone,
+                                                work_phone,
+                                                education_level_id, 
+                                                income_level_id,
+                                                marital_status_id,
+                                                school_or_employer,
+                                                victim_status_id,
+                                                relationship_id,
+                                                role_id))
+                            conn.commit()
+                    except Exception as e:
+                        messagebox.showinfo("Error", f"Failed to save: {e}")
+
+                for victim in non_victims:
+
+                    # Collect victim data into usable names
+                    using_existing_person = victim[0]
+                    cac_id = victim[1]
+                    person_id = victim[2]
+                    first_name = victim[3]
+                    middle_name = victim[4]
+                    last_name = victim[5]
+                    suffix = victim[6]
+                    birthdate = victim[7]
+                    gender = victim[8]
+                    race_id = victim[9]
+                    religion_id = victim[10]
+                    language_id = victim[11]
+                    prior_convictions = victim[12]
+                    convicted_against_children = victim[13]
+                    sex_offender = victim[14]
+                    sex_predator = victim[15]
+                    victim_status_id = victim[16]
+                    age = victim[17]
+                    age_unit = victim[18]
+                    address_line_1 = victim[19]
+                    address_line_2 = victim[20]
+                    city = victim[21]
+                    state_abbr = victim[22]
+                    zip_code = victim[23]
+                    home_phone = victim[24]
+                    work_phone = victim[25]
+                    cell_phone = victim[26]
+                    school_or_employer = victim[27]
+                    education_level_id = victim[28]
+                    marital_status_id = victim[29]
+                    income_level_id = victim[30]
+                    relationship_id = victim[31]
+                    role_id = victim[32]
+                    household = victim[33]
+                    custody = victim[34]
+                    referred_date = victim[35]
+                    
+                    # Update the database
+                    try:
+                        config = load_config(filename="database.ini")
+                        conn = connect(config)
+                        with conn.cursor() as cur:
+
+                            # Update person table
+                            if using_existing_person:
+                                query = """
+                                    UPDATE person SET 
+                                        first_name = %s, 
+                                        middle_name = %s, 
+                                        last_name = %s,
+                                        suffix = %s, 
+                                        date_of_birth = %s, 
+                                        language_id = %s, 
+                                        race_id = %s, 
+                                        religion_id = %s,
+                                        prior_convictions = %s,
+                                        convicted_against_children = %s,
+                                        sex_offender = %s,
+                                        sex_predator = %s
+                                    WHERE person_id = %s;
+                                    """
+                                cur.execute(query, (first_name, 
+                                                    middle_name, 
+                                                    last_name, 
+                                                    suffix, 
+                                                    birthdate, 
+                                                    language_id, 
+                                                    race_id, 
+                                                    religion_id, 
+                                                    prior_convictions, 
+                                                    convicted_against_children, 
+                                                    sex_offender, 
+                                                    sex_predator,
+                                                    person_id))
+                            else:
+                                query = """
+                                        INSERT INTO person (cac_id, 
+                                                            person_id,
+                                                            first_name, 
+                                                            middle_name, 
+                                                            last_name, 
+                                                            suffix, 
+                                                            date_of_birth, 
+                                                            language_id, 
+                                                            race_id, 
+                                                            religion_id,
+                                                            prior_convictions,
+                                                            convicted_against_children,
+                                                            sex_offender,
+                                                            sex_predator)
+                                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+                                        """
+                                cur.execute(query, (cac_id,
+                                                    person_id,
+                                                    first_name,
+                                                    middle_name,
+                                                    last_name,
+                                                    suffix,
+                                                    birthdate,
+                                                    language_id,
+                                                    race_id,
+                                                    religion_id,
+                                                    prior_convictions,
+                                                    convicted_against_children,
+                                                    sex_offender,
+                                                    sex_predator))
+
+                            # Update case_person table
+                            query = """
+                                    INSERT INTO case_person (person_id,
+                                                            case_id,
+                                                            cac_id,
+                                                            age,
+                                                            age_unit,
+                                                            address_line_1,
+                                                            address_line_2,
+                                                            city,
+                                                            state_abbr,
+                                                            zip,
+                                                            cell_phone_number,
+                                                            home_phone_number,
+                                                            work_phone_number,
+                                                            education_level_id,
+                                                            income_level_id,
+                                                            marital_status_id,
+                                                            school_or_employer,
+                                                            victim_status_id,
+                                                            relationship_id,
+                                                            role_id, 
+                                                            same_household, 
+                                                            custody)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                    """    
+                            cur.execute(query, (person_id, 
+                                                case_id,
+                                                cac_id,
+                                                age,
+                                                age_unit,
+                                                address_line_1,
+                                                address_line_2,
+                                                city,
+                                                state_abbr,
+                                                zip_code,
+                                                cell_phone,
+                                                home_phone,
+                                                work_phone,
+                                                education_level_id, 
+                                                income_level_id,
+                                                marital_status_id,
+                                                school_or_employer,
+                                                victim_status_id,
+                                                relationship_id,
+                                                role_id,
+                                                household,
+                                                custody))
+                            conn.commit()
+                    except Exception as e:
+                        messagebox.showinfo("Error", f"Failed to save: {e}")
+
+                messagebox.showinfo("Success", "New Case Saved")
+                case_file = open("case_id.txt", "w")
+                case_file.write(str(case_id))
+                case_file.close()
+                self.controller.refresh()
 
             def cancel_case():
                 add_new_person_popup.destroy()
