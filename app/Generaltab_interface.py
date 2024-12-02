@@ -353,8 +353,7 @@ class GeneraltabInterface(tk.Frame):
                     ttk.Label(frame, text=value).grid(row=row_counter, column=i, padx=5, pady=5)
 
                 # Add Edit button
-                ttk.Button(frame, text="Edit", command=add_editbutton_popup).grid(row=row_counter, column=0, padx=5,
-                                                                                  pady=5)
+                # ttk.Button(frame, text="Edit", command=add_editbutton_popup).grid(row=row_counter, column=0, padx=5,pady=5)
                 row_counter += 1
 
         load_general_case(cases_frame, caseId)
