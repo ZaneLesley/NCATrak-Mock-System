@@ -30,7 +30,6 @@ class GeneraltabInterface(tk.Frame):
                         return case
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         def get_case(id):
             try:
@@ -42,7 +41,6 @@ class GeneraltabInterface(tk.Frame):
                         return case
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         with open("case_id.txt", "r") as file:
             case = get_case(file.read())
@@ -155,7 +153,6 @@ class GeneraltabInterface(tk.Frame):
                         return cases
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         # Function to create edit case details
         def add_editbutton_popup():
@@ -371,7 +368,6 @@ class GeneraltabInterface(tk.Frame):
                         return stateMap
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         def get_all_agencies():
             try:
@@ -385,7 +381,6 @@ class GeneraltabInterface(tk.Frame):
                         return agencyMap, agencyMapReversed
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         def insert_new_agency(name, address1, address2, city, state, zipcode, phone):
             sqlQuery = """insert into cac_agency (agency_id, cac_id, agency_name, addr_line_1, 
@@ -401,7 +396,6 @@ class GeneraltabInterface(tk.Frame):
                         messagebox.showinfo("Save", "Agency has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         def add_agency_popup():
             popup = tk.Toplevel(self)
@@ -488,7 +482,6 @@ class GeneraltabInterface(tk.Frame):
                         return personMap, personMapReverse
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         def insert_new_personnel(email, first, last, title, number):
             # SQL query to insert a new employee
@@ -990,7 +983,6 @@ class GeneraltabInterface(tk.Frame):
                         messagebox.showinfo("Save", "Case information has been saved successfully!")
             except (psycopg2.DatabaseError, Exception) as error:
                 print(f"{error}")
-                exit()
 
         save_button = ttk.Button(widget_frame, text='SAVE',
                                  command=lambda: save_case(str(date_entry.get_date()), aReverse[main_agency.get()],
