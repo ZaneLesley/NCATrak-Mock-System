@@ -890,12 +890,17 @@ class va_interface(tk.Frame):
                                                                                (str(session_date_entry.get_date()) + " " + end_start_entry.get()), sessionReverse[session_status_entry.get()], attendees, atReverse, providerReverse[provider_agency_entry.get()], services, servicesId), popup.destroy()]).grid(row=0, column=0, padx=5, pady=5)
             ttk.Button(button_frame, text="Cancel", command=lambda: [popup.destroy()]).grid(row=0, column=1, padx=5, pady=5)
 
-        def get_all_sessions():
+        def get_all_sessions(caseid):
             try:
                 config = load_config()
                 with psycopg2.connect(**config) as conn:
                     with conn.cursor() as cur:
-                        cur.execute("select case_va_session_id, session_date, start_time, end_time, session_status from case_va_session_log order by session_date desc;")
+                        cur.execute("""
+                            SELECT case_va_session_id, session_date, start_time, end_time, session_status
+                            FROM case_va_session_log
+                            WHERE case_id = %s
+                            ORDER BY session_date DESC;
+                        """, (caseid,))
                         sessions = cur.fetchall()
                         return sessions
             except (psycopg2.DatabaseError, Exception) as error:
@@ -944,7 +949,7 @@ class va_interface(tk.Frame):
         vas_log_frame = tk.LabelFrame(scrollable_frame, text="Victim Advocacy Services Log", padx=10, pady=10)
         vas_log_frame.grid(row=4, column=0, sticky='w', padx=10, pady=5)
 
-        sessions = get_all_sessions()
+        sessions = get_all_sessions(caseId)
 
         ttk.Button(vas_log_frame, text="Add New Session Log", command=add_new_session_popup).grid(row=0, column=0, padx=5, pady=5)
     
