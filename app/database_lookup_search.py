@@ -243,6 +243,21 @@ def generate_unique_case_id():
     while new_id in existing_case_ids:
         new_id = fake.unique.random_number(digits=9)
 
+def get_current_cac_id():
+    case_file = open("case_id.txt", "r")
+    case_id = int(case_file.readline())
+    try:
+        config = load_config(filename="database.ini")
+        conn = connect(config)
+        with conn.cursor() as cur:
+            cur.execute("SELECT cac_id FROM cac_case WHERE case_id=%s;", (case_id,))
+            result = int(cur.fetchone()[0])
+            print(f"Current cac_id: {result}")
+            return result
+    except Exception as e:
+        messagebox.showinfo("Error", f"Error in getting current cac_id: {e}")
+        exit()
+
 fake = Faker()
 class lookup_interface(tk.Frame):
     
@@ -575,7 +590,7 @@ class lookup_interface(tk.Frame):
         # Variable for tracking the CAC ID of the main person in the case - set to 1 by default, changed to the correct
         # ID if the user selects an existing person
         cac_id_var = tk.IntVar()
-        cac_id_var.set(1)
+        cac_id_var.set(get_current_cac_id())
 
         # Variable for tracking the Person ID of the main person in the case - set to a random valid ID by default, changed to an
         # existing ID if the user selects an existing person
@@ -1629,7 +1644,7 @@ class lookup_interface(tk.Frame):
                 # Variable for tracking the CAC ID of the main person in the case - set to 1 by default, changed to the correct
                 # ID if the user selects an existing person
                 cac_id_var = tk.IntVar()
-                cac_id_var.set(1)
+                cac_id_var.set(get_current_cac_id())
 
                 # Variable for tracking the Person ID of the main person in the case - set to a random valid ID by default, changed to an
                 # existing ID if the user selects an existing person
@@ -2098,7 +2113,7 @@ class lookup_interface(tk.Frame):
                 # Variable for tracking the CAC ID of the main person in the case - set to 1 by default, changed to the correct
                 # ID if the user selects an existing person
                 cac_id_var = tk.IntVar()
-                cac_id_var.set(1)
+                cac_id_var.set(get_current_cac_id())
 
                 # Variable for tracking the Person ID of the main person in the case - set to a random valid ID by default, changed to an
                 # existing ID if the user selects an existing person
