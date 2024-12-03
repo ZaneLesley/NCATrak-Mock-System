@@ -770,43 +770,82 @@ class PersonalProfileForm(tk.Toplevel):
 
         # Define Mappings for Race, Religion, Language, Role, Relationship, Ethnicity, Education Level, Marital Status, Income Level
         self.race_mapping = {
-            'White': 1,
-            'Black or African American': 2,
-            'Asian': 3,
-            'American Indian or Alaska Native': 4,
-            'Native Hawaiian or Other Pacific Islander': 5,
-            'Other': 6
+            'Asian': 0,
+            'American Indian': 1,
+            'Biracial': 2,
+            'Biracial - African-American/White': 3,
+            'Biracial - Hispanic/White': 4,
+            'Black/African-American': 5,
+            'White': 6,
+            'Hispanic': 7,
+            'Native Hawaiian/Other Pacific Islander': 8,
+            'Alaska Native': 9,
+            'Multiple Races': 10,
+            'Not Reported': 11,
+            'Not Tracked': 12,
+            'Other': 13
         }
 
         self.religion_mapping = {
-            'Christianity': 1,
-            'Islam': 2,
-            'Judaism': 3,
-            'Hinduism': 4,
-            'Buddhism': 5,
-            'Other': 6
+            'Christianity': 0,
+            'Islam': 1,
+            'Judaism': 2,
+            'Hinduism': 3,
+            'Buddhism': 4,
+            'Sikhism': 5,
+            'Jainism': 6,
+            'Atheist/Agnostic': 7,
+            'Other': 8
         }
 
         self.language_mapping = {
-            'English': 1,
-            'Spanish': 2,
-            'French': 3,
-            'Mandarin': 4,
-            'Other': 5
+            'English': 0,
+            'Spanish': 1,
+            'French': 2,
+            'German': 3,
+            'Portuguese': 4,
+            'Russian': 5,
+            'Arabic': 6,
+            'Turkish': 7,
+            'Hindi': 8,
+            'Urdu': 9,
+            'Chinese': 10,
+            'Japanese': 11,
+            'Vietnamese': 12,
+            'Korean': 13,
+            'Other': 14
         }
 
         self.role_mapping = {
-            'Victim': 1,
-            'Perpetrator': 2,
-            'Witness': 3,
+            'Alleged Victim/Client': 0,
+            'Alleged Co-Victim': 1,
+            'Alleged Offender': 2,
+            'Caregiver': 3,
             'Other': 4
         }
 
         self.relationship_mapping = {
-            'Parent': 1,
-            'Sibling': 2,
-            'Guardian': 3,
-            'Other': 4
+            'Self': 0,
+            'Mother': 1,
+            'Biological Mother': 2,
+            'Adoptive Mother': 3,
+            'Step-Mother': 4,
+            'Father\'s Girlfriend': 5,
+            'Father': 6,
+            'Biological Father': 7,
+            'Adoptive Father': 8,
+            'Step-Father': 9,
+            'Mother\'s Boyfriend': 10,
+            'Brother': 11,
+            'Sister': 12,
+            'Step-Brother': 13,
+            'Step-Sister': 14,
+            'Adoptive Brother': 15,
+            'Adoptive Sister': 16,
+            'Grandmother': 17,
+            'Grandfather': 18,
+            'Friend': 19,
+            'Other Known Person': 20
         }
 
         self.ethnicity_mapping = {
@@ -815,27 +854,34 @@ class PersonalProfileForm(tk.Toplevel):
         }
 
         self.education_level_mapping = {
-            'High School': 1,
-            'Bachelor\'s Degree': 2,
-            'Master\'s Degree': 3,
-            'Doctorate': 4,
-            'Other': 5
+            'None': 0,
+            'Preschool': 1,
+            'Elementary School': 2,
+            'Middle School': 3,
+            'High School': 4,
+            'High School Graduate - GED': 5,
+            'Some College': 6,
+            'Associate\'s Degree': 7,
+            'Bachelor\'s Degree': 8,
+            'Master\'s Degree': 9,
+            'PhD': 10,
+            'Unknown': 11
         }
 
         self.marital_status_mapping = {
-            'Single': 1,
-            'Married': 2,
-            'Divorced': 3,
-            'Widowed': 4,
-            'Other': 5
+            'Single': 0,
+            'Married': 1,
+            'Divorced': 2,
+            'Widowed': 3,
+            'Unknown': 4
         }
 
         self.income_level_mapping = {
-            'Below Poverty Line': 1,
-            'Low Income': 2,
-            'Middle Income': 3,
-            'High Income': 4,
-            'Other': 5
+            'less than $15,000': 0,
+            'between $15,000 and $25,000': 1,
+            'between $25,000 and $50,000': 2,
+            'between $50,000 and $75,000': 3,
+            'greater than $75,000': 4
         }
 
         # Initialize in-memory storage for Runaway Incidents
@@ -1813,11 +1859,7 @@ class PersonalProfileForm(tk.Toplevel):
                 religion_name = data.get('Religion')
                 if religion_name in self.religion_mapping:
                     religion_id = self.religion_mapping[religion_name]
-                elif religion_name == 'Select Religion':
-                    religion_id = None
-                else:
-                    messagebox.showwarning("Validation Error", "Invalid Religion selected.")
-                    return
+                else: religion_id = None
 
                 # Map Language to language_id
                 language_id = None
