@@ -506,15 +506,15 @@ class lookup_interface(tk.Frame):
                         first_name_entry.get(),
                         middle_name_entry.get(),
                         last_name_entry.get(),
-                        str(birthdate_entry.get_date()),
-                        str(self.get_id_from_item(languages, language_var.get())),
-                        str(self.get_id_from_item(races, race_var.get())),
-                        str(self.get_id_from_item(religions, religion_var.get())),
-                        str(prior_convictions_var.get()),
-                        str(convicted_against_children_var.get()),
-                        str(sex_offender.get()),
-                        str(sex_predator.get()),
-                        str(patient[1]))
+                        birthdate_entry.get_date(),
+                        self.get_id_from_item(languages, language_var.get()),
+                        self.get_id_from_item(races, race_var.get()),
+                        self.get_id_from_item(religions, religion_var.get()),
+                        prior_convictions_var.get(),
+                        convicted_against_children_var.get(),
+                        sex_offender.get(),
+                        sex_predator.get(),
+                        patient[1])
                     )
                     conn.commit()
                     messagebox.showinfo("Success", "Updated record successfully")
