@@ -1440,6 +1440,7 @@ class lookup_interface(tk.Frame):
                                                 relationship_id,
                                                 role_id))
                             conn.commit()
+                            z += 1
                     except Exception as e:
                         messagebox.showinfo("Error", f"Failed to save: {e}")
 
@@ -2603,8 +2604,8 @@ class lookup_interface(tk.Frame):
                     education_level_id = self.get_id_from_item(education_levels, education_level_var.get())
                     marital_status_id = self.get_id_from_item(marital_statuses, marital_status_var.get())
                     income_level_id = self.get_id_from_item(income_levels, income_level_var.get())
-                    relationship_id = relationship_var.get() 
-                    role_id = role_var.get()
+                    relationship_id = self.get_id_from_item(relationships_to_victim, relationship_var.get())
+                    role_id = self.get_id_from_item(case_roles, role_var.get())
                     household = household_var.get()
                     custody = custody_var.get()
 

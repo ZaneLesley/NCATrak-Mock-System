@@ -315,35 +315,36 @@ class PeopleInterface(tk.Frame):
 
     def get_role_name(self, role_id):
         role_mapping = {
-            1: 'Alleged Victim/Client',
-            2: 'Alleged Co-Victim',
-            3: 'Alleged Offender',
-            4: 'Caregiver',
-            5: 'Other'
+            0: 'Alleged Victim/Client',
+            1: 'Alleged Co-Victim',
+            2: 'Alleged Offender',
+            3: 'Caregiver',
+            4: 'Other'
         }
         return role_mapping.get(role_id, 'N/A')
 
     def get_relationship_name(self, relationship_id):
         relationship_mapping = {
-            1: 'Self',
-            2: 'Mother',
-            3: 'Biological Mother',
-            4: 'Adoptive Mother',
-            5: 'Step-Mother',
-            6: 'Father\'s Girlfriend',
-            7: 'Father',
-            8: 'Biological Father',
-            9: 'Adoptive Father',
-            10: 'Step-Father',
-            11: 'Mother\'s Boyfriend',
-            12: 'Brother',
-            13: 'Sister',
-            14: 'Step-Brother',
-            15: 'Step-Sister',
-            16: 'Step-Brother',
-            17: 'Step-Sister',
-            18: 'Grandmother',
-            19: 'Grandfather',
+            0: 'Self',
+            1: 'Mother',
+            2: 'Biological Mother',
+            3: 'Adoptive Mother',
+            4: 'Step-Mother',
+            5: 'Father\'s Girlfriend',
+            6: 'Father',
+            7: 'Biological Father',
+            8: 'Adoptive Father',
+            9: 'Step-Father',
+            10: 'Mother\'s Boyfriend',
+            11: 'Brother',
+            12: 'Sister',
+            13: 'Step-Brother',
+            14: 'Step-Sister',
+            15: 'Step-Brother',
+            16: 'Step-Sister',
+            17: 'Grandmother',
+            18: 'Grandfather',
+            19: 'Friend',
             20: 'Other Known Person'
         }
         return relationship_mapping.get(relationship_id, 'N/A')
