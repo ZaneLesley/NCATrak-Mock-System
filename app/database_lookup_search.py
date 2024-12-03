@@ -1016,6 +1016,16 @@ class lookup_interface(tk.Frame):
                 conn = connect(config)
                 with conn.cursor() as cur:
 
+                    # verify the person is not a duplicate and ask for confirmation if they are
+                    if not using_existing_person.get():
+                        cur.execute("""SELECT * FROM person 
+                                    WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                        existing_person = cur.fetchone()
+                        if existing_person is not None:
+                            confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
+                            if not confirm_duplicate:
+                                return
+
                     # Update person table
                     if using_existing_person.get():
                         query = """
@@ -1323,6 +1333,16 @@ class lookup_interface(tk.Frame):
                         conn = connect(config)
                         with conn.cursor() as cur:
 
+                            # verify the person is not a duplicate and ask for confirmation if they are
+                            if not using_existing_person:
+                                cur.execute("""SELECT * FROM person 
+                                            WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                                existing_person = cur.fetchone()
+                                if existing_person is not None:
+                                    confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
+                                    if not confirm_duplicate:
+                                        return
+
                             # Update person table
                             if using_existing_person:
                                 query = """
@@ -1489,6 +1509,16 @@ class lookup_interface(tk.Frame):
                         config = load_config(filename="database.ini")
                         conn = connect(config)
                         with conn.cursor() as cur:
+
+                            # verify the person is not a duplicate and ask for confirmation if they are
+                            if not using_existing_person:
+                                cur.execute("""SELECT * FROM person 
+                                            WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                                existing_person = cur.fetchone()
+                                if existing_person is not None:
+                                    confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
+                                    if not confirm_duplicate:
+                                        return
 
                             # Update person table
                             if using_existing_person:
