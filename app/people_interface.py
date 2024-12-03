@@ -1020,10 +1020,9 @@ class PersonalProfileForm(tk.Toplevel):
             if field_key == 'Race':
                 # Predefined options with mapping to integer IDs
                 self.fields[field_key] = tk.StringVar()
-                options = [
-                    'White', 'Black or African American', 'Asian',
-                    'American Indian or Alaska Native', 'Native Hawaiian or Other Pacific Islander', 'Other'
-                ]
+                options = ["Asian", "American Indian", "Biracial", "Biracial - African-American/White", "Biracial - Hispanic/White",
+                           "Black/African-American", "White", "Hispanic", "Native Hawaiian/Other Pacific Islander", "Alaska Native",
+                           "Multiple Races", "Not Reported", "Not Tracked", "Other"]
                 self.fields[field_key].set('Select Race')  # Default value
                 race_combobox = ttk.Combobox(
                     demographics_frame,
@@ -1035,10 +1034,8 @@ class PersonalProfileForm(tk.Toplevel):
             elif field_key == 'Religion':
                 # Predefined options with mapping to integer IDs
                 self.fields[field_key] = tk.StringVar()
-                options = [
-                    'Christianity', 'Islam', 'Judaism',
-                    'Hinduism', 'Buddhism', 'Other'
-                ]
+                options = religions = ["Christianity", "Islam", "Judaism", "Hinduism", "Buddhism", "Sikhism", "Jainism", 
+                                       "Atheist/Agnostic", "Other"]
                 self.fields[field_key].set('Select Religion')  # Default value
                 religion_combobox = ttk.Combobox(
                     demographics_frame,
@@ -1050,10 +1047,8 @@ class PersonalProfileForm(tk.Toplevel):
             elif field_key == 'Language':
                 # Predefined options with mapping to integer IDs
                 self.fields[field_key] = tk.StringVar()
-                options = [
-                    'English', 'Spanish', 'French',
-                    'Mandarin', 'Other'
-                ]
+                options = ["English", "Spanish", "French", "German", "Portuguese", "Russian", "Arabic", "Turkish", "Hindi", "Urdu", 
+                           "Chinese", "Japanese", "Vietnamese", "Korean", "Other"]
                 self.fields[field_key].set('Select Language')  # Default value
                 language_combobox = ttk.Combobox(
                     demographics_frame,
@@ -1866,11 +1861,7 @@ class PersonalProfileForm(tk.Toplevel):
                 language_name = data.get('Language')
                 if language_name in self.language_mapping:
                     language_id = self.language_mapping[language_name]
-                elif language_name == 'Select Language':
-                    language_id = None
-                else:
-                    messagebox.showwarning("Validation Error", "Invalid Language selected.")
-                    return
+                else: language_id = None
 
                 # Map Role to role_id
                 role_id = None
@@ -1981,22 +1972,15 @@ class PersonalProfileForm(tk.Toplevel):
                 religion_name = data.get('Religion')
                 if religion_name in self.religion_mapping:
                     religion_id = self.religion_mapping[religion_name]
-                elif religion_name == 'Select Religion':
-                    religion_id = None
-                else:
-                    messagebox.showwarning("Validation Error", "Invalid Religion selected.")
-                    return
+                else: religion_id = None
+                
 
                 # Map Language to language_id
                 language_id = None
                 language_name = data.get('Language')
                 if language_name in self.language_mapping:
                     language_id = self.language_mapping[language_name]
-                elif language_name == 'Select Language':
-                    language_id = None
-                else:
-                    messagebox.showwarning("Validation Error", "Invalid Language selected.")
-                    return
+                else: language_id = None
 
                 # Map Role to role_id
                 role_id = None
