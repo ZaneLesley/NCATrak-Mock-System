@@ -15,15 +15,10 @@ import configparser
 import os
 import math  # For pagination calculations
 
-
 class MHBasicInterface(tk.Frame):
-
     def __init__(self, parent, controller):
-
         tk.Frame.__init__(self, parent)
-
         self.controller = controller
-        
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -73,16 +68,25 @@ class MHBasicInterface(tk.Frame):
         refresh_button.pack(side='right', padx=5)
 
         # Initialize identifiers
-        self.case_id = 1  # Default value; adjust as needed
-        self.cac_id = 1   # Default value; adjust as needed
+        self.case_id = self.read_case_id_from_file()  # Read from case_id.txt
+
+        if self.case_id is None:
+            messagebox.showerror("Error", "Failed to read case ID from case_id.txt.")
+            return
 
         # Initialize database connection
         self.conn = self.connect_to_database()
         self.cur = self.conn.cursor()
 
+        # Get cac_id from the database based on case_id
+        self.cac_id = self.get_cac_id_from_case_id(self.case_id)
+        if self.cac_id is None:
+            messagebox.showerror("Error", "Failed to retrieve cac_id from database.")
+            return
+
         # In-memory storage for referrals and POCs
         self.referrals_data = []  # List to store referrals
-        self.poc_data = []        # List to store points of contact
+        self.poc_data = []  # List to store points of contact
 
         # Function for line numbering
         def create_line_numbered_label(frame, text, line_number):
@@ -93,7 +97,7 @@ class MHBasicInterface(tk.Frame):
 
         # Save and Cancel Buttons
         button_frame = ttk.Frame(scrollable_frame)
-        button_frame.grid(row = 1, column=0, pady=10, padx=10)
+        button_frame.grid(row=1, column=0, pady=10, padx=10)
         save_button = ttk.Button(button_frame, text="Save", command=self.save_data)
         save_button.pack(side="left", padx=5)
         cancel_button = ttk.Button(button_frame, text="Cancel", command=self.cancel)
@@ -163,8 +167,8 @@ class MHBasicInterface(tk.Frame):
         ttk.Checkbutton(custom_frame, text="No", variable=no_mh_services_var).grid(row=line_number - 1, column=3, sticky="w")
         self.mh_services_var = mh_services_var
         self.no_mh_services_var = no_mh_services_var
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "Status of Mental Health Referral", line_number)
         status_accepted_var = tk.BooleanVar(value=False)
         status_declined_var = tk.BooleanVar(value=False)
@@ -172,40 +176,40 @@ class MHBasicInterface(tk.Frame):
         ttk.Checkbutton(custom_frame, text="Declined: Already receiving therapy services", variable=status_declined_var).grid(row=line_number - 1, column=3, sticky="w")
         self.status_accepted_var = status_accepted_var
         self.status_declined_var = status_declined_var
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "Seen For MH Services Elsewhere", line_number)
         mh_services_elsewhere = ttk.Entry(custom_frame)
         mh_services_elsewhere.grid(row=line_number - 1, column=2, columnspan=2, padx=5, pady=5, sticky="we")
         self.mh_services_elsewhere = mh_services_elsewhere
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "Psyco/Social Notes", line_number)
         psyc_notes_entry = ttk.Entry(custom_frame)
         psyc_notes_entry.grid(row=line_number - 1, column=2, columnspan=2, padx=5, pady=5, sticky="we")
         self.psyc_notes_entry = psyc_notes_entry
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "MH Extended Services Candidate", line_number)
-        # The options for the dropdown based on NCA-Trak
+        # The options for the dropdown based on NCA-Trak options
         options = ["If Needed"] + [str(i) for i in range(4, 34)] + ["If Space Allows"]
         mh_extended_services = ttk.Combobox(custom_frame, values=options)
         mh_extended_services.grid(row=line_number - 1, column=2, columnspan=2, padx=5, pady=5, sticky="we")
         self.mh_extended_services = mh_extended_services
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "MH - Services Custom", line_number)
         custom_field_6 = ttk.Entry(custom_frame)
         custom_field_6.grid(row=line_number - 1, column=2, columnspan=2, padx=5, pady=5, sticky="we")
         self.custom_field_6 = custom_field_6
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "MH - Services Custom", line_number)
         custom_field_7 = ttk.Entry(custom_frame)
         custom_field_7.grid(row=line_number - 1, column=2, columnspan=2, padx=5, pady=5, sticky="we")
         self.custom_field_7 = custom_field_7
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "Client Declined Services", line_number)
         client_declined_var = tk.BooleanVar(value=False)
         no_client_declined_var = tk.BooleanVar(value=False)
@@ -213,8 +217,8 @@ class MHBasicInterface(tk.Frame):
         ttk.Checkbutton(custom_frame, text="No", variable=no_client_declined_var).grid(row=line_number - 1, column=3, sticky="w")
         self.client_declined_var = client_declined_var
         self.no_client_declined_var = no_client_declined_var
-
         line_number += 1
+
         create_line_numbered_label(custom_frame, "Why Client Declined Services", line_number)
         client_declined_reason = ttk.Entry(custom_frame)
         client_declined_reason.grid(row=line_number - 1, column=2, columnspan=2, padx=5, pady=5, sticky="we")
@@ -232,7 +236,6 @@ class MHBasicInterface(tk.Frame):
 
         # Barriers encountered
         ttk.Label(telehealth_frame, text="Barriers Encountered During Mental Health Services:").grid(row=1, column=0, padx=5, pady=5, sticky="w")
-
         # List to store the BooleanVar instances
         barriers = [
             "Center doesn't offer the services needed",
@@ -311,7 +314,7 @@ class MHBasicInterface(tk.Frame):
 
         # Additional Points of Contact Section
         additional_poc_frame = tk.LabelFrame(scrollable_frame, text="Additional Points of Contact", padx=10, pady=10)
-        additional_poc_frame.grid(row=8, column=0, padx=10, pady=5, sticky = 'w')
+        additional_poc_frame.grid(row=8, column=0, padx=10, pady=5, sticky='w')
 
         # "+ Add New Point of Contact" button
         ttk.Button(additional_poc_frame, text="+ Add New Point of Contact", command=self.add_new_poc_popup).grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -349,7 +352,6 @@ class MHBasicInterface(tk.Frame):
         client_name_label = ttk.Label(contact_info_frame, text="")
         client_name_label.grid(row=1, column=0, padx=5, pady=5, sticky="w", columnspan=2)
         self.client_name_label = client_name_label
-
         client_address_label = ttk.Label(contact_info_frame, text="")
         client_address_label.grid(row=2, column=0, padx=5, pady=5, sticky="w", columnspan=2)
         self.client_address_label = client_address_label
@@ -359,7 +361,6 @@ class MHBasicInterface(tk.Frame):
         parent_name_label = ttk.Label(contact_info_frame, text="")
         parent_name_label.grid(row=4, column=0, padx=5, pady=5, sticky="w", columnspan=2)
         self.parent_name_label = parent_name_label
-
         parent_address_label = ttk.Label(contact_info_frame, text="")
         parent_address_label.grid(row=5, column=0, padx=5, pady=5, sticky="w", columnspan=2)
         self.parent_address_label = parent_address_label
@@ -373,7 +374,6 @@ class MHBasicInterface(tk.Frame):
         # Document Upload Section
         upload_frame = tk.LabelFrame(scrollable_frame, text="Document Upload", padx=10, pady=10)
         upload_frame.grid(row=10, column=0, sticky='w', padx=10, pady=5)
-
         ttk.Label(upload_frame, text="File Name:").grid(row=0, column=0, padx=5, pady=5, sticky="e")
         file_name_var = tk.StringVar()  # Variable to hold the filename
         file_name_entry = ttk.Entry(upload_frame, textvariable=file_name_var, width=50, state="readonly")
@@ -383,7 +383,8 @@ class MHBasicInterface(tk.Frame):
         # Function to open file dialog and set the filename
         def select_file():
             file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("All files", "*.*")])
-            if file_path:  # If a file is selected
+            if file_path:
+                # If a file is selected
                 file_name_var.set(os.path.basename(file_path))  # Set the filename in the entry
 
         # Button to trigger file selection
@@ -405,7 +406,6 @@ class MHBasicInterface(tk.Frame):
         config = configparser.ConfigParser()
         config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'database', 'database.ini')
         config.read(config_path)
-
         db_params = {
             'host': config.get('postgresql', 'host'),
             'database': config.get('postgresql', 'database'),
@@ -423,6 +423,32 @@ class MHBasicInterface(tk.Frame):
             print(f"Error connecting to database: {error}")
             messagebox.showerror("Database Connection Error", f"Unable to connect to the database: {error}")
             raise
+
+    def read_case_id_from_file(self):
+        try:
+            with open("case_id.txt", "r") as file:
+                case_id = int(file.read().strip())
+                print(f"Read case_id: {case_id}")
+                return case_id
+        except Exception as e:
+            print(f"Error reading case_id from file: {e}")
+            messagebox.showerror("Error", f"Failed to read case_id from file: {e}")
+            return None
+
+    def get_cac_id_from_case_id(self, case_id):
+        try:
+            self.cur.execute("SELECT cac_id FROM cac_case WHERE case_id = %s;", (case_id,))
+            result = self.cur.fetchone()
+            if result:
+                cac_id = result[0]
+                print(f"Retrieved cac_id: {cac_id}")
+                return cac_id
+            else:
+                print(f"No cac_id found for case_id: {case_id}")
+                return None
+        except Exception as e:
+            print(f"Error retrieving cac_id from case_id: {e}")
+            return None
 
     def get_existing_personnel(self):
         # Fetch existing personnel from the database
@@ -449,10 +475,11 @@ class MHBasicInterface(tk.Frame):
     def get_state_list(self):
         # Hardcoded list of US state abbreviations
         return [
-            "- Please select a state -", "AL", "AK", "AZ", "AR", "CA", "CO", "CT",
-            "DE", "FL", "GA", "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA",
-            "ME", "MD", "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH",
-            "NJ", "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
+            "- Please select a state -",
+            "AL", "AK", "AZ", "AR", "CA", "CO", "CT", "DE", "FL", "GA",
+            "HI", "ID", "IL", "IN", "IA", "KS", "KY", "LA", "ME", "MD",
+            "MA", "MI", "MN", "MS", "MO", "MT", "NE", "NV", "NH", "NJ",
+            "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
             "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"
         ]
 
@@ -870,6 +897,40 @@ class MHBasicInterface(tk.Frame):
         self.provider_entry.set(person_name)
         popup.destroy()
 
+
+    def save_personnel(self, first_name, last_name, agency_name, job_title='', email='', phone=''):
+        # Save new personnel to the database with a unique employee_id
+        try:
+            if not first_name or not last_name or not agency_name:
+                messagebox.showerror("Missing Information", "Please fill in all mandatory fields.")
+                return
+
+            # Fetch the agency_id based on agency_name
+            self.cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s LIMIT 1;", (agency_name,))
+            agency_result = self.cur.fetchone()
+            if agency_result:
+                agency_id = agency_result[0]
+            else:
+                messagebox.showerror("Error", f"Agency '{agency_name}' not found.")
+                return
+
+            # Fetch the next employee_id
+            self.cur.execute("SELECT MAX(employee_id) FROM employee;")
+            result = self.cur.fetchone()
+            next_employee_id = result[0] + 1 if result and result[0] else 1
+
+            # Insert the new employee
+            self.cur.execute("""
+                INSERT INTO employee (employee_id, agency_id, cac_id, email_addr, first_name, last_name, job_title, phone_number)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                """, (next_employee_id, agency_id, self.cac_id, email, first_name, last_name, job_title, phone))
+            self.conn.commit()
+            messagebox.showinfo("Success", "Personnel saved successfully.")
+            self.load_personnel_list()
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to save personnel: {e}")
+            self.conn.rollback()
+
     def save_personnel(self, first_name, last_name, agency_name, job_title='', email='', phone=''):
         # Save new personnel to the database with a unique employee_id
         try:
@@ -1026,6 +1087,7 @@ class MHBasicInterface(tk.Frame):
         if hasattr(self, 'agency_entry'):
             self.agency_entry['values'] = self.get_existing_agencies()
 
+
     def load_data(self):
         # Load existing data for the case and populate the fields
         # Fetch data from the database based on self.case_id
@@ -1091,17 +1153,17 @@ class MHBasicInterface(tk.Frame):
                 if client_declined_reason:
                     self.client_declined_reason.insert(0, client_declined_reason)
 
-            # Load provider log
-            self.load_provider_log()
+                # Load provider log
+                self.load_provider_log()
 
-            # Load referrals
-            self.load_referrals()
+                # Load referrals
+                self.load_referrals()
 
-            # Load additional points of contact
-            self.load_poc()
+                # Load additional points of contact
+                self.load_poc()
 
-            # Load contact info
-            self.load_contact_info()
+                # Load contact info
+                self.load_contact_info()
 
         except Exception as e:
             print(f"Error loading data: {e}")
@@ -1675,6 +1737,7 @@ class MHBasicInterface(tk.Frame):
 
     def show_case_notes(self):
         self.controller.show_frame(case_notes.case_notes_interface)
+
 
     def __del__(self):
         # Close database connection when the interface is destroyed
