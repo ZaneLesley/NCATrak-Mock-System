@@ -432,7 +432,6 @@ class MHassessment(tk.Frame):
                     # Execute the query to fetch the CAC ID
                     cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
                     result = cur.fetchone()
-                    print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
                     return result[0] if result else None
         except Exception as error:
             print(f"Error fetching CAC ID for agency '{agency_name}': {error}")
@@ -449,7 +448,6 @@ class MHassessment(tk.Frame):
                     # Execute the query to fetch the Agency ID
                     cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
                     result = cur.fetchone()
-                    print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
                     return result[0] if result else None
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
@@ -465,7 +463,6 @@ class MHassessment(tk.Frame):
                     # Execute the query to fetch the Agency Name
                     cur.execute("SELECT agency_name FROM cac_agency WHERE agency_id = %s", (agency_id,))
                     result = cur.fetchone()
-                    print(f"Fetching Agency Name for agency ID '{agency_id}': {result[0] if result else 'None'}")
                     return result[0] if result else "Unknown"
         except Exception as error:
             print(f"Error fetching Agency Name for agency ID '{agency_id}': {error}")
@@ -498,7 +495,6 @@ class MHassessment(tk.Frame):
             with psycopg2.connect(**config) as conn:
                 with conn.cursor() as cur:
                     query = f"SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment WHERE case_id={case_id}"
-                    print(query)
                     cur.execute(query)
                     assessments = cur.fetchall()
 

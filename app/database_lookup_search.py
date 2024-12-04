@@ -254,7 +254,6 @@ def get_current_cac_id():
         with conn.cursor() as cur:
             cur.execute("SELECT cac_id FROM cac_case WHERE case_id=%s;", (case_id,))
             result = int(cur.fetchone()[0])
-            print(f"Current cac_id: {result}")
             return result
     except Exception as e:
         messagebox.showinfo("Error", f"Error in getting current cac_id: {e}")

@@ -517,7 +517,6 @@ class case_notes_interface(tk.Frame):
                 for param in params:
                     db_config[param[0]] = param[1]
                 conn = psycopg2.connect(**db_config)
-                print("Database connection established.")
                 return conn
             else:
                 messagebox.showerror("Error", "Database configuration file not found.")
@@ -560,7 +559,6 @@ class case_notes_interface(tk.Frame):
             """, (self.current_case_id,))
             rows = self.cur.fetchall()
             attendees = [row[0] for row in rows]
-            print(f"Attendees loaded: {attendees}")
         except Exception as e:
             self.conn.rollback()
             traceback_str = traceback.format_exc()
