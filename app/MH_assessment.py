@@ -73,6 +73,13 @@ class MHassessment(tk.Frame):
         refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
         refresh_button.pack(side='right', padx=5)
 
+        # Display current case ID
+        current_case_id_file = open("case_id.txt", "r")
+        current_case_id = int(current_case_id_file.readline())
+        current_case_id_file.close()
+        case_id_font = ("Helvetica", 10)
+        tk.Label(button_frame, text=f"Case ID: {current_case_id}", font=case_id_font).pack(side='right', padx=30)
+
         # Assessments Given Section 
         assessments_frame = tk.LabelFrame(scrollable_frame, text="Assessments Given", padx=10, pady=10)
         assessments_frame.grid(row=1, column=0, padx=10, pady=5, sticky='w')
@@ -425,7 +432,6 @@ class MHassessment(tk.Frame):
                     # Execute the query to fetch the CAC ID
                     cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
                     result = cur.fetchone()
-                    print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
                     return result[0] if result else None
         except Exception as error:
             print(f"Error fetching CAC ID for agency '{agency_name}': {error}")
@@ -442,7 +448,6 @@ class MHassessment(tk.Frame):
                     # Execute the query to fetch the Agency ID
                     cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
                     result = cur.fetchone()
-                    print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
                     return result[0] if result else None
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
@@ -458,7 +463,6 @@ class MHassessment(tk.Frame):
                     # Execute the query to fetch the Agency Name
                     cur.execute("SELECT agency_name FROM cac_agency WHERE agency_id = %s", (agency_id,))
                     result = cur.fetchone()
-                    print(f"Fetching Agency Name for agency ID '{agency_id}': {result[0] if result else 'None'}")
                     return result[0] if result else "Unknown"
         except Exception as error:
             print(f"Error fetching Agency Name for agency ID '{agency_id}': {error}")
@@ -491,7 +495,6 @@ class MHassessment(tk.Frame):
             with psycopg2.connect(**config) as conn:
                 with conn.cursor() as cur:
                     query = f"SELECT assessment_instrument_id, timing_id, session_date FROM case_mh_assessment WHERE case_id={case_id}"
-                    print(query)
                     cur.execute(query)
                     assessments = cur.fetchall()
 

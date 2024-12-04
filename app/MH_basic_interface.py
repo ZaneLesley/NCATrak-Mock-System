@@ -67,6 +67,13 @@ class MHBasicInterface(tk.Frame):
         refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
         refresh_button.pack(side='right', padx=5)
 
+        # Display current case ID
+        current_case_id_file = open("case_id.txt", "r")
+        current_case_id = int(current_case_id_file.readline())
+        current_case_id_file.close()
+        case_id_font = ("Helvetica", 10)
+        tk.Label(button_frame, text=f"Case ID: {current_case_id}", font=case_id_font).pack(side='right', padx=30)
+
         # Initialize identifiers
         self.case_id = self.read_case_id_from_file()  # Read from case_id.txt
 
@@ -417,7 +424,6 @@ class MHBasicInterface(tk.Frame):
         # Connect to the PostgreSQL database
         try:
             conn = psycopg2.connect(**db_params)
-            print("Database connection established.")
             return conn
         except (Exception, psycopg2.DatabaseError) as error:
             print(f"Error connecting to database: {error}")
@@ -428,7 +434,6 @@ class MHBasicInterface(tk.Frame):
         try:
             with open("case_id.txt", "r") as file:
                 case_id = int(file.read().strip())
-                print(f"Read case_id: {case_id}")
                 return case_id
         except Exception as e:
             print(f"Error reading case_id from file: {e}")
@@ -441,7 +446,6 @@ class MHBasicInterface(tk.Frame):
             result = self.cur.fetchone()
             if result:
                 cac_id = result[0]
-                print(f"Retrieved cac_id: {cac_id}")
                 return cac_id
             else:
                 print(f"No cac_id found for case_id: {case_id}")
@@ -1673,9 +1677,6 @@ class MHBasicInterface(tk.Frame):
             # Since there are no database columns for the abuse types, referrals, and additional POCs, handle accordingly
             # For example, you can print them or integrate with existing tables if available
             selected_abuse_types = [abuse for abuse, var in self.abuse_type_vars.items() if var.get()]
-            print("Abuse Type Yes:", abuse_type_yes)
-            print("Abuse Type No:", abuse_type_no)
-            print("Selected Abuse Types:", selected_abuse_types)
 
             # Insert or update into cac_case
             self.cur.execute("""

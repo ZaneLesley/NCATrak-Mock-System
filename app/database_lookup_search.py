@@ -12,6 +12,8 @@ import case_notes
 from database.config import load_config
 from database.connect import connect
 from faker import Faker
+from functools import partial
+import datetime
 
 heading_font = ("Helvetica", 18, "bold")
 bold_label_font = ("Helvetica", 12, "bold")
@@ -252,7 +254,6 @@ def get_current_cac_id():
         with conn.cursor() as cur:
             cur.execute("SELECT cac_id FROM cac_case WHERE case_id=%s;", (case_id,))
             result = int(cur.fetchone()[0])
-            print(f"Current cac_id: {result}")
             return result
     except Exception as e:
         messagebox.showinfo("Error", f"Error in getting current cac_id: {e}")
@@ -302,6 +303,13 @@ class lookup_interface(tk.Frame):
         # Reload button - fully reloads the application
         refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
         refresh_button.pack(side='right', padx=5)
+
+        # Display current case ID
+        current_case_id_file = open("case_id.txt", "r")
+        current_case_id = int(current_case_id_file.readline())
+        current_case_id_file.close()
+        case_id_font = ("Helvetica", 10)
+        tk.Label(button_frame, text=f"Case ID: {current_case_id}", font=case_id_font).pack(side='right', padx=30)
 
         # Create a window in the canvas
         canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
@@ -417,7 +425,7 @@ class lookup_interface(tk.Frame):
         middle_name_entry.grid(column=1, row=2, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Date of Birth:", font=bold_label_font).grid(column=0, row=4, sticky="e", padx=padx, pady=pady)
-        birthdate_entry = DateEntry(self.details_frame, font=normal_text_font)
+        birthdate_entry = DateEntry(self.details_frame, font=normal_text_font, selectmode='day', date_pattern='mm/dd/yyyy')
         birthdate_entry.set_date(patient[6])
         birthdate_entry.grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
 
@@ -523,7 +531,7 @@ class lookup_interface(tk.Frame):
 
         # button for saving edits to personal profile
         save_button = ttk.Button(self.scrollable_frame, text="Save", command=save_person)
-        save_button.grid(row=1, column=8, sticky='ne', pady=25)
+        save_button.grid(row=1, column=8, sticky='ne', pady=20)
 
         # to search cases based on specific person
         def search_cases_by_patient(person_id, event=None):
@@ -622,7 +630,7 @@ class lookup_interface(tk.Frame):
         suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
         tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
-        birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+        birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font, date_pattern='mm/dd/yyyy')
         birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
         genders = ["M", "F"]
@@ -812,8 +820,9 @@ class lookup_interface(tk.Frame):
                 results_frame = tk.Frame(search_person_popup)
                 results_frame.grid(row=2, column=0, sticky='w')
                 for i in range(len(filtered_people)):
-                    tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
-                    tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                    
+                    tk.Button(results_frame, text="Select", command=partial(select_person, filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                    tk.Button(results_frame, text="View", command=partial(view_person, filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
                     tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
                     tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
                     tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
@@ -1016,6 +1025,16 @@ class lookup_interface(tk.Frame):
                 conn = connect(config)
                 with conn.cursor() as cur:
 
+                    # verify the person is not a duplicate and ask for confirmation if they are
+                    if not using_existing_person.get():
+                        cur.execute("""SELECT * FROM person 
+                                    WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                        existing_person = cur.fetchone()
+                        if existing_person is not None:
+                            confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
+                            if not confirm_duplicate:
+                                return
+
                     # Update person table
                     if using_existing_person.get():
                         query = """
@@ -1197,7 +1216,9 @@ class lookup_interface(tk.Frame):
 
 
         victims = []
+        victim_ids = []
         non_victims = []
+        non_victim_ids = []
         def add_another_person():
 
             # Is this an existing person?
@@ -1264,6 +1285,7 @@ class lookup_interface(tk.Frame):
                            work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                            relationship_id, role_id, referred_date]
             victims.append(case_person)
+            victim_ids.append(person_id)
             new_case_popup.destroy()
             show_add_more_people_screen()
 
@@ -1322,6 +1344,16 @@ class lookup_interface(tk.Frame):
                         config = load_config(filename="database.ini")
                         conn = connect(config)
                         with conn.cursor() as cur:
+
+                            # verify the person is not a duplicate and ask for confirmation if they are
+                            if not using_existing_person:
+                                cur.execute("""SELECT * FROM person 
+                                            WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                                existing_person = cur.fetchone()
+                                if existing_person is not None:
+                                    confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
+                                    if not confirm_duplicate:
+                                        return
 
                             # Update person table
                             if using_existing_person:
@@ -1489,6 +1521,16 @@ class lookup_interface(tk.Frame):
                         config = load_config(filename="database.ini")
                         conn = connect(config)
                         with conn.cursor() as cur:
+
+                            # verify the person is not a duplicate and ask for confirmation if they are
+                            if not using_existing_person:
+                                cur.execute("""SELECT * FROM person 
+                                            WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                                existing_person = cur.fetchone()
+                                if existing_person is not None:
+                                    confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
+                                    if not confirm_duplicate:
+                                        return
 
                             # Update person table
                             if using_existing_person:
@@ -1677,7 +1719,7 @@ class lookup_interface(tk.Frame):
                 suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
                 tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
-                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font, date_pattern='mm/dd/yyyy')
                 birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
                 genders = ["M", "F"]
@@ -1867,8 +1909,8 @@ class lookup_interface(tk.Frame):
                         results_frame = tk.Frame(search_person_popup)
                         results_frame.grid(row=2, column=0, sticky='w')
                         for i in range(len(filtered_people)):
-                            tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
-                            tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                            tk.Button(results_frame, text="Select", command=partial(select_person, filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                            tk.Button(results_frame, text="View", command=partial(view_person, filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
@@ -2064,12 +2106,16 @@ class lookup_interface(tk.Frame):
                         messagebox.showinfo("Error", "Date Received by CAC is required")
                         return
                     
+                    if (person_id in victim_ids) or (person_id in non_victim_ids):
+                        messagebox.showinfo("Error", "Person is already attached to case")
+                        return
                     case_person = [is_existing_person, cac_id, person_id, first_name, middle_name, last_name, suffix, birthdate, gender, race_id, 
                                 religion_id, language_id, prior_convictions, convicted_against_children, sex_offender, sex_predator, 
                                 victim_status_id, age, age_unit, address_line_1, address_line_2, city, state_abbr, zip_code, home_phone, 
                                 work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                                 relationship_id, role_id, referred_date]
                     victims.append(case_person)
+                    victim_ids.append(person_id)
 
                     new_victim_popup.destroy()
                     add_new_person_popup.destroy()
@@ -2146,7 +2192,7 @@ class lookup_interface(tk.Frame):
                 suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
                 tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
-                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font, date_pattern='mm/dd/yyyy')
                 birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
                 genders = ["M", "F"]
@@ -2416,8 +2462,8 @@ class lookup_interface(tk.Frame):
                         results_frame = tk.Frame(search_person_popup)
                         results_frame.grid(row=2, column=0, sticky='w')
                         for i in range(len(filtered_people)):
-                            tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
-                            tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                            tk.Button(results_frame, text="Select", command=partial(select_person, filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                            tk.Button(results_frame, text="View", command=partial(view_person, filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
@@ -2615,12 +2661,16 @@ class lookup_interface(tk.Frame):
                         messagebox.showinfo("Error", "Date Received by CAC is required")
                         return
                     
+                    if (person_id in victim_ids) or (person_id in non_victim_ids):
+                        messagebox.showinfo("Error", "Person is already attached to case")
+                        return
                     case_person = [is_existing_person, cac_id, person_id, first_name, middle_name, last_name, suffix, birthdate, gender, race_id, 
                                 religion_id, language_id, prior_convictions, convicted_against_children, sex_offender, sex_predator, 
                                 victim_status_id, age, age_unit, address_line_1, address_line_2, city, state_abbr, zip_code, home_phone, 
                                 work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                                 relationship_id, role_id, household, custody, referred_date]
                     non_victims.append(case_person)
+                    non_victim_ids.append(person_id)
 
                     new_non_victim_popup.destroy()
                     add_new_person_popup.destroy()

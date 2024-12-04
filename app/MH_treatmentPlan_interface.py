@@ -72,6 +72,13 @@ class MH_treatment_plan_interface(tk.Frame):
         refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
         refresh_button.pack(side='right', padx=5)
 
+        # Display current case ID
+        current_case_id_file = open("case_id.txt", "r")
+        current_case_id = int(current_case_id_file.readline())
+        current_case_id_file.close()
+        case_id_font = ("Helvetica", 10)
+        tk.Label(button_frame, text=f"Case ID: {current_case_id}", font=case_id_font).pack(side='right', padx=30)
+
         # Function to open file dialog and set the filename
         def select_file():
             file_path = filedialog.askopenfilename(title="Select a file", filetypes=[("All files", "*.*")])
@@ -171,7 +178,6 @@ class MH_treatment_plan_interface(tk.Frame):
                     if data:
                         cur.executemany(command, data)
                         conn.commit()
-                        print(f"{name} successfully added.")
                     else:
                         print(f"No data input for {name}.")
         except (psycopg2.DatabaseError, Exception) as error:
@@ -426,7 +432,6 @@ class MH_treatment_plan_interface(tk.Frame):
                 with conn.cursor() as cur:
                     cur.execute("SELECT cac_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
                     result = cur.fetchone()
-                    print(f"Fetching CAC ID for agency '{agency_name}': {result[0] if result else 'None'}")
                     return result[0] if result else None
         except Exception as error:
             print(f"Error fetching CAC ID for agency '{agency_name}': {error}")
@@ -440,7 +445,6 @@ class MH_treatment_plan_interface(tk.Frame):
                 with conn.cursor() as cur:
                     cur.execute("SELECT agency_id FROM cac_agency WHERE agency_name = %s", (agency_name,))
                     result = cur.fetchone()
-                    print(f"Fetching Agency ID for agency '{agency_name}': {result[0] if result else 'None'}")
                     return result[0] if result else None
         except Exception as error:
             print(f"Error fetching Agency ID for agency '{agency_name}': {error}")
@@ -470,7 +474,6 @@ class MH_treatment_plan_interface(tk.Frame):
                     # Execute the query to fetch the Agency Name
                     cur.execute("SELECT agency_name FROM cac_agency WHERE agency_id = %s", (agency_id,))
                     result = cur.fetchone()
-                    print(f"Fetching Agency Name for agency ID '{agency_id}': {result[0] if result else 'None'}")
                     return result[0] if result else "Unknown"
         except Exception as error:
             print(f"Error fetching Agency Name for agency ID '{agency_id}': {error}")

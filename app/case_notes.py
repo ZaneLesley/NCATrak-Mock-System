@@ -462,6 +462,13 @@ class case_notes_interface(tk.Frame):
         refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
         refresh_button.pack(side='right', padx=5)
 
+        # Display current case ID
+        current_case_id_file = open("case_id.txt", "r")
+        current_case_id = int(current_case_id_file.readline())
+        current_case_id_file.close()
+        case_id_font = ("Helvetica", 10)
+        tk.Label(button_frame, text=f"Case ID: {current_case_id}", font=case_id_font).pack(side='right', padx=30)
+
         # Establish database connection
         self.conn = self.get_connection()
         if not self.conn:
@@ -510,7 +517,6 @@ class case_notes_interface(tk.Frame):
                 for param in params:
                     db_config[param[0]] = param[1]
                 conn = psycopg2.connect(**db_config)
-                print("Database connection established.")
                 return conn
             else:
                 messagebox.showerror("Error", "Database configuration file not found.")
@@ -553,7 +559,6 @@ class case_notes_interface(tk.Frame):
             """, (self.current_case_id,))
             rows = self.cur.fetchall()
             attendees = [row[0] for row in rows]
-            print(f"Attendees loaded: {attendees}")
         except Exception as e:
             self.conn.rollback()
             traceback_str = traceback.format_exc()
