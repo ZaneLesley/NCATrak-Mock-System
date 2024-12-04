@@ -129,6 +129,13 @@ class va_interface(tk.Frame):
         refresh_button = ttk.Button(button_frame, text="Reload", command=controller.refresh)
         refresh_button.pack(side='right', padx=5)
 
+        # Display current case ID
+        current_case_id_file = open("case_id.txt", "r")
+        current_case_id = int(current_case_id_file.readline())
+        current_case_id_file.close()
+        case_id_font = ("Helvetica", 10)
+        tk.Label(button_frame, text=f"Case ID: {current_case_id}", font=case_id_font).pack(side='right', padx=30)
+
         # VA tab title
         va_frame = tk.Frame(scrollable_frame)
         va_frame.grid(row=1, column=0, sticky='w', pady=10, padx=10)
