@@ -12,6 +12,7 @@ import case_notes
 from database.config import load_config
 from database.connect import connect
 from faker import Faker
+from functools import partial
 
 heading_font = ("Helvetica", 18, "bold")
 bold_label_font = ("Helvetica", 12, "bold")
@@ -819,8 +820,9 @@ class lookup_interface(tk.Frame):
                 results_frame = tk.Frame(search_person_popup)
                 results_frame.grid(row=2, column=0, sticky='w')
                 for i in range(len(filtered_people)):
-                    tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
-                    tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                    
+                    tk.Button(results_frame, text="Select", command=partial(select_person, filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                    tk.Button(results_frame, text="View", command=partial(view_person, filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
                     tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
                     tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
                     tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
@@ -1904,8 +1906,8 @@ class lookup_interface(tk.Frame):
                         results_frame = tk.Frame(search_person_popup)
                         results_frame.grid(row=2, column=0, sticky='w')
                         for i in range(len(filtered_people)):
-                            tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
-                            tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                            tk.Button(results_frame, text="Select", command=partial(select_person, filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                            tk.Button(results_frame, text="View", command=partial(view_person, filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
@@ -2453,8 +2455,8 @@ class lookup_interface(tk.Frame):
                         results_frame = tk.Frame(search_person_popup)
                         results_frame.grid(row=2, column=0, sticky='w')
                         for i in range(len(filtered_people)):
-                            tk.Button(results_frame, text="Select", command=lambda:select_person(filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
-                            tk.Button(results_frame, text="View", command=lambda:view_person(filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
+                            tk.Button(results_frame, text="Select", command=partial(select_person, filtered_people[i]), width=10).grid(row=i, column=0, padx=10, pady=5, sticky='w')
+                            tk.Button(results_frame, text="View", command=partial(view_person, filtered_people[i]), width=10).grid(row=i, column=1, padx=10, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][4], font=normal_text_font, width=20).grid(row=i, column=2, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][2], font=normal_text_font, width=20).grid(row=i, column=3, padx=5, pady=5, sticky='w')
                             tk.Label(results_frame, text=filtered_people[i][3], font=normal_text_font, width=20).grid(row=i, column=4, padx=5, pady=5, sticky='w')
