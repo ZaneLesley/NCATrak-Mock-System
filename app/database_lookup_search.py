@@ -531,7 +531,7 @@ class lookup_interface(tk.Frame):
 
         # button for saving edits to personal profile
         save_button = ttk.Button(self.scrollable_frame, text="Save", command=save_person)
-        save_button.grid(row=1, column=8, sticky='ne', pady=25)
+        save_button.grid(row=1, column=8, sticky='ne', pady=20)
 
         # to search cases based on specific person
         def search_cases_by_patient(person_id, event=None):
