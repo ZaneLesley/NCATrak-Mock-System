@@ -1216,7 +1216,9 @@ class lookup_interface(tk.Frame):
 
 
         victims = []
+        victim_ids = []
         non_victims = []
+        non_victim_ids = []
         def add_another_person():
 
             # Is this an existing person?
@@ -1283,6 +1285,7 @@ class lookup_interface(tk.Frame):
                            work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                            relationship_id, role_id, referred_date]
             victims.append(case_person)
+            victim_ids.append(person_id)
             new_case_popup.destroy()
             show_add_more_people_screen()
 
@@ -2103,12 +2106,16 @@ class lookup_interface(tk.Frame):
                         messagebox.showinfo("Error", "Date Received by CAC is required")
                         return
                     
+                    if (person_id in victim_ids) or (person_id in non_victim_ids):
+                        messagebox.showinfo("Error", "Person is already attached to case")
+                        return
                     case_person = [is_existing_person, cac_id, person_id, first_name, middle_name, last_name, suffix, birthdate, gender, race_id, 
                                 religion_id, language_id, prior_convictions, convicted_against_children, sex_offender, sex_predator, 
                                 victim_status_id, age, age_unit, address_line_1, address_line_2, city, state_abbr, zip_code, home_phone, 
                                 work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                                 relationship_id, role_id, referred_date]
                     victims.append(case_person)
+                    victim_ids.append(person_id)
 
                     new_victim_popup.destroy()
                     add_new_person_popup.destroy()
@@ -2654,12 +2661,16 @@ class lookup_interface(tk.Frame):
                         messagebox.showinfo("Error", "Date Received by CAC is required")
                         return
                     
+                    if (person_id in victim_ids) or (person_id in non_victim_ids):
+                        messagebox.showinfo("Error", "Person is already attached to case")
+                        return
                     case_person = [is_existing_person, cac_id, person_id, first_name, middle_name, last_name, suffix, birthdate, gender, race_id, 
                                 religion_id, language_id, prior_convictions, convicted_against_children, sex_offender, sex_predator, 
                                 victim_status_id, age, age_unit, address_line_1, address_line_2, city, state_abbr, zip_code, home_phone, 
                                 work_phone, cell_phone, school_or_employer, education_level_id, marital_status_id, income_level_id, 
                                 relationship_id, role_id, household, custody, referred_date]
                     non_victims.append(case_person)
+                    non_victim_ids.append(person_id)
 
                     new_non_victim_popup.destroy()
                     add_new_person_popup.destroy()
