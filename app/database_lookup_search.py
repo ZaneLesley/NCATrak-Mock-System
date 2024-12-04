@@ -13,6 +13,7 @@ from database.config import load_config
 from database.connect import connect
 from faker import Faker
 from functools import partial
+import datetime
 
 heading_font = ("Helvetica", 18, "bold")
 bold_label_font = ("Helvetica", 12, "bold")
@@ -425,7 +426,7 @@ class lookup_interface(tk.Frame):
         middle_name_entry.grid(column=1, row=2, sticky="w", padx=padx, pady=pady)
 
         tk.Label(self.details_frame, text="Date of Birth:", font=bold_label_font).grid(column=0, row=4, sticky="e", padx=padx, pady=pady)
-        birthdate_entry = DateEntry(self.details_frame, font=normal_text_font)
+        birthdate_entry = DateEntry(self.details_frame, font=normal_text_font, selectmode='day', date_pattern='mm/dd/yyyy')
         birthdate_entry.set_date(patient[6])
         birthdate_entry.grid(column=1, row=4, sticky="w", padx=padx, pady=pady)
 
@@ -630,7 +631,7 @@ class lookup_interface(tk.Frame):
         suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
         tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
-        birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+        birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font, date_pattern='mm/dd/yyyy')
         birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
         genders = ["M", "F"]
@@ -1719,7 +1720,7 @@ class lookup_interface(tk.Frame):
                 suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
                 tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
-                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font, date_pattern='mm/dd/yyyy')
                 birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
                 genders = ["M", "F"]
@@ -2192,7 +2193,7 @@ class lookup_interface(tk.Frame):
                 suffix_entry.grid(row=3, column=1, padx=5, pady=5, sticky='w')
 
                 tk.Label(personal_profile_frame, text="Date of Birth", font=bold_label_font).grid(row=4, column=0, padx=5, pady=5, sticky='e')
-                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font)
+                birthdate_entry = DateEntry(personal_profile_frame, font=normal_text_font, date_pattern='mm/dd/yyyy')
                 birthdate_entry.grid(row=4, column=1, padx=5, pady=5, sticky='w')
 
                 genders = ["M", "F"]
