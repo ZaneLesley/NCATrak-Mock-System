@@ -7,7 +7,6 @@ from . import util
 
 # Configurable
 # Note: CAC_TO_GENERATE * CAC_TO_AGENCY_RATIO < 32767
-#TODO: Write a check for this
 CAC_TO_GENERATE = 5
 CAC_TO_AGENCY_RATIO = 5         # Agency per CAC
 
@@ -17,7 +16,6 @@ PERSON_AGE_CUTOFF = 15
 
 
 # Data Tables table name + data = variable name, refer to .xlsx for tables
-#FIXME: fix some of the table names here
 child_advocacy_center_data = []
 cac_agency_data = []
 person_data = []
@@ -160,7 +158,6 @@ def generate_child_advocacy_center():
             agency["zip_code"] = fake.postalcode()
             cac_agency_data.append(agency)
 
-# TODO: Fix Nones
 def generate_person(amount: int):
     fake = Faker()
 #     fake.seed_instance(0)
@@ -176,7 +173,6 @@ def generate_person(amount: int):
         person["last_name"] = fake.last_name_male() if x == 0 else fake.last_name_female()
         person["suffix"] = None
         person["date_of_birth"] = fake.date_of_birth(minimum_age=3, maximum_age=100)
-        #TODO: Put this in a utility file
         birthdate = person["date_of_birth"]
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
@@ -211,7 +207,6 @@ def generator_cac_case(amount: int):
             start_date=datetime.combine(case_date, datetime.min.time())).date(), None])
         case["closed_reason_id"] = fake.random_int(min=1, max=6) if case["case_closed_date"] != None else None
         case["created_date"] = case_date
-        #FIXME: Think of how to do this part
         case["mh_lead_employee_id"] = None
         case["mh_agency_id"] = None
         case["mh_case_number"] = None
@@ -239,8 +234,7 @@ def generator_cac_case(amount: int):
         case["va_services_end_date"] = None
         case["va_services_offered_date"] = None
         cac_case_data.append(case)
-        
-#TODO: Figure out how this exactly works, is there multiple of these types of cases per person.
+
 def generator_case_person(amount: int):
     fake = Faker()
     fake.add_provider(SchoolProvider)
@@ -251,14 +245,12 @@ def generator_case_person(amount: int):
         temp.remove(person)   
         case = {}
 
-        # FIXME: Is the person ID unique?
         case["person_id"] = util.find_column(key = person["cac_id"], column="cac_id", table=person_data, value="person_id")
         case["case_id"] = person["case_id"]
         case["cac_id"] = person["cac_id"]
         birthdate = util.find_column(key = person["cac_id"], column="cac_id", table=person_data, value="date_of_birth")
         today = datetime.today()
         age = today.year - birthdate.year - ((today.month, today.day) < (birthdate.month, birthdate.day))
-        # TODO: Check if it is Months / Days
         case["age"] = age
         case["age_unit"] = "year"
         case["address_line_1"] = fake.street_address()
@@ -268,7 +260,6 @@ def generator_case_person(amount: int):
         case["state_abbr"] = random.choice(state_abbreviations)
         case["zip"] = fake.postalcode()
         case["cell_phone_number"] = fake.unique.numerify("(###)###-####")
-        #FIXME: Set Chances / NULL
         case["home_phone_number"] = fake.unique.numerify("(###)###-####")
         case["work_phone_number"] = fake.unique.numerify("(###)###-####")
         school_data = fake.school_object()
@@ -325,7 +316,6 @@ def generator_case_va_session_service(amount: int):
         session["cac_id"] = case["cac_id"] 
         session["case_va_session_id"] = case["case_va_session_id"] 
         session["case_va_session_service_id"] = fake.unique.random_number(digits = 9)
-        #FIXME: Check what this can be
         session["service_type_id"] = random.randint(1, 5)
         
         case_va_session_service_data.append(session)
@@ -348,14 +338,9 @@ def generator_case_mh_assessments(amount: int):
         case = random.choice(cac_case_data)
         assessment["cac_id"] = case["cac_id"]
         assessment["case_id"] = case["case_id"]
-        #FIXME: Ask about this value
         assessment["assessment_id"] = fake.unique.random_number(digits = 6)
         assessment["mh_provider_agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
-        #FIXME: What does this mean
         assessment["timing_id"] = None
-        #FIXME: repeat, what to do here
-        # asssessment["assessment_id"] = ...
-        #TODO: Fill in
         assessment["session_date"] = None
         assessment["assessment_date"] = None
         assessment["agency_id"] = util.find_column(key = case["cac_id"], column="cac_id", table=cac_agency_data, value="agency_id")
@@ -377,7 +362,6 @@ def generator_case_mh_assessment_measure_scores(amount: int):
         assessment["case_id"] = case["case_id"]
         assessment["assessment_id"] = case["assessment_id"]
         assessment["instruments_id"] = case["assessment_instrument_id"]
-        # FIXME: determine a way to get specific values (from a, b depending on description)
         assessment["mh_assessment_scores"] = None
         
         case_mh_assessment_measure_scores_data.append(assessment)
@@ -431,7 +415,6 @@ def generator_mh_treatment_plan(amount: int):
         treatment["cac_id"] = case["cac_id"]
         treatment["case_id"] = case["case_id"]
         treatment["duration"] = None
-        # FIXME: CHECK THIS LATER CUZ IM TOO TIRED TO UNDERSTAND
         treatment["duration_unit"] = None
         treatment["id"] = fake.unique.random_number(digits = 8)
         treatment["planned_end_date"] = None
@@ -443,8 +426,7 @@ def generator_mh_treatment_plan(amount: int):
         treatment["treatment_plan_date"] = None
         
         case_mh_treatment_plans_data.append(treatment)
-        
-# FIXME: Maybe Review and ensure this one is correct with case vs person
+
 def generator_mh_session_attendee(amount: int):
     fake = Faker()
 #     fake.seed_instance(0)
@@ -523,7 +505,6 @@ def main():
     n = int(input())
     print("[yellow]Generating Data...")
     # Call to make
-    # TODO: Clean up calls, idk how yet...
     generate_cac_agency()
     generate_child_advocacy_center()
     generate_person(amount = n)
@@ -566,31 +547,4 @@ def main():
     #util.write_to_csv(data=state_data, name="state_data")
     #util.write_to_csv(data=employee_data, name="employee_data")
     #util.write_to_csv(data=employee_account_data, name="employee_account_data")
-    # Print Testing
-    """
-    for key, value in case_mh_session_attendee_data[0].items():
-        print(f"Key: {key}, {type(value)}, value: {value}")
-    """
-    #print(cac_agency_data)
-    #print(child_advocacy_center_data)
-    #print(person_data)
-    #print(case_person_data)
-    #print(cac_case_data)
-    #print(case_va_session_log_data)
-    #print(case_va_session_attendee_data)
-    #print(case_va_session_service_data)
-    #print(case_mh_assessments_data)
-    #print(case_mh_assessment_instruments_data)
-    #print(case_mh_assessment_measure_scores_data)
-    #print(case_mh_diagonosis_log_data)
-    #print(case_mh_session_log_enc_data)
-    #print(case_mh_treatment_plans_data)
-    #print(case_mh_session_attendee_data)
-    #print(case_mh_attribute_group_data)
-    #print(case_mh_provider_log_data)
-    #print(case_mh_service_barriers_data)
-    #print(case_mh_treatment_models_data)
-    #print(state_data)
-    #print(employee_data)
-    #print(employee_account_data)
     

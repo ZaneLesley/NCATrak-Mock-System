@@ -44,9 +44,6 @@ class tkinterApp(tk.Tk):
             frame.grid(row=0, column=0, sticky="nsew")
             print(f"Completed loading for frame {frame}")
 
-        # For Testing
-        #print(self.frame)
-
         self.show_frame(database_lookup_search.lookup_interface)
             
     def show_frame(self, frame_class):
