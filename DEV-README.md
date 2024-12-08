@@ -22,7 +22,7 @@ their own instance of it. The setup is quite easy and is outlined in the [README
 The code relies on a couple of main files. Most importantly note that we used 
 [psycopg2](https://www.psycopg.org/docs/) for our postgres drivers.
 From the [wizard.py](app/wizard.py) you can track the call order and what 
-files are being used. The most important of these are [database.ini](app/database/database.ini), 
+files are being used. The most important of these are database.ini(created by wizard), 
 [create_table.py](app/database/create_tables.py), and [populate_database.py](app/database/populate_database.py). 
 Note: on `tables_to_fill` order is important. This depends on foreign keys and primary keys, so be careful and 
 test when messing with these orderings. The [connect.py](app/database/connect.py) script is trivial, but used in 
