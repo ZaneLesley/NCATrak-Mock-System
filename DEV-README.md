@@ -185,6 +185,19 @@ way, one way to make sure it can run is to use
 [Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to test latest branches on. Most 
 of this just consist of using the `os` module and make sure you don't hardcode in data paths.
 
+### Add getters / setters in interfaces
+
+If you don't end up switching to JavaScript, I would go back and instead of reading from a file like `case_id.txt` 
+I would make a getter and a setter to handle that information, it would clean the code up a lot.
+
+# Conclusion
+
+That is all the recommendations I can think of at this current point, again as stated above if you need to contact me
+with any questions, I am avaliable by [email](mailto:zanelesley@outlook.com?subject=OU%20CS%20Capstone%20Question).
+
+Thanks, have a good year!
+
+
 
 
 
