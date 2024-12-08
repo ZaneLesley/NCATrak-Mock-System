@@ -13,7 +13,6 @@ from database.config import load_config
 from database.connect import connect
 from faker import Faker
 from functools import partial
-import datetime
 
 heading_font = ("Helvetica", 18, "bold")
 bold_label_font = ("Helvetica", 12, "bold")
@@ -760,7 +759,7 @@ class lookup_interface(tk.Frame):
         referral_information_frame.grid(row=3, column=0, sticky='w')
 
         tk.Label(referral_information_frame, text="Date Received by CAC*", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5, sticky='w')
-        received_date_entry = DateEntry(referral_information_frame, font=normal_text_font)
+        received_date_entry = DateEntry(referral_information_frame, font=normal_text_font, date_pattern="mm/dd/yyyy")
         received_date_entry.grid(row=0, column=1, padx=5, pady=5)
 
         def cancel():
@@ -1027,8 +1026,10 @@ class lookup_interface(tk.Frame):
 
                     # verify the person is not a duplicate and ask for confirmation if they are
                     if not using_existing_person.get():
-                        cur.execute("""SELECT * FROM person 
-                                    WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                        if middle_name == "":
+                            cur.execute("""SELECT * FROM person WHERE UPPER(first_name) LIKE UPPER(%s) AND UPPER(last_name) LIKE UPPER(%s)""", (first_name, last_name, ))
+                        else:
+                            cur.execute("""SELECT * FROM person WHERE UPPER(first_name) LIKE UPPER(%s) AND UPPER(middle_name) LIKE UPPER(%s) AND UPPER(last_name) LIKE UPPER(%s)""", (first_name, middle_name, last_name))
                         existing_person = cur.fetchone()
                         if existing_person is not None:
                             confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
@@ -1347,8 +1348,10 @@ class lookup_interface(tk.Frame):
 
                             # verify the person is not a duplicate and ask for confirmation if they are
                             if not using_existing_person:
-                                cur.execute("""SELECT * FROM person 
-                                            WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                                if middle_name == "":
+                                    cur.execute("""SELECT * FROM person WHERE UPPER(first_name) LIKE UPPER(%s) AND UPPER(last_name) LIKE UPPER(%s)""", (first_name, last_name, ))
+                                else:
+                                    cur.execute("""SELECT * FROM person WHERE UPPER(first_name) LIKE UPPER(%s) AND UPPER(middle_name) LIKE UPPER(%s) AND UPPER(last_name) LIKE UPPER(%s)""", (first_name, middle_name, last_name))
                                 existing_person = cur.fetchone()
                                 if existing_person is not None:
                                     confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
@@ -1524,8 +1527,10 @@ class lookup_interface(tk.Frame):
 
                             # verify the person is not a duplicate and ask for confirmation if they are
                             if not using_existing_person:
-                                cur.execute("""SELECT * FROM person 
-                                            WHERE CONCAT(first_name, \' \', middle_name, \' \', last_name)~*\'{0}\' OR CONCAT(first_name, \' \', last_name)~*\'{0}\'""".format(first_name, middle_name, last_name))
+                                if middle_name == "":
+                                    cur.execute("""SELECT * FROM person WHERE UPPER(first_name) LIKE UPPER(%s) AND UPPER(last_name) LIKE UPPER(%s)""", (first_name, last_name, ))
+                                else:
+                                    cur.execute("""SELECT * FROM person WHERE UPPER(first_name) LIKE UPPER(%s) AND UPPER(middle_name) LIKE UPPER(%s) AND UPPER(last_name) LIKE UPPER(%s)""", (first_name, middle_name, last_name))
                                 existing_person = cur.fetchone()
                                 if existing_person is not None:
                                     confirm_duplicate = messagebox.askyesno("Duplicate Entry", f"There is already a {first_name} {middle_name} {last_name} in the database. Do you wish to proceed and create a duplicate record?")
@@ -1849,7 +1854,7 @@ class lookup_interface(tk.Frame):
                 referral_information_frame.grid(row=3, column=0, sticky='w')
 
                 tk.Label(referral_information_frame, text="Date Received by CAC*", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5, sticky='w')
-                received_date_entry = DateEntry(referral_information_frame, font=normal_text_font)
+                received_date_entry = DateEntry(referral_information_frame, font=normal_text_font, date_pattern="mm/dd/yyyy")
                 received_date_entry.grid(row=0, column=1, padx=5, pady=5)
 
                 def cancel_new_victim():
@@ -2322,7 +2327,7 @@ class lookup_interface(tk.Frame):
                 referral_information_frame.grid(row=3, column=0, sticky='w')
 
                 tk.Label(referral_information_frame, text="Date Received by CAC*", font=bold_label_font).grid(row=0, column=0, padx=5, pady=5, sticky='w')
-                received_date_entry = DateEntry(referral_information_frame, font=normal_text_font)
+                received_date_entry = DateEntry(referral_information_frame, font=normal_text_font, date_pattern="mm/dd/yyyy")
                 received_date_entry.grid(row=0, column=1, padx=5, pady=5)
 
                 relationship_role_frame = tk.LabelFrame(scrollable_frame, text="Relationship to Alleged Victims/Clients")
@@ -2797,4 +2802,3 @@ class lookup_interface(tk.Frame):
 
     def show_case_notes(self):
         self.controller.show_frame(case_notes.case_notes_interface)
-
