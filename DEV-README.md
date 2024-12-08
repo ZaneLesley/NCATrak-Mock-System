@@ -26,7 +26,7 @@ files are being used. The most important of these are database.ini(created by wi
 [create_table.py](app/database/create_tables.py), and [populate_database.py](app/database/populate_database.py). 
 Note: on `tables_to_fill` order is important. This depends on foreign keys and primary keys, so be careful and 
 test when messing with these orderings. The [connect.py](app/database/connect.py) script is trivial, but used in 
-almost every script above it.[config.py](app/database/config.py) is used everytime 
+almost every script above it. [Config.py](app/database/config.py) is used everytime 
 [connect.py](app/database/connect.py) is called as well.
 
 ## Generator
