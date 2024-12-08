@@ -386,6 +386,11 @@ class PeopleInterface(tk.Frame):
                 sh_checkbox = ttk.Checkbutton(self.tree, variable=sh_var, command=lambda i=item, var=sh_var: self.update_same_household(i, var))
                 custody_checkbox = ttk.Checkbutton(self.tree, variable=custody_var, command=lambda i=item, var=custody_var: self.update_custody(i, var))
 
+                role_id =  self.get_person_role_id(item)
+                if role_id is not None and role_id[0] == 0:
+                    sh_checkbox.config(state='disabled')
+                    custody_checkbox.config(state='disabled')
+
                 self.action_widgets[item] = {
                     'edit_button': edit_button,
                     'bio_button': bio_button,
@@ -451,8 +456,26 @@ class PeopleInterface(tk.Frame):
     def on_bio_press(self, item):
         person_id = item
         PersonalProfileForm(self, person_id, mode='bio')
+    
+    def get_person_role_id(self, item):
+        try:
+            cur = self.conn.cursor()
+            # Get person role from database
+            person_query = "SELECT role_id FROM case_person WHERE person_id = %s AND case_id = %s;"
+            cur.execute(person_query, (item, self.current_case_id))
+            id = cur.fetchone()
+            cur.close()
+            return id
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to get person role id: {e}")
 
     def on_delete_press(self, item):
+        #Check if person has role "Alleged Victim/Client"
+        id = self.get_person_role_id(item)
+        if id is not None and id[0] == 0:
+            messagebox.showerror("Error", "Cannot delete person with role: Alleged Victim/Client")
+            return
+
         # Confirm deletion
         response = messagebox.askyesno("Confirm Deletion", "Are you sure you want to delete this person from the case?")
         if response:
@@ -1308,26 +1331,26 @@ class PersonalProfileForm(tk.Toplevel):
                 self.fields[field_key] = tk.StringVar()
                 options = list(self.relationship_mapping.keys())
                 self.fields[field_key].set('Select Relationship')  # Default value
-                relationship_combobox = ttk.Combobox(
+                self.relationship_combobox = ttk.Combobox(
                     case_specific_frame,
                     textvariable=self.fields[field_key],
                     state="readonly"
                 )
-                relationship_combobox['values'] = options
-                relationship_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                self.relationship_combobox['values'] = options
+                self.relationship_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
                 row_idx += 1
             elif field_key == 'Role':
                 # Predefined options with mapping to integer IDs
                 self.fields[field_key] = tk.StringVar()
                 options = list(self.role_mapping.keys())
                 self.fields[field_key].set('Select Role')  # Default value
-                role_combobox = ttk.Combobox(
+                self.role_combobox = ttk.Combobox(
                     case_specific_frame,
                     textvariable=self.fields[field_key],
                     state="readonly"
                 )
-                role_combobox['values'] = options
-                role_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
+                self.role_combobox['values'] = options
+                self.role_combobox.grid(row=row_idx, column=1, sticky='w', padx=5, pady=5)
                 row_idx += 1
             elif field_key == 'Victim Status':
                 self.fields[field_key] = ttk.Combobox(case_specific_frame, state="readonly")
@@ -1625,7 +1648,7 @@ class PersonalProfileForm(tk.Toplevel):
             person_query = """
                 SELECT first_name, middle_name, last_name, suffix, date_of_birth, gender,
                        religion_id, language_id, prior_convictions,
-                       convicted_against_children, sex_offender, sex_predator
+                       convicted_against_children, sex_offender, sex_predator, race_id
                 FROM person WHERE person_id = %s
             """
             cur.execute(person_query, (self.person_id,))
@@ -1639,7 +1662,7 @@ class PersonalProfileForm(tk.Toplevel):
             person_field_keys = [
                 'First Name', 'Middle Name', 'Last Name', 'Suffix', 'Date of Birth', 'Biological Sex',
                 'Religion', 'Language', 'Prior Convictions',
-                'Convicted Of Crime Against Children', 'Sexual Offender', 'Sexual Predator'
+                'Convicted Of Crime Against Children', 'Sexual Offender', 'Sexual Predator', 'Race'
             ]
 
             for idx, key in enumerate(person_field_keys):
@@ -1650,20 +1673,25 @@ class PersonalProfileForm(tk.Toplevel):
                 elif key == 'Biological Sex':
                     # Map single character to full-text option if necessary
                     mapping = {'M': 'Male', 'F': 'Female', 'I': 'Intersex', 'U': 'Unknown', 'D': 'Decline to Answer'}
-                    full_text = mapping.get(value, '') if value else ''
+                    full_text = mapping.get(value, '') 
                     self.fields[key].set(full_text)
                 elif key == 'Religion':
                     # Map religion_id to religion name
                     reverse_religion_mapping = {v: k for k, v in self.religion_mapping.items()}
-                    religion_name = reverse_religion_mapping.get(value, '') if value else ''
+                    religion_name = reverse_religion_mapping.get(value, '') 
                     self.fields[key].set(religion_name)
                 elif key == 'Language':
                     # Map language_id to language name
                     reverse_language_mapping = {v: k for k, v in self.language_mapping.items()}
-                    language_name = reverse_language_mapping.get(value, '') if value else ''
+                    language_name = reverse_language_mapping.get(value, '') 
                     self.fields[key].set(language_name)
                 elif key in ['Prior Convictions', 'Convicted Of Crime Against Children', 'Sexual Offender', 'Sexual Predator']:
                     self.fields[key].set(bool(value))
+                elif key == 'Race':
+                    # Map race_id to race name
+                    reverse_race_mapping = {v: k for k, v in self.race_mapping.items()}
+                    race_name = reverse_race_mapping.get(value, '')
+                    self.fields[key].set(race_name)
                 else:
                     if isinstance(self.fields[key], ttk.Entry):
                         self.fields[key].delete(0, tk.END)
@@ -1690,17 +1718,22 @@ class PersonalProfileForm(tk.Toplevel):
                     'Marital Status ID', 'Same Household', 'School or Employer', 'Victim Status ID'
                 ]
 
+                role_id = case_person[1]
+
                 # Handle 'Relationship to Alleged Victim/Client'
                 relationship_id = case_person[0]
                 reverse_relationship_mapping = {v: k for k, v in self.relationship_mapping.items()}
-                relationship_name = reverse_relationship_mapping.get(relationship_id, '') if relationship_id else ''
+                relationship_name = reverse_relationship_mapping.get(relationship_id, '') 
                 self.fields['Relationship to Alleged Victim/Client'].set(relationship_name if relationship_name else 'Select Relationship')
+                if role_id is not None and role_id == 0:
+                    self.relationship_combobox.state(['disabled'])
 
                 # Handle 'Role'
-                role_id = case_person[1]
                 reverse_role_mapping = {v: k for k, v in self.role_mapping.items()}
-                role_name = reverse_role_mapping.get(role_id, '') if role_id else ''
+                role_name = reverse_role_mapping.get(role_id, '') 
                 self.fields['Role'].set(role_name if role_name else 'Select Role')
+                if role_id is not None and role_id == 0:
+                    self.role_combobox.state(['disabled'])
 
                 # Handle 'Age at Time of Referral' and 'Age Unit'
                 age = case_person[2]
@@ -1898,12 +1931,12 @@ class PersonalProfileForm(tk.Toplevel):
                         person_id, cac_id, first_name, middle_name, last_name, suffix,
                         date_of_birth, gender, religion_id, language_id,
                         prior_convictions, convicted_against_children,
-                        sex_offender, sex_predator
+                        sex_offender, sex_predator, race_id
                     ) VALUES (
                         %s, %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
                         %s, %s,
-                        %s, %s
+                        %s, %s, %s
                     )
                 """
                 person_data = (
@@ -1920,7 +1953,8 @@ class PersonalProfileForm(tk.Toplevel):
                     data.get('Prior Convictions'),
                     data.get('Convicted Of Crime Against Children'),
                     data.get('Sexual Offender'),
-                    data.get('Sexual Predator')
+                    data.get('Sexual Predator'),
+                    race_id
                 )
                 cur.execute(insert_person_query, person_data)
 
@@ -1929,11 +1963,11 @@ class PersonalProfileForm(tk.Toplevel):
                     INSERT INTO case_person (
                         person_id, case_id, cac_id, relationship_id, role_id,
                         age, age_unit, address_line_1, address_line_2,
-                        city, state_abbr, zip, same_household, school_or_employer
+                        city, state_abbr, zip, same_household, school_or_employer, victim_status_id
                     ) VALUES (
                         %s, %s, %s, %s, %s,
                         %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s
                     )
                 """
                 case_person_data = (
@@ -2025,7 +2059,8 @@ class PersonalProfileForm(tk.Toplevel):
                         prior_convictions = %s,
                         convicted_against_children = %s,
                         sex_offender = %s,
-                        sex_predator = %s
+                        sex_predator = %s,
+                        race_id = %s
                     WHERE person_id = %s
                 """
                 person_data = (
@@ -2041,6 +2076,7 @@ class PersonalProfileForm(tk.Toplevel):
                     data.get('Convicted Of Crime Against Children'),
                     data.get('Sexual Offender'),
                     data.get('Sexual Predator'),
+                    race_id,
                     self.person_id
                 )
                 cur.execute(update_person_query, person_data)
