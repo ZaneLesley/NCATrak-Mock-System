@@ -22,11 +22,11 @@ their own instance of it. The setup is quite easy and is outlined in the [README
 The code relies on a couple of main files. Most importantly note that we used 
 [psycopg2](https://www.psycopg.org/docs/) for our postgres drivers.
 From the [wizard.py](app/wizard.py) you can track the call order and what 
-files are being used. The most important of these are [database.ini](app/database/database.ini), 
+files are being used. The most important of these are database.ini(created by wizard), 
 [create_table.py](app/database/create_tables.py), and [populate_database.py](app/database/populate_database.py). 
 Note: on `tables_to_fill` order is important. This depends on foreign keys and primary keys, so be careful and 
 test when messing with these orderings. The [connect.py](app/database/connect.py) script is trivial, but used in 
-almost every script above it.[config.py](app/database/config.py) is used everytime 
+almost every script above it. [Config.py](app/database/config.py) is used everytime 
 [connect.py](app/database/connect.py) is called as well.
 
 ## Generator
@@ -184,6 +184,19 @@ Currently, the application can run on the big 3 OSes, Windows, Linux, MacOS. I r
 way, one way to make sure it can run is to use 
 [Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to test latest branches on. Most 
 of this just consist of using the `os` module and make sure you don't hardcode in data paths.
+
+### Add getters / setters in interfaces
+
+If you don't end up switching to JavaScript, I would go back and instead of reading from a file like `case_id.txt` 
+I would make a getter and a setter to handle that information, it would clean the code up a lot.
+
+# Conclusion
+
+That is all the recommendations I can think of at this current point, again as stated above if you need to contact me
+with any questions, I am avaliable by [email](mailto:zanelesley@outlook.com?subject=OU%20CS%20Capstone%20Question).
+
+Thanks, have a good year!
+
 
 # Further Answer to Dr. Kang Question
 
