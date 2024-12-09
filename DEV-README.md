@@ -185,7 +185,214 @@ way, one way to make sure it can run is to use
 [Linux on Windows with WSL](https://learn.microsoft.com/en-us/windows/wsl/install) to test latest branches on. Most 
 of this just consist of using the `os` module and make sure you don't hardcode in data paths.
 
+# Further Answer to Dr. Kang Question
+
+His question is as follows:
+
+Also, as briefly discussed during your team's poster presentation on Friday, the project will continue in Spring 2025. I am wondering whether you'd be able to provide a short documentation on your thoughts about what we discussed as follows, and two questions are provided below:
 
 
 
+(Some background)
 
+The next phase is to define areas of interests (AOIs) on the interface screens. Simply stated, the screen will be divided into many different sized grids or boxes. Each AOI will contain (x,y) coordinates to keep track of the invisible box location for each interface screen. Keylogging events are recorded in real-time. In addition, mouse movements are tracked in real-time, and if a mouseover event happens on an important AOI, then such event is recorded in a text file such as:
+
+| **Timestamp** | **MouseOverEvent**      | **MouseCoordinate (X, Y)** | **MouseButtonClick** | **TextInputAOI (Yes/No)** | **TextTypingActivity** |
+|---------------|--------------------------|----------------------------|-----------------------|---------------------------|-------------------------|
+| 00:00:00      | occurred on AOI1         | (234, 452)                 | No                    | Yes                       |                         |
+| 00:00:01      | occurred on AOI1         | (238, 457)                 | Yes                   | Yes                       | Z                       |
+| 00:00:02      | occurred on AOI1         | (238, 457)                 | Yes                   | Yes                       | a                       |
+| 00:00:03      | occurred on AOI1         | (238, 457)                 | Yes                   | Yes                       | n                       |
+| 00:00:04      | occurred on AOI1         | (238, 457)                 | Yes                   | Yes                       | e                       |
+| 00:00:04      | occurred on AOI2         | (438, 657)                 | No                    | No                        |                         |
+                              
+
+
+Questions:
+
+1. Re-structure the current "only" Python-based program into Javascript-based interface (possibly running the 
+   Javascript files from python)?
+
+2. Recommendations on whether we should use either python or javascript for keylogging and mouse features?
+
+## Answer
+
+Yes it's feasible, I will leave you with an answer that answers both. Below is the code I came up with in 2ish hours 
+of research and googling which shows you how to use Flask to run a python app, which can connect to a javascript or 
+HTML front end.
+
+First, we have the Flask app which is in python which looks like this
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/keylog', methods=['POST'])
+def keylog():
+    key_data = request.json
+    print(f"Key logged: {key_data['key']}\n")
+    return jsonify({"message": "Key logged successfully"}), 200
+
+@app.route('/mouse_events', methods=['POST'])
+def handle_mouse_events():
+    data = request.json
+    if data and "events" in data:
+        for event in data["events"]:
+            print(f"Received mouse event: {event}")
+        return jsonify({"message": "Mouse events logged successfully"}), 200
+    return jsonify({"error": "Invalid data"}), 400
+
+if __name__ == '__main__':
+    app.run()
+```
+Here, we are basically making two routes that accept data, those are `/keylog` and `/mouse_events`. They provide an 
+endpoint for us to send data too and record it. You can do whatever you want with the information here, it's just 
+showing how to send some information from file x to file y. Here is the keylogger code that sends the information.
+
+```python
+from pynput import keyboard, mouse
+import requests
+import threading
+import time
+
+# Alternatives to this using javascript see:
+# https://www.geeksforgeeks.org/javascript-coordinates-of-mouse/
+# https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key
+# https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/pageX
+
+# Global Stuff
+url = "http://127.0.0.1:5000/keylog"
+url_mouse = "http://127.0.0.1:5000/mouse_events"
+stop_threads = False
+mouse_data = []
+
+def on_press(key):
+    key_str = str(key).strip("'")
+    print(key_str, flush=True)
+    response = requests.post(url, json={"key": key_str})
+    if response.status_code == 200:
+        pass
+    else:
+        print(f"Error sending key '{key_str}'")
+
+def on_release(key):
+    global stop_threads
+    if key == keyboard.Key.esc:
+        print("Esc pressed. Stopping listeners and threads...")
+        stop_threads = True
+        listener.stop()
+        return False
+
+def get_mouse_events():
+    global mouse_data
+    if mouse_data:
+            # Send the logged mouse data
+            response = requests.post(url_mouse, json={"events": mouse_data})
+            if response.status_code == 200:
+                print("Mouse data sent successfully:")
+                mouse_data = []
+            else:
+                print("Failed to send mouse data:", response.status_code, response.text)
+
+def on_move(x, y):
+    global mouse_data
+    mouse_data.append({"event": "move", "x": x, "y": y})
+
+def on_click(x, y, button, pressed):
+    global mouse_data
+    action = "pressed" if pressed else "released"
+    mouse_data.append({"event": "click", "x": x, "y": y, "button": str(button), "action": action})
+    print(f"Mouse {action} at ({x}, {y}) with {button}")
+
+def periodic_event_sender(interval=1):
+    global stop_threads
+    while not stop_threads:
+        get_mouse_events()
+        time.sleep(interval)
+
+if __name__ == "__main__":
+    sender_thread = threading.Thread(target=periodic_event_sender, daemon=True)
+    sender_thread.start()
+
+    mouse_listener = mouse.Listener(on_move=on_move, on_click=on_click)
+    mouse_listener.start()
+
+    with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+        listener.join()
+
+    mouse_listener.stop()
+    mouse_listener.join()
+    print("All listeners and threads stopped.")
+```
+
+In this you can also see I provided alternatives to if you just wanted to use javascript to keep track of all the 
+information. It has much less code, and is much cleaner, but has the downside of only being able to track the 
+webpage (for example, the only mouse and keyboard it can get has to come from when the client has the webpage opened 
+and focused, whereas the keylogger from pynput can track global information.). Both work, both are viable, it 
+really is up to you which you want to use. If you want to add this dynamically to a page, you can listen to it in 
+the javascript or html file with something like this 
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mouse Tracker</title>
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <div id="container">
+        <h2>Mouse Events</h2>
+        <ul id="mouse-events"></ul>
+    </div>
+</body>
+</html>
+```
+
+with the backing JavaScript looking like (for mouse events only, works the same way with keyboard):
+
+```javascript
+document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("mouse-events");
+
+    async function fetchMouseEvents() {
+        try {
+            const response = await fetch("http://127.0.0.1:5000/mouse_events");
+            const events = await response.json();
+            
+            events.forEach(event => {
+                const listItem = document.createElement("ul");
+                listItem.textContent = JSON.stringify(event);
+                container.appendChild(listItem);
+            });
+        } 
+    }
+```
+
+Basically all that is happening above is we are listening to the Flask application from our forward facing front-end 
+application. The pipeline is essentially:
+
+python keylogger/mouse logger -> 'back-end' flask -> 'front-end HTML/Javascript'. 
+
+Some of these files are buggy, I didn't test them too hard and is really just a proof of concept.
+
+## TLDR
+
+So again, you have two ways of doing it, 
+
+Python, Javascript, HTML
+
+or 
+
+Javascript, HTML.
+
+In order to link Python and Javascript together, you can use flask applications that POST/GET data and retrieve it 
+from the Javascript/HTML using the javascript method above.
+
+To get information that he wants to use for AIO, simply get the elements position and create a 'bounding box' around 
+it and just create some logic to tell if the x,y coords match. See https://www.geeksforgeeks.org/how-to-find-the-position-of-html-elements-in-javascript/
+and https://stackoverflow.com/questions/72120789/detecting-cursor-in-a-certain-range (can also probably ask 
+[Dr. Weaver](https://www.ou.edu/coe/cs/people/faculty/chris-weaver) for 
+help on this in terms of x, y coords, he is the computer graphics professor I had and knows the math behind this).
