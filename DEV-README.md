@@ -405,7 +405,7 @@ In order to link Python and Javascript together, you can use flask applications 
 from the Javascript/HTML using the javascript method above.
 
 To get information that he wants to use for AIO, simply get the elements position and create a 'bounding box' around 
-it and just create some logic to tell if the x,y coords match. See https://www.geeksforgeeks.org/how-to-find-the-position-of-html-elements-in-javascript/
+it and just create some logic to tell if the x,y coords match. See https://www.geeksforgeeks.org/javascript-coordinates-of-mouse/
 and https://stackoverflow.com/questions/72120789/detecting-cursor-in-a-certain-range (can also probably ask 
 [Dr. Weaver](https://www.ou.edu/coe/cs/people/faculty/chris-weaver) for 
 help on this in terms of x, y coords, he is the computer graphics professor I had and knows the math behind this).
